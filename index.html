@@ -15,7 +15,7 @@
             text-align: center;
             margin: 0;
             padding: 10px;
-            touch-action: manipulation; /* تحسين استجابة اللمس على الموبايل */
+            touch-action: manipulation;
         }
         .container {
             max-width: 500px;
@@ -101,7 +101,7 @@
             border-radius: 12px;
             cursor: crosshair; 
             max-width: 100%;
-            touch-action: none; /* منع زووم الشاشة الافتراضي أثناء اللعب وسرعة استجابة القنص */
+            touch-action: none;
         }
         .weapons-market {
             display: flex;
@@ -136,7 +136,7 @@
 
 <div class="container" id="game-container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - مؤثرات صوتية وبصرية كاملة</p>
+    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - دخول فوري ومؤثرات كاملة</p>
 
     <div id="auth-section">
         <div class="welcome-card">
@@ -195,9 +195,8 @@
     let ammo = 30;
     let currentWeapon = "classic"; 
     let playerPiUser = "";
-    
-    // محرك الصوت المدمج في المتصفح لمنع مشاكل التحميل
     let audioCtx = null;
+    let hasLoggedIn = false; // فحص لمنع الدخول المزدوج
 
     const targetsConfig = {
         bird: { radius: 18, pts: 10, speedFactor: 1, name: "🕊️ طائر مائي", health: 1 },
@@ -213,7 +212,6 @@
     const ctx = canvas.getContext('2d');
     let gameInterval;
 
-    // دالات توليد الأصوات البرمجية النظيفة
     function initAudio() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -231,7 +229,6 @@
             gain.connect(audioCtx.destination);
 
             if (type === 'shoot') {
-                // صوت إطلاق النار (بارود/موجة حادة تتلاشى سريعاً)
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(300, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
@@ -239,7 +236,6 @@
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.15);
             } else if (type === 'hit') {
-                // صوت الإصابة البطلة (نغمة تصاعدية حماسية)
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(400, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.2);
@@ -247,7 +243,6 @@
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.2);
             } else if (type === 'miss') {
-                // طلقة طائشة في الهواء
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(150, audioCtx.currentTime);
                 osc.frequency.linearRampToValueAtTime(60, audioCtx.currentTime + 0.1);
@@ -255,22 +250,36 @@
                 gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             }
-        } catch (e) { console.log("الصوت بانتظار تفعيل المتصفح"); }
+        } catch (e) {}
     }
 
     function freeLoginWithPi() {
-        initAudio(); // تفعيل محرك الصوت مع أول ضغطة
+        if (hasLoggedIn) return;
+        initAudio(); 
         document.getElementById('btn-login').innerText = "جاري فتح الميدان...";
+
+        // 🔥 مؤقت ذكي: إذا لم تستجب الشبكة خلال 1200 ملي ثانية، ادخل فورا تلقائياً
+        const fallbackTimeout = setTimeout(() => {
+            if (!hasLoggedIn) {
+                simulateDeveloperLogin();
+            }
+        }, 1200);
+        
         if (typeof Pi !== 'undefined' && window.Pi && window.Pi.authenticate) {
             Pi.authenticate(['username', 'payments'], onIncompletePaymentFound).then(function(auth) {
+                clearTimeout(fallbackTimeout);
                 handleLocalLogin(auth.user.username);
-            }).catch(simulateDeveloperLogin);
-        } else { simulateDeveloperLogin(); }
+            }).catch(() => {
+                clearTimeout(fallbackTimeout);
+                simulateDeveloperLogin();
+            });
+        }
     }
 
     function simulateDeveloperLogin() { handleLocalLogin("AbuKareem_Dev"); }
 
     function handleLocalLogin(username) {
+        hasLoggedIn = true;
         playerPiUser = username;
         document.getElementById('player-name').innerText = playerPiUser;
         document.getElementById('lbl-local-user').innerText = playerPiUser;
@@ -280,8 +289,8 @@
     }
 
     function enterGameView() {
-        document.getElementById('auth-section').classList.add('hidden');
-        document.getElementById('game-section').classList.remove('hidden');
+        document.getElementById('auth-section').className = 'hidden';
+        document.getElementById('game-section').className = '';
         startGameLoop();
     }
 
@@ -293,7 +302,6 @@
         }
     }
 
-    // دالة معالجة الإطلاق الموحدة (تعمل مع اللمس على الجوال وفأرة الحاسوب)
     function executeShot(clientX, clientY) {
         if (ammo <= 0) return;
         ammo--; 
@@ -312,13 +320,13 @@
             target.currentHealth--;
             
             if (target.currentHealth > 0) {
-                playSound('shoot'); // تشغيل صوت إطلاق
+                playSound('shoot'); 
                 document.getElementById('game-status').innerText = `💥 أصبت ${target.name}.. متبقي طلقة للقضاء عليه!`;
                 target.radius *= 0.8; 
                 return; 
             }
 
-            playSound('hit'); // تشغيل صوت الإصابة الناجحة
+            playSound('hit'); 
             let pts = target.pts;
             if (currentWeapon === "fast") pts = Math.ceil(pts * 1.5);
             score += pts;
@@ -327,18 +335,16 @@
             updateHighScoreLocally(); 
             resetTarget();
         } else {
-            playSound('miss'); // تشغيل صوت الطلقة الضائعة
+            playSound('miss'); 
             document.getElementById('game-status').innerText = "💥 طلقة طائشة! ركز تصويبك على الهدف.";
         }
     }
 
-    // دعم الماوس
     canvas.addEventListener('mousedown', function(e) {
         e.preventDefault();
         executeShot(e.clientX, e.clientY);
     });
 
-    // دعم اللمس السريع على شاشات الموبايل
     canvas.addEventListener('touchstart', function(e) {
         e.preventDefault();
         if(e.touches.length > 0) {
@@ -370,7 +376,6 @@
             ctx.fillStyle = "#475569"; ctx.font = "13px Arial";
             ctx.fillText("البيئة: ميدان الغابة الرقمية", 15, 25);
             
-            // رسم الوحش/الحيوان
             ctx.beginPath(); 
             ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
             ctx.fillStyle = target.name.includes("وحش") ? "#ef4444" : target.name.includes("نادر") ? '#fbbf24' : '#4ade80'; 
