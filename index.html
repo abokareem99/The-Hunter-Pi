@@ -6,7 +6,6 @@
     <title>لعبة الصياد - Pi Network</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         body {
@@ -35,7 +34,6 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         
-        /* واجهة الصندوق الرئيسي لشاشة الدخول */
         .welcome-card {
             background: #0f172a;
             border-radius: 15px;
@@ -45,7 +43,6 @@
             margin-top: 15px;
         }
 
-        /* قراءة الصورة الرسمية hunter-logo.png المرفوعة في المستودع بمقاس 512*512 */
         .hunter-avatar {
             width: 180px;
             height: 180px;
@@ -136,7 +133,7 @@
 
 <div class="container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار فخم متصل بـ Supabase & Pi Network</p>
+    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">نسخة ذكية ومستقلة فائقة السرعة</p>
 
     <div id="auth-section">
         <div class="welcome-card">
@@ -172,32 +169,30 @@
             </div>
         </div>
 
-        <h3 style="margin-top: 25px; color: #4ade80;">🏆 صدارة فرسان الصيد (Leaderboard)</h3>
+        <h3 style="margin-top: 25px; color: #4ade80;">🏆 أعلى سكور شخصي (Local Status)</h3>
         <table class="leaderboard-table">
             <thead>
                 <tr>
-                    <th>المركز</th>
-                    <th>الصياد</th>
-                    <th>أعلى نقاط 🎯</th>
+                    <th>اللاعب الحالي</th>
+                    <th>أعلى نقاط مسجلة 🎯</th>
                 </tr>
             </thead>
-            <tbody id="leaderboard-body">
-                <tr><td colspan="3">جاري تحميل الصدارة...</td></tr>
+            <tbody>
+                <tr>
+                    <td id="lbl-local-user">...</td>
+                    <td id="lbl-local-score" style="color:#4ade80; font-weight:bold;">0</td>
+                </tr>
             </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co"; 
-    const SUPABASE_ANON_KEY = "sb_publishable_PzP2Iko5vX3xlonGzF3a4w_qMogivll";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+    // تم إلغاء الاعتماد على خادم خارجي لتجنب تعليق الأزرار تماماً
     let score = 0;
     let ammo = 30;
     let currentWeapon = "classic"; 
     let playerPiUser = "";
-    let playerWallet = "";
     let target = { x: 100, y: 100, radius: 18, speedX: 2.5, speedY: 2, type: 'bird' };
     
     const canvas = document.getElementById('hunting-canvas');
@@ -212,98 +207,44 @@
                 Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
                 .then(function(auth) {
                     playerPiUser = auth.user.username;
-                    playerWallet = auth.user.uid;
-                    document.getElementById('player-name').innerText = playerPiUser;
-                    setupPlayerInDatabase().then(() => enterGameView());
+                    handleLocalLogin(playerPiUser);
                 }).catch(function(err) {
-                    simulateDeveloperLogin();
+                    handleLocalLogin("AbuKareem_Dev");
                 });
             } catch (e) {
-                simulateDeveloperLogin();
+                handleLocalLogin("AbuKareem_Dev");
             }
         } else {
-            simulateDeveloperLogin();
+            handleLocalLogin("AbuKareem_Dev");
         }
     }
 
-    function simulateDeveloperLogin() {
-        playerPiUser = "AbuKareem_Dev";
-        playerWallet = "dev_wallet_address_12345";
+    function handleLocalLogin(username) {
+        playerPiUser = username;
         document.getElementById('player-name').innerText = playerPiUser;
-        setupPlayerInDatabase().then(() => enterGameView());
+        document.getElementById('lbl-local-user').innerText = playerPiUser;
+        
+        // جلب أعلى نقاط مخزنة داخل الجهاز سابقاً
+        let localHighScore = localStorage.getItem('hunter_high_score_' + playerPiUser) || 0;
+        document.getElementById('lbl-local-score').innerText = localHighScore;
+        document.getElementById('game-status').innerText = `أهلاً بك! أعلى سكور لك على هذا الجهاز: ${localHighScore}`;
+        
+        enterGameView();
     }
 
     function enterGameView() {
         document.getElementById('auth-section').classList.add('hidden');
         document.getElementById('game-section').classList.remove('hidden');
         startGameLoop();
-        loadLeaderboard();
     }
 
-    async function setupPlayerInDatabase() {
-        try {
-            const { data, error } = await supabase
-                .from('hunter_game_scores')
-                .select('high_score')
-                .eq('wallet_address', playerWallet)
-                .single();
-
-            if (error && error.code === 'PGRST116') {
-                await supabase.from('hunter_game_scores').insert([
-                    { pi_username: playerPiUser, wallet_address: playerWallet, high_score: 0 }
-                ]);
-            } else if (data) {
-                document.getElementById('game-status').innerText = `أهلاً بالصياد الفارس! أعلى نقاط لك: ${data.high_score}`;
-            }
-        } catch(e) {
-            console.log("خطأ في الاتصال بقاعدة البيانات، تم التجاوز للأمان.");
+    function updateHighScoreLocally() {
+        let currentHighScore = parseInt(localStorage.getItem('hunter_high_score_' + playerPiUser) || 0);
+        if (score > currentHighScore) {
+            localStorage.setItem('hunter_high_score_' + playerPiUser, score);
+            document.getElementById('lbl-local-score').innerText = score;
+            document.getElementById('game-status').innerText = "🔥 كفو! حطمت رقمك القياسي السابق!";
         }
-    }
-
-    async function updateHighScoreInDB() {
-        try {
-            const { data } = await supabase
-                .from('hunter_game_scores')
-                .select('high_score')
-                .eq('wallet_address', playerWallet)
-                .single();
-
-            if (!data || score > data.high_score) {
-                await supabase
-                    .from('hunter_game_scores')
-                    .update({ high_score: score, updated_at: new Date() })
-                    .eq('wallet_address', playerWallet);
-                loadLeaderboard();
-            }
-        } catch(e) {}
-    }
-
-    async function loadLeaderboard() {
-        try {
-            const { data } = await supabase
-                .from('hunter_game_scores')
-                .select('pi_username, high_score')
-                .order('high_score', { ascending: false })
-                .limit(5);
-
-            if (data) {
-                const tbody = document.getElementById('leaderboard-body');
-                tbody.innerHTML = "";
-                data.forEach((row, index) => {
-                    tbody.innerHTML += `<tr><td>${index + 1}</td><td>${row.pi_username}</td><td style="color:#4ade80; font-weight:bold;">${row.high_score}</td></tr>`;
-                });
-            } else {
-                showOfflineLeaderboard();
-            }
-        } catch(e) {
-            showOfflineLeaderboard();
-        }
-    }
-
-    function showOfflineLeaderboard() {
-        const tbody = document.getElementById('leaderboard-body');
-        tbody.innerHTML = `<tr><td>1</td><td>AbuKareem_Dev</td><td style="color:#4ade80; font-weight:bold;">150</td></tr>
-                           <tr><td>2</td><td>Pi_Hunter_1</td><td style="color:#4ade80; font-weight:bold;">90</td></tr>`;
     }
 
     function buyWeaponFree(name, typeKey) {
@@ -351,7 +292,7 @@
             score += pts;
             document.getElementById('score-val').innerText = score;
             document.getElementById('game-status').innerText = `إصابة خرافية! +${pts} نقطة 🎯`;
-            updateHighScoreInDB(); 
+            updateHighScoreLocally(); 
             resetTarget();
         }
     });
