@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الصياد - Pi Network</title>
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #ffffff;
+            text-align: center;
+            margin: 0;
+            padding: 15px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #162447;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h1 { color: #e43f5a; margin-bottom: 5px; }
+        .btn {
+            background-color: #e43f5a;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        .btn:hover { background-color: #ff4b6e; }
+        .hidden { display: none; }
+        
+        /* إحصائيات اللاعب */
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: #1f4068;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        /* ساحة الصيد */
+        #hunting-canvas {
+            background-color: #222831;
+            border: 3px solid #e43f5a;
+            border-radius: 10px;
+            cursor: crosshair;
+            max-width: 100%;
+        }
+
+        .weapons-market {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .weapon-card {
+            background: #1f4068;
+            padding: 10px;
+            border-radius: 8px;
+            width: 48%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎮 لعبة الصياد (The Hunter)</h1>
+    <p style="margin-top: 0; color: #b5b5b5;">اضغط على الطيور والحيوانات لاصطيادها!</p>
+
+    <div id="auth-section">
+        <p>للاشتراك وبدء اللعبة، يرجى دفع رسوم الدخول التجريبية.</p>
+        <p><strong>تكلفة الدخول:</strong> <span style="color: #4caf50;">0.05 Test Pi</span></p>
+        <button class="btn" id="btn-pay" onclick="handlePayment()">اشترك الآن وافتح اللعبة</button>
+    </div>
+
+    <div id="game-section" class="hidden">
+        
+        <div class="stats-bar">
+            <div>النقاط: <span id="score-val" style="color: #4caf50;">0</span> 🎯</div>
+            <div>الذخيرة: <span id="ammo-val" style="color: #ff4b6e;">30</span> 🎈</div>
+        </div>
+
+        <p>السلاح الحالي: <strong id="current-weapon" style="color: #ffb423;">بندقية الصيد الكلاسيكية</strong></p>
+        
+        <canvas id="hunting-canvas" width="500" height="300"></canvas>
+        
+        <p id="game-status" style="color: #ffb423; font-weight: bold; min-height: 20px;"></p>
+        <button class="btn" style="background-color: #4caf50;" onclick="reloadAmmo()">إعادة تعبئة الذخيرة (+30 طلقة) 🔋</button>
+
+        <h3 style="margin-top: 20px; border-top: 1px solid #0f4c75; padding-top: 10px;">🛒 متجر الأسلحة المعروضة</h3>
+        <div class="weapons-market">
+            <div class="weapon-card">
+                <h4>مسدس السهام السريع</h4>
+                <p>سهم أسرع وعيار أكبر</p>
+                <button class="btn" style="font-size: 14px; padding: 5px 15px;" onclick="buyWeapon('مسدس السهام السريع', 0.10)">شراء بـ 0.10 Pi</button>
+            </div>
+            <div class="weapon-card">
+                <h4>بندقية القنص المطورة</h4>
+                <p>نقاط مضاعفة لكل صيدة</p>
+                <button class="btn" style="font-size: 14px; padding: 5px 15px;" onclick="buyWeapon('بندقية القنص المطورة', 0.25)">شراء بـ 0.25 Pi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // متغيرات اللعبة الأساسية
+    let score = 0;
+    let ammo = 30;
+    let currentWeapon = "classic"; // classic, fast, sniper
+    let target = { x: 100, y: 100, radius: 20, speedX: 2, speedY: 1.5, type: 'bird' };
+    
+    const canvas = document.getElementById('hunting-canvas');
+    const ctx = canvas.getContext('2d');
+    let gameInterval;
+
+    // محاكاة الدخول
+    function handlePayment() {
+        document.getElementById('btn-pay').innerText = "جاري الاتصال بمحفظة Pi...";
+        setTimeout(() => {
+            alert("تم تأكيد دفع 0.05 Test Pi! بالتوفيق في الصيد.");
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('game-section').classList.remove('hidden');
+            startGameLoop(); // تشغيل حركة اللعبة
+        }, 1200);
+    }
+
+    // تشغيل محرك اللعبة وتحديث الشاشة بانتظام
+    function startGameLoop() {
+        gameInterval = setInterval(() => {
+            updateTargetPosition();
+            drawGame();
+        }, 1000 / 60); // 60 إطار في الثانية للنعومة
+    }
+
+    // تحديث مكان الهدف (الطائر/الحيوان) ليتنقل في الشاشة
+    function updateTargetPosition() {
+        target.x += target.speedX;
+        target.y += target.speedY;
+
+        // الارتداد عند الاصطدام بالحواف
+        if (target.x - target.radius < 0 || target.x + target.radius > canvas.width) {
+            target.speedX = -target.speedX;
+        }
+        if (target.y - target.radius < 0 || target.y + target.radius > canvas.height) {
+            target.speedY = -target.speedY;
+        }
+    }
+
+    // رسم العناصر داخل ساحة الصيد
+    function drawGame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // مسح الإطار السابق
+
+        // رسم خلفية مبسطة (سماء خضراء أو ليلية)
+        ctx.fillStyle = "#1f4068";
+        ctx.font = "14px Arial";
+        ctx.fillText("البيئة: الغابة الخضراء", 15, 25);
+
+        // رسم الهدف (دائرة تمثل الطائر حالياً لتسهيل الكود)
+        ctx.beginPath();
+        ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+        ctx.fillStyle = target.type === 'rare' ? '#ffb423' : '#e43f5a'; // الحيوان النادر ذهبي
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+        ctx.closePath();
+
+        // رسم منقار أو علامة تميز الهدف
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(target.type === 'rare' ? "👑 غزال نادر" : "🕊️ طائر", target.x - 20, target.y - 25);
+    }
+
+    // التفاعل عند الضغط (إطلاق النار)
+    canvas.addEventListener('mousedown', function(e) {
+        if (ammo <= 0) {
+            document.getElementById('game-status').innerText = "نفدت الذخيرة! أعد التعبئة 🛑";
+            return;
+        }
+
+        // خصم ذخيرة حسب نوع السلاح
+        ammo--;
+        document.getElementById('ammo-val').innerText = ammo;
+
+        // حساب إحداثيات الضغطة بدقة داخل الكانفاس
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // حساب المسافة بين الضغطة ومركز الهدف
+        const distance = Math.sqrt((mouseX - target.x)**2 + (mouseY - target.y)**2);
+
+        // التحقق من الإصابة
+        if (distance <= target.radius) {
+            let pointsEarned = currentWeapon === "sniper" ? 20 : 10;
+            if (target.type === 'rare') pointsEarned *= 2; // مضاعفة النقاط للحيوان النادر
+
+            score += pointsEarned;
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('game-status').innerText = `إصابة قاتلة! 🎉 +${pointsEarned} نقطة`;
+
+            // إعادة توليد الهدف في مكان عشوائي بعد اصطياده
+            resetTarget();
+        } else {
+            document.getElementById('game-status').innerText = "رصاصة طائشة! حاول مرة أخرى 💨";
+        }
+    });
+
+    function resetTarget() {
+        target.x = Math.random() * (canvas.width - 50) + 25;
+        target.y = Math.random() * (canvas.height - 50) + 25;
+        // تغيير السرعة عشوائياً لزيادة التحدي
+        target.speedX = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1);
+        target.speedY = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1);
+        // فرصة 25% لظهور حيوان نادر
+        target.type = Math.random() > 0.75 ? 'rare' : 'bird';
+        target.radius = target.type === 'rare' ? 15 : 20; // النادر أصغر وأسرع
+    }
+
+    // إعادة التعبئة
+    function reloadAmmo() {
+        ammo = 30;
+        document.getElementById('ammo-val').innerText = ammo;
+        document.getElementById('game-status').innerText = "تمت إعادة تعبئة المخزن وجاهز للإطلاق! ⚡";
+    }
+
+    // شراء سلاح جديد
+    function buyWeapon(name, price) {
+        let confirmBuy = confirm(`هل تؤكد شراء ${name} مقابل ${price} Pi تجريبي؟`);
+        if (confirmBuy) {
+            alert(`تم خصم ${price} Pi. السلاح الجديد نشط الآن!`);
+            document.getElementById('current-weapon').innerText = name;
+            
+            if (name === "بندقية القنص المطورة") {
+                currentWeapon = "sniper";
+            } else if (name === "مسدس السهام السريع") {
+                currentWeapon = "fast";
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
