@@ -11,50 +11,86 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a2e;
+            background-color: #0f172a;
             color: #ffffff;
             text-align: center;
             margin: 0;
-            padding: 15px;
+            padding: 10px;
         }
         .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #162447;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            max-width: 500px;
+            margin: 10px auto;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            border: 1px solid #334155;
         }
-        h1 { color: #e43f5a; margin-bottom: 5px; direction: ltr; text-align: center; }
+        h1 { 
+            color: #38bdf8; 
+            margin-bottom: 5px; 
+            direction: ltr; 
+            text-align: center;
+            font-size: 24px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        /* تصميم واجهة الصياد الحقيقي الفخمة */
+        .welcome-card {
+            background-image: linear-gradient(to bottom, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.95)), 
+                              url('https://api.screenshotone.com/take?url=https%3A%2F%2Fstorage.googleapis.com%2Fcomet-neon%2Fprod%2Fchat_attachments%2F1acbccce-1a57-4568-ace7-9bbac56d45ac-1_all_49.jpg&access_key=dummy'); /* استخدام رابط الصورة المرفوعة */
+            background-size: cover;
+            background-position: center;
+            border-radius: 15px;
+            padding: 140px 15px 25px 15px; /* رفع المساحة لتبق صورة الفارس واضحة */
+            border: 2px solid #38bdf8;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            margin-top: 15px;
+        }
+        
+        .welcome-card p {
+            font-size: 16px;
+            color: #e2e8f0;
+            text-shadow: 1px 1px 3px #000000;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
         .btn {
-            background-color: #e43f5a;
+            background-image: linear-gradient(135deg, #38bdf8, #0284c7);
             color: white;
             border: none;
-            padding: 12px 30px;
+            padding: 14px 35px;
             font-size: 18px;
-            border-radius: 25px;
+            font-weight: bold;
+            border-radius: 30px;
             cursor: pointer;
             transition: 0.3s;
-            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
         }
-        .btn:hover { background-color: #ff4b6e; }
+        .btn:hover { 
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.6);
+        }
         .hidden { display: none; }
         
         .stats-bar {
             display: flex;
             justify-content: space-around;
-            background: #1f4068;
-            padding: 10px;
-            border-radius: 8px;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 12px;
             margin-bottom: 15px;
             font-weight: bold;
+            border: 1px solid #334155;
         }
         #hunting-canvas {
-            background-color: #222831;
-            border: 3px solid #e43f5a;
-            border-radius: 10px;
+            background-color: #020617;
+            border: 3px solid #38bdf8;
+            border-radius: 12px;
             cursor: crosshair;
             max-width: 100%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
         .weapons-market {
             display: flex;
@@ -62,65 +98,69 @@
             margin-top: 15px;
         }
         .weapon-card {
-            background: #1f4068;
-            padding: 10px;
-            border-radius: 8px;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 12px;
             width: 48%;
             box-sizing: border-box;
+            border: 1px solid #334155;
         }
         .leaderboard-table {
             width: 100%;
             margin-top: 15px;
             border-collapse: collapse;
-            background: #1f4068;
-            border-radius: 8px;
+            background: #0f172a;
+            border-radius: 12px;
             overflow: hidden;
+            border: 1px solid #334155;
         }
         .leaderboard-table th, .leaderboard-table td {
-            padding: 10px;
-            border-bottom: 1px solid #162447;
+            padding: 12px;
+            border-bottom: 1px solid #1e293b;
         }
-        .leaderboard-table th { background-color: #0f4c75; }
+        .leaderboard-table th { background-color: #1e293b; color: #38bdf8; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #b5b5b5;">دخول مجاني ودفع عند تطوير الأسلحة</p>
+    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار فخم متصل بـ Supabase & Pi Network</p>
 
     <div id="auth-section">
-        <p>مرحباً بك أيها الصياد! اضغط لربط حسابك وبدء الصيد مجاناً.</p>
-        <button class="btn" id="btn-login" onclick="freeLoginWithPi()">دخول مجاني وبدء اللعب 🚀</button>
+        <div class="welcome-card">
+            <p>مرحباً بك في ميدان الصيد الرقمي! اربط حسابك وانطلق مجاناً</p>
+            <button class="btn" id="btn-login" onclick="freeLoginWithPi()">دخول مجاني وبدء اللعب 🚀</button>
+        </div>
     </div>
 
     <div id="game-section" class="hidden">
         <div class="stats-bar">
-            <div>الصياد: <span id="player-name" style="color: #ffb423;">...</span></div>
-            <div>النقاط: <span id="score-val" style="color: #4caf50;">0</span> 🎯</div>
-            <div>الذخيرة: <span id="ammo-val" style="color: #ff4b6e;">30</span> 🎈</div>
+            <div>الصياد: <span id="player-name" style="color: #38bdf8;">...</span></div>
+            <div>النقاط: <span id="score-val" style="color: #4ade80;">0</span> 🎯</div>
+            <div>الذخيرة: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
         </div>
 
-        <p>السلاح الحالي: <strong id="current-weapon" style="color: #ffb423;">بندقية الصيد الكلاسيكية</strong></p>
-        <canvas id="hunting-canvas" width="500" height="300"></canvas>
-        <p id="game-status" style="color: #ffb423; font-weight: bold; min-height: 20px;"></p>
+        <p>السلاح: <strong id="current-weapon" style="color: #fbbf24;">بندقية الصيد الكلاسيكية</strong></p>
+        <canvas id="hunting-canvas" width="480" height="280"></canvas>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 14px;"></p>
         
-        <button class="btn" style="background-color: #4caf50; font-size: 14px;" onclick="reloadAmmo()">إعادة تعبئة الذخيرة مجاناً 🔋</button>
+        <button class="btn" style="background-image: linear-gradient(135deg, #4ade80, #16a34a); font-size: 14px; padding: 10px 25px; box-shadow:0 4px 10px rgba(74,222,128,0.3);" onclick="reloadAmmo()">إعادة تعبئة الذخيرة مجاناً 🔋</button>
 
-        <h3 style="margin-top: 25px; border-top: 1px solid #0f4c75; padding-top: 10px;">🛒 متجر الأسلحة المعروضة</h3>
+        <h3 style="margin-top: 25px; border-top: 1px solid #334155; padding-top: 15px; color: #38bdf8;">🛒 متجر العتاد المطوّر</h3>
         <div class="weapons-market">
             <div class="weapon-card">
-                <h4>مسدس السهام السريع</h4>
-                <button class="btn" style="font-size: 13px; padding: 5px 10px; background-color: #4caf50;" onclick="buyWeaponFree('مسدس السهام السريع', 'fast')">تفعيل مجاني 🎁</button>
+                <h4 style="margin:0 0 5px 0; font-size:14px;">مسدس السهام السريع</h4>
+                <button class="btn" style="font-size: 12px; padding: 6px 12px; background: #4ade80; box-shadow:none;" onclick="buyWeaponFree('مسدس السهام السريع', 'fast')">تفعيل مجاني 🎁</button>
             </div>
             <div class="weapon-card">
-                <h4>بندقية القنص المطورة</h4>
-                <p style="margin: 5px 0; font-size: 12px; color: #ffb423;">تمنحك 20 نقطة لكل إصابة</p>
-                <button class="btn" style="font-size: 13px; padding: 5px 10px;" onclick="buySniperWithPi()">شراء بـ 0.25 Pi 🪙</button>
+                <h4 style="margin:0 0 2px 0; font-size:14px;">قناصة الفارس المطورة</h4>
+                <p style="margin: 0 0 8px 0; font-size: 11px; color: #fbbf24;">(+20 نقطة لكل صيدة)</p>
+                <button class="btn" style="font-size: 12px; padding: 6px 12px;" onclick="buySniperWithPi()">شراء بـ 0.25 Pi 🪙</button>
             </div>
         </div>
 
-        <h3 style="margin-top: 25px; color: #4caf50;">🏆 لوحة صدارة الصيادين (Leaderboard)</h3>
+        <h3 style="margin-top: 25px; color: #4ade80;">🏆 صدارة فرسان الصيد (Leaderboard)</h3>
         <table class="leaderboard-table">
             <thead>
                 <tr>
@@ -146,27 +186,23 @@
     let currentWeapon = "classic"; 
     let playerPiUser = "";
     let playerWallet = "";
-    let target = { x: 100, y: 100, radius: 20, speedX: 2, speedY: 1.5, type: 'bird' };
+    let target = { x: 100, y: 100, radius: 18, speedX: 2.5, speedY: 2, type: 'bird' };
     
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
     let gameInterval;
     let isPiBrowser = false;
 
-    // تهيئة مأمونة للـ SDK
     try {
         if (typeof Pi !== 'undefined') {
             Pi.init({ version: "2.0", sandbox: true });
             isPiBrowser = true;
         }
-    } catch(e) { 
-        console.log("خارج متصفح باي - تفعيل طور المحاكاة"); 
-    }
+    } catch(e) { console.log("طور المحاكاة النشط خارج المتصفح"); }
 
     async function freeLoginWithPi() {
-        document.getElementById('btn-login').innerText = "جاري الاتصال...";
+        document.getElementById('btn-login').innerText = "جاري فتح الميدان...";
         
-        // فحص صريح: إذا لم نكن داخل متصفح باي، ننتقل فوراً للمحاكاة دون تعليق الكود
         if (!isPiBrowser) {
             simulateDeveloperLogin();
             return;
@@ -180,7 +216,6 @@
             await setupPlayerInDatabase();
             enterGameView();
         } catch (error) {
-            console.error("فشل تسجيل الدخول الرسمي:", error);
             simulateDeveloperLogin();
         }
     }
@@ -212,11 +247,9 @@
                     { pi_username: playerPiUser, wallet_address: playerWallet, high_score: 0 }
                 ]);
             } else if (data) {
-                document.getElementById('game-status').innerText = `أهلاً بعودتك! أعلى نقاط سابقة لك: ${data.high_score}`;
+                document.getElementById('game-status').innerText = `أهلاً بالصياد الفارس! أعلى نقاط لك: ${data.high_score}`;
             }
-        } catch(e) {
-            console.log("خطأ في الاتصال بقاعدة البيانات:", e);
-        }
+        } catch(e) {}
     }
 
     async function updateHighScoreInDB() {
@@ -234,7 +267,7 @@
                     .eq('wallet_address', playerWallet);
                 loadLeaderboard();
             }
-        } catch(e) { }
+        } catch(e) {}
     }
 
     async function loadLeaderboard() {
@@ -249,21 +282,21 @@
                 const tbody = document.getElementById('leaderboard-body');
                 tbody.innerHTML = "";
                 data.forEach((row, index) => {
-                    tbody.innerHTML += `<tr><td>${index + 1}</td><td>${row.pi_username}</td><td style="color: #4caf50; font-weight: bold;">${row.high_score}</td></tr>`;
+                    tbody.innerHTML += `<tr><td>${index + 1}</td><td>${row.pi_username}</td><td style="color:#4ade80; font-weight:bold;">${row.high_score}</td></tr>`;
                 });
             }
-        } catch(e) { }
+        } catch(e) {}
     }
 
     function buySniperWithPi() {
         if (!isPiBrowser) {
-            alert("ميزة الشراء الحقيقي تعمل فقط من داخل متصفح Pi Browser!");
+            alert("ميزة الشراء الحقيقي بالبلوكتشين تعمل فقط داخل Pi Browser!");
             return;
         }
 
         Pi.createPayment({
             amount: 0.25,
-            memo: "شراء بندقية القنص المطورة في لعبة الصياد",
+            memo: "شراء قناصة الفارس المطورة",
             metadata: { weapon_type: "sniper" }
         }, {
             onReadyForServerApproval: function(paymentId) {
@@ -280,8 +313,8 @@
                     body: JSON.stringify({ paymentId: paymentId, action: 'complete', txid: txid })
                 }).then(() => {
                     currentWeapon = "sniper";
-                    document.getElementById('current-weapon').innerText = "بندقية القنص المطورة 👑";
-                    document.getElementById('game-status').innerText = "تم تأكيد عملية الشراء على البلوكتشين بنجاح! 🎯";
+                    document.getElementById('current-weapon').innerText = "قناصة الفارس المطورة 👑";
+                    document.getElementById('game-status').innerText = "تم الشراء الحقيقي للبندقية بنجاح! 🎯";
                 });
             },
             onCancel: function(paymentId) { alert("تم إلغاء عملية الشراء"); },
@@ -305,17 +338,20 @@
             if (target.y - target.radius < 0 || target.y + target.radius > canvas.height) target.speedY = -target.speedY;
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#1f4068"; ctx.font = "14px Arial";
-            ctx.fillText("البيئة الحالية: الغابة الرقمية", 15, 25);
+            ctx.fillStyle = "#475569"; ctx.font = "13px Arial";
+            ctx.fillText("البيئة: ميدان الغابة الرقمية", 15, 25);
             ctx.beginPath(); ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
-            ctx.fillStyle = target.type === 'rare' ? '#ffb423' : '#e43f5a'; ctx.fill();
+            ctx.fillStyle = target.type === 'rare' ? '#fbbf24' : '#f87171'; ctx.fill();
             ctx.strokeStyle = '#ffffff'; ctx.stroke(); ctx.closePath();
-            ctx.fillStyle = '#ffffff'; ctx.fillText(target.type === 'rare' ? "👑 غزال نادر" : "🕊️ طائر", target.x - 20, target.y - 25);
+            ctx.fillStyle = '#ffffff'; ctx.fillText(target.type === 'rare' ? "👑 هدف نادر" : "🕊️ طائر مائي", target.x - 25, target.y - 22);
         }, 1000 / 60);
     }
 
     canvas.addEventListener('mousedown', function(e) {
-        if (ammo <= 0) return;
+        if (ammo <= 0) {
+            document.getElementById('game-status').innerText = "انتهت الذخيرة! أعد التعبئة من الزر الأخضر 🔋";
+            return;
+        }
         ammo--; document.getElementById('ammo-val').innerText = ammo;
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
@@ -326,23 +362,23 @@
             if (target.type === 'rare') pts *= 2;
             score += pts;
             document.getElementById('score-val').innerText = score;
-            document.getElementById('game-status').innerText = `إصابة دقيقة! +${pts} نقطة 🎯`;
+            document.getElementById('game-status').innerText = `إصابة خرافية! +${pts} نقطة 🎯`;
             updateHighScoreInDB(); 
             resetTarget();
         } else {
-            document.getElementById('game-status').innerText = "رصاصة طائشة! 💨";
+            document.getElementById('game-status').innerText = "رصاصة طائشة في الهواء! 💨";
         }
     });
 
     function resetTarget() {
         target.x = Math.random() * (canvas.width - 50) + 25; target.y = Math.random() * (canvas.height - 50) + 25;
-        target.speedX = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1);
-        target.speedY = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1);
+        target.speedX = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1.5);
+        target.speedY = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1.5);
         target.type = Math.random() > 0.75 ? 'rare' : 'bird';
-        target.radius = target.type === 'rare' ? 15 : 20;
+        target.radius = target.type === 'rare' ? 14 : 18;
     }
 
-    function reloadAmmo() { ammo = 30; document.getElementById('ammo-val').innerText = ammo; }
+    function reloadAmmo() { ammo = 30; document.getElementById('ammo-val').innerText = ammo; document.getElementById('game-status').innerText = "تم شحن العتاد بالكامل!"; }
 </script>
 
 </body>
