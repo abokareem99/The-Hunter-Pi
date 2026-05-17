@@ -24,6 +24,7 @@
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.6);
             border: 1px solid #334155;
+            transition: transform 0.05s ease-out; /* لإضافة اهتزاز الشاشة برمجياً */
         }
         h1 { 
             color: #38bdf8; 
@@ -97,7 +98,6 @@
             background-color: #020617;
             border: 3px solid #38bdf8;
             border-radius: 12px;
-            /* تغيير شكل الماوس تلقائياً إلى علامة التصويب المتقاطعة */
             cursor: crosshair; 
             max-width: 100%;
         }
@@ -132,9 +132,9 @@
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="game-container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الصياد المحترف - يدعم مؤثرات الإطلاق</p>
+    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">نسخة الوحوش والمؤثرات - بدون اعتماد خارجي</p>
 
     <div id="auth-section">
         <div class="welcome-card">
@@ -151,9 +151,9 @@
             <div>الذخيرة: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
         </div>
 
-        <p>السلاح الحالي: <strong id="current-weapon" style="color: #fbbf24;">بندقية الصيد الكلاسيكية</strong></p>
+        <p>السلاح: <strong id="current-weapon" style="color: #fbbf24;">بندقية الصيد الكلاسيكية</strong></p>
         <canvas id="hunting-canvas" width="480" height="280"></canvas>
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 14px;">اضغط داخل المستطيل لإطلاق النار وقنص الهدف!</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 14px;">جاهز؟ ابحث عن الحيوانات والوحوش وقنصها!</p>
         
         <button class="btn" style="background-image: linear-gradient(135deg, #4ade80, #16a34a); font-size: 14px; padding: 10px 25px; box-shadow:0 4px 10px rgba(74,222,128,0.3); width:auto;" onclick="reloadAmmo()">إعادة تعبئة الذخيرة مجاناً 🔋</button>
 
@@ -193,9 +193,16 @@
     let ammo = 30;
     let currentWeapon = "classic"; 
     let playerPiUser = "";
-    let target = { x: 100, y: 100, radius: 18, speedX: 2.5, speedY: 2, type: 'bird' };
     
-    // متغيرات لتخزين إحداثيات ومضة الإطلاق الأخيرة ورسمها على الشاشة
+    // 🔥 تعريف الحيوانات والوحوش المختلفة
+    const targetsConfig = {
+        bird: { radius: 18, pts: 10, speedFactor: 1, name: "🕊️ طائر مائي", health: 1 },
+        deer: { radius: 22, pts: 15, speedFactor: 1.3, name: "🦌 غزال جبلي", health: 1 },
+        monster: { radius: 30, pts: 30, speedFactor: 2.1, name: "👹 وحش الميدان", health: 2 }, // الوحش قوي ويحتاج لطلقتين!
+        rare: { radius: 14, pts: 50, speedFactor: 1.8, name: "👑 هدف نادر", health: 1 }
+    };
+
+    let target = { x: 100, y: 100, xSpeed: 2.5, ySpeed: 2, currentHealth: 1, ...targetsConfig.bird };
     let lastShot = { x: -100, y: -100, timer: 0 };
 
     const canvas = document.getElementById('hunting-canvas');
@@ -204,32 +211,21 @@
 
     function freeLoginWithPi() {
         document.getElementById('btn-login').innerText = "جاري فتح الميدان...";
-        
         if (typeof Pi !== 'undefined' && window.Pi && window.Pi.authenticate) {
-            try {
-                Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
-                .then(function(auth) {
-                    playerPiUser = auth.user.username;
-                    handleLocalLogin(playerPiUser);
-                }).catch(function(err) {
-                    handleLocalLogin("AbuKareem_Dev");
-                });
-            } catch (e) {
-                handleLocalLogin("AbuKareem_Dev");
-            }
-        } else {
-            handleLocalLogin("AbuKareem_Dev");
-        }
+            Pi.authenticate(['username', 'payments'], onIncompletePaymentFound).then(function(auth) {
+                handleLocalLogin(auth.user.username);
+            }).catch(simulateDeveloperLogin);
+        } else { simulateDeveloperLogin(); }
     }
+
+    function simulateDeveloperLogin() { handleLocalLogin("AbuKareem_Dev"); }
 
     function handleLocalLogin(username) {
         playerPiUser = username;
         document.getElementById('player-name').innerText = playerPiUser;
         document.getElementById('lbl-local-user').innerText = playerPiUser;
-        
         let localHighScore = localStorage.getItem('hunter_high_score_' + playerPiUser) || 0;
         document.getElementById('lbl-local-score').innerText = localHighScore;
-        
         enterGameView();
     }
 
@@ -244,8 +240,119 @@
         if (score > currentHighScore) {
             localStorage.setItem('hunter_high_score_' + playerPiUser, score);
             document.getElementById('lbl-local-score').innerText = score;
-            document.getElementById('game-status').innerText = "🔥 كفو! حطمت رقمك القياسي الشخصي!";
         }
+    }
+
+    // التنصت لضغطات الإطلاق داخل الميدان
+    canvas.addEventListener('mousedown', function(e) {
+        if (ammo <= 0) return;
+        ammo--; 
+        document.getElementById('ammo-val').innerText = ammo;
+        
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left; 
+        const mouseY = e.clientY - rect.top;
+        
+        // 🔥 ميزتي الوميض واهتزاز الميدان عند كل إطلاق
+        triggerVisualAudioEffect();
+        lastShot = { x: mouseX, y: mouseY, timer: 8 }; // أثر الطلقة
+
+        const distance = Math.sqrt((mouseX - target.x)**2 + (mouseY - target.y)**2);
+
+        if (distance <= target.radius) {
+            // 🔥 ميزة الحيوان الذي يحتاج قنصتين (مثل الوحش)
+            target.currentHealth--;
+            
+            if (target.currentHealth > 0) {
+                document.getElementById('game-status').innerText = `💥 قنصة ممتاز! أصبت ${target.name}.. يحتاج أخرى ليولد من جديد!`;
+                target.radius *= 0.8; // تصغير الحجم كأنه مصاب
+                return; // لم يمت بعد
+            }
+
+            // إذا مات
+            let pts = target.pts;
+            if (currentWeapon === "fast") pts = Math.ceil(pts * 1.5);
+            score += pts;
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('game-status').innerText = `🎯 مقتل ممتاز لـ ${target.name} وتجاوزته لـ +${pts} نقطة!`;
+            updateHighScoreLocally(); 
+            resetTarget();
+        } else {
+            document.getElementById('game-status').innerText = "💥 طلقة طائشة! الحيوان أفلت منك..";
+        }
+    });
+
+    // 🔥 ميزة المحاكاة الصوتية بصرياً: اهتزاز الشاشة ووميض أحمر
+    function triggerVisualAudioEffect() {
+        const container = document.getElementById('game-container');
+        // ومضة حمراء سريعة على الخلفية
+        ctx.fillStyle = "rgba(239, 68, 68, 0.7)";
+        ctx.fillRect(0,0, canvas.width, canvas.height);
+        
+        // اهتزاز عشوائي للشاشة (Screen Shake) كأنك تشعر بقوة البارود
+        const intensity = 8;
+        const xShake = (Math.random() - 0.5) * intensity;
+        const yShake = (Math.random() - 0.5) * intensity;
+        container.style.transform = `translate(${xShake}px, ${yShake}px)`;
+        
+        // إزالة الاهتزاز بعد 50 ملي ثانية ليكون الاهتزاز سريعاً جداً
+        setTimeout(() => { container.style.transform = 'translate(0,0)'; }, 50);
+    }
+
+    function startGameLoop() {
+        if(gameInterval) clearInterval(gameInterval);
+        gameInterval = setInterval(() => {
+            target.x += target.xSpeed; target.y += target.ySpeed;
+            if (target.x - target.radius < 0 || target.x + target.radius > canvas.width) target.xSpeed = -target.xSpeed;
+            if (target.y - target.radius < 0 || target.y + target.radius > canvas.height) target.ySpeed = -target.ySpeed;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#475569"; ctx.font = "13px Arial";
+            ctx.fillText("البيئة: ميدان الغابة الرقمية", 15, 25);
+            
+            // رسم الحيوان/الوحش الحالي
+            ctx.beginPath(); 
+            ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+            // تلوين خاص لكل نوع
+            ctx.fillStyle = target.name.includes("وحش") ? "#475569" : target.name.includes("نادر") ? '#fbbf24' : '#f87171'; 
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff'; 
+            ctx.stroke(); 
+            ctx.closePath();
+            
+            // رسم اسم الحيوان والصحة (إذا كان وحشاً)
+            ctx.fillStyle = '#ffffff'; 
+            ctx.fillText(target.name + (target.currentHealth > 1 ? ` (HP:${target.currentHealth})` : ""), target.x - 30, target.y - target.radius - 8);
+            
+            // رسم ثقب الطلقة عند الإطلاق
+            if (lastShot.timer > 0) {
+                // ثقب الطلقة الأبيض الداخلي
+                ctx.beginPath(); ctx.arc(lastShot.x, lastShot.y, 4, 0, Math.PI * 2); ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.closePath();
+                // ثقب أسود خارجي صغير
+                ctx.beginPath(); ctx.arc(lastShot.x, lastShot.y, 1.5, 0, Math.PI * 2); ctx.fillStyle = "#000000"; ctx.fill(); ctx.closePath();
+                lastShot.timer--;
+            }
+        }, 1000 / 60);
+    }
+
+    function resetTarget() {
+        const types = Object.keys(targetsConfig);
+        const randomType = types[Math.floor(Math.random() * types.length)];
+        const config = targetsConfig[randomType];
+        
+        target.name = config.name;
+        target.radius = config.radius;
+        target.pts = config.pts;
+        target.health = config.health;
+        target.currentHealth = config.health;
+        target.speedFactor = config.speedFactor;
+        
+        target.x = Math.random() * (canvas.width - 100) + 50; 
+        target.y = Math.random() * (canvas.height - 100) + 50;
+        
+        // 🔥 ميزة سرعة الحركة العشوائية لكل حيوان
+        target.xSpeed = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1.5) * config.speedFactor;
+        target.ySpeed = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1.5) * config.speedFactor;
     }
 
     function buyWeaponFree(name, typeKey) {
@@ -253,118 +360,8 @@
         document.getElementById('current-weapon').innerText = name;
         document.getElementById('game-status').innerText = `تم تفعيل ${name} مجاناً!`;
     }
-
-    function buySniperWithPi() {
-        if (typeof Pi === 'undefined') {
-            alert("ميزة الشراء الحقيقي بالبلوكتشين تعمل فقط داخل Pi Browser!");
-            return;
-        }
-    }
-
-    function onIncompletePaymentFound(payment) { }
-
-    // حلقة تشغيل اللعبة وتحديث الرسومات 60 مرة بالثانية
-    function startGameLoop() {
-        if(gameInterval) clearInterval(gameInterval);
-        gameInterval = setInterval(() => {
-            // 1. تحريك الهدف
-            target.x += target.speedX; target.y += target.speedY;
-            if (target.x - target.radius < 0 || target.x + target.radius > canvas.width) target.speedX = -target.speedX;
-            if (target.y - target.radius < 0 || target.y + target.radius > canvas.height) target.speedY = -target.speedY;
-            
-            // 2. مسح اللوحة بالكامل لإعادة الرسم النظيف
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // 3. رسم خلفية الميدان أو نصوص توضيحية
-            ctx.fillStyle = "#475569"; ctx.font = "13px Arial";
-            ctx.fillText("البيئة: ميدان الغابة الرقمية", 15, 25);
-            
-            // 4. رسم الهدف المتحرك (الطائر)
-            ctx.beginPath(); 
-            ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
-            ctx.fillStyle = target.type === 'rare' ? '#fbbf24' : '#f87171'; 
-            ctx.fill();
-            ctx.strokeStyle = '#ffffff'; 
-            ctx.stroke(); 
-            ctx.closePath();
-            
-            ctx.fillStyle = '#ffffff'; 
-            ctx.fillText(target.type === 'rare' ? "👑 هدف نادر" : "🕊️ طائر مائي", target.x - 25, target.y - 22);
-            
-            // 🔥 5. نظام الإطلاق المرئي: رسم ومضة وأثر الطلقة إذا كان التايمر نشطاً
-            if (lastShot.timer > 0) {
-                // رسم ومضة الإطلاق الدائرية الحمراء الشفافة مكان الضغط
-                ctx.beginPath();
-                ctx.arc(lastShot.x, lastShot.y, 25, 0, Math.PI * 2);
-                ctx.fillStyle = "rgba(239, 68, 68, 0.4)"; // ومضة بلون أحمر ناري شفاف
-                ctx.fill();
-                ctx.closePath();
-
-                // رسم ثقب الطلقة الداخلي (نقطة سوداء صغيرة بمركز الإطلاق)
-                ctx.beginPath();
-                ctx.arc(lastShot.x, lastShot.y, 4, 0, Math.PI * 2);
-                ctx.fillStyle = "#ffffff"; 
-                ctx.fill();
-                ctx.closePath();
-
-                // إنقاص التايمر لتختفي الومضة تلقائياً بعد أجزاء من الثانية
-                lastShot.timer--;
-            }
-
-        }, 1000 / 60);
-    }
-
-    // التنصت لضغطات الإطلاق داخل المستطيل (Canvas)
-    canvas.addEventListener('mousedown', function(e) {
-        if (ammo <= 0) {
-            document.getElementById('game-status').innerText = "نفذت الذخيرة! اضغط على زر التعبئة بالأسفل 🔋";
-            return;
-        }
-        
-        // خصم طلقة واحدة فوراً من العداد
-        ammo--; 
-        document.getElementById('ammo-val').innerText = ammo;
-        
-        // حساب إحداثيات الضغطة الدقيقة داخل حدود المستطيل بالظبط
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left; 
-        const mouseY = e.clientY - rect.top;
-        
-        // تفعيل نظام الإطلاق المرئي وإعطائه تايمر مدته 8 فريمات ليظهر على الشاشة ويموت
-        lastShot.x = mouseX;
-        lastShot.y = mouseY;
-        lastShot.timer = 8; 
-
-        // حساب المسافة الرياضية بين موقع إطلاقك وموقع الهدف الحالي لمعرفة هل تم القنص
-        const distance = Math.sqrt((mouseX - target.x)**2 + (mouseY - target.y)**2);
-
-        if (distance <= target.radius) {
-            let pts = currentWeapon === "fast" ? 15 : 10;
-            if (target.type === 'rare') pts *= 2;
-            score += pts;
-            document.getElementById('score-val').innerText = score;
-            document.getElementById('game-status').innerText = `🎯 قنص ممتاز! أصبت الهدف مباشرة ونلت +${pts} نقطة!`;
-            updateHighScoreLocally(); 
-            resetTarget();
-        } else {
-            document.getElementById('game-status').innerText = "💥 طلقة طائشة في الهواء! حاول التركيز على الهدف.";
-        }
-    });
-
-    function resetTarget() {
-        target.x = Math.random() * (canvas.width - 50) + 25; 
-        target.y = Math.random() * (canvas.height - 50) + 25;
-        target.speedX = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1.5);
-        target.speedY = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1.5);
-        target.type = Math.random() > 0.75 ? 'rare' : 'bird';
-        target.radius = target.type === 'rare' ? 14 : 18;
-    }
-
-    function reloadAmmo() { 
-        ammo = 30; 
-        document.getElementById('ammo-val').innerText = ammo; 
-        document.getElementById('game-status').innerText = "تمت إعادة تعبئة سلاحك بـ 30 طلقة جديدة! جاهز للميدان 🚀";
-    }
+    function buySniperWithPi() {}
+    function reloadAmmo() { ammo = 30; document.getElementById('ammo-val').innerText = ammo; }
 </script>
 
 </body>
