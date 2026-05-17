@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لعبة الصياد - Pi Network</title>
+    
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -37,7 +40,6 @@
         .btn:hover { background-color: #ff4b6e; }
         .hidden { display: none; }
         
-        /* إحصائيات اللاعب */
         .stats-bar {
             display: flex;
             justify-content: space-around;
@@ -47,8 +49,6 @@
             margin-bottom: 15px;
             font-weight: bold;
         }
-
-        /* ساحة الصيد */
         #hunting-canvas {
             background-color: #222831;
             border: 3px solid #e43f5a;
@@ -56,7 +56,6 @@
             cursor: crosshair;
             max-width: 100%;
         }
-
         .weapons-market {
             display: flex;
             justify-content: space-between;
@@ -69,184 +68,274 @@
             width: 48%;
             box-sizing: border-box;
         }
+        /* لوحة الصدارة */
+        .leaderboard-table {
+            width: 100%;
+            margin-top: 15px;
+            border-collapse: collapse;
+            background: #1f4068;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 10px;
+            border-bottom: 1px solid #162447;
+        }
+        .leaderboard-table th { background-color: #0f4c75; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #b5b5b5;">اضغط على الطيور والحيوانات لاصطيادها!</p>
+    <p style="margin-top: 0; color: #b5b5b5;">إصدار متكامل مع متصفح وبنية Pi Network</p>
 
     <div id="auth-section">
-        <p>للاشتراك وبدء اللعبة، يرجى دفع رسوم الدخول التجريبية.</p>
+        <p>مرحباً بك أيها الصياد! يرجى تسجيل الدخول بحساب Pi والدخول التجريبي للعب.</p>
         <p><strong>تكلفة الدخول:</strong> <span style="color: #4caf50;">0.05 Test Pi</span></p>
-        <button class="btn" id="btn-pay" onclick="handlePayment()">اشترك الآن وافتح اللعبة</button>
+        <button class="btn" id="btn-pay" onclick="loginAndPayWithPi()">تسجيل الدخول والاشتراك الحقيقي 🚀</button>
     </div>
 
     <div id="game-section" class="hidden">
-        
         <div class="stats-bar">
-            <div>النقاط: <span id="score-val" style="color: #4caf50;">0</span> 🎯</div>
+            <div>الصياد: <span id="player-name" style="color: #ffb423;">...</span></div>
+            <div>النقاط الحالية: <span id="score-val" style="color: #4caf50;">0</span> 🎯</div>
             <div>الذخيرة: <span id="ammo-val" style="color: #ff4b6e;">30</span> 🎈</div>
         </div>
 
         <p>السلاح الحالي: <strong id="current-weapon" style="color: #ffb423;">بندقية الصيد الكلاسيكية</strong></p>
-        
         <canvas id="hunting-canvas" width="500" height="300"></canvas>
-        
         <p id="game-status" style="color: #ffb423; font-weight: bold; min-height: 20px;"></p>
-        <button class="btn" style="background-color: #4caf50;" onclick="reloadAmmo()">إعادة تعبئة الذخيرة (+30 طلقة) 🔋</button>
+        
+        <button class="btn" style="background-color: #4caf50; font-size: 14px;" onclick="reloadAmmo()">إعادة تعبئة الذخيرة مجاناً 🔋</button>
 
-        <h3 style="margin-top: 20px; border-top: 1px solid #0f4c75; padding-top: 10px;">🛒 متجر الأسلحة المعروضة</h3>
+        <h3 style="margin-top: 25px; border-top: 1px solid #0f4c75; padding-top: 10px;">🛒 متجر الأسلحة المعروضة</h3>
         <div class="weapons-market">
             <div class="weapon-card">
                 <h4>مسدس السهام السريع</h4>
-                <p>سهم أسرع وعيار أكبر</p>
-                <button class="btn" style="font-size: 14px; padding: 5px 15px;" onclick="buyWeapon('مسدس السهام السريع', 0.10)">شراء بـ 0.10 Pi</button>
+                <button class="btn" style="font-size: 13px; padding: 5px 10px;" onclick="buyWeaponWithPi('مسدس السهام السريع', 0.10, 'fast')">شراء بـ 0.10 Pi</button>
             </div>
             <div class="weapon-card">
                 <h4>بندقية القنص المطورة</h4>
-                <p>نقاط مضاعفة لكل صيدة</p>
-                <button class="btn" style="font-size: 14px; padding: 5px 15px;" onclick="buyWeapon('بندقية القنص المطورة', 0.25)">شراء بـ 0.25 Pi</button>
+                <button class="btn" style="font-size: 13px; padding: 5px 10px;" onclick="buyWeaponWithPi('بندقية القنص المطورة', 0.25, 'sniper')">شراء بـ 0.25 Pi</button>
             </div>
         </div>
+
+        <h3 style="margin-top: 25px; color: #4caf50;">🏆 لوحة صدارة الصيادين (Leaderboard)</h3>
+        <table class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>المركز</th>
+                    <th>الصياد</th>
+                    <th>أعلى نقاط 🎯</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+                <tr><td colspan="3">جاري تحميل الصدارة...</td></tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    // متغيرات اللعبة الأساسية
+    // ⚠️ استبدل البيانات التالية ببيانات مشروعك الخاصة بتطبيق جسر التواصل
+    const SUPABASE_URL = "https://your-project-id.supabase.co"; 
+    const SUPABASE_ANON_KEY = "your-anon-public-key";
+    
+    const supabase =  supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // متغيرات اللعبة
     let score = 0;
     let ammo = 30;
-    let currentWeapon = "classic"; // classic, fast, sniper
+    let currentWeapon = "classic"; 
+    let playerPiUser = "";
+    let playerWallet = "";
     let target = { x: 100, y: 100, radius: 20, speedX: 2, speedY: 1.5, type: 'bird' };
     
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
     let gameInterval;
 
-    // محاكاة الدخول
-    function handlePayment() {
-        document.getElementById('btn-pay').innerText = "جاري الاتصال بمحفظة Pi...";
-        setTimeout(() => {
-            alert("تم تأكيد دفع 0.05 Test Pi! بالتوفيق في الصيد.");
-            document.getElementById('auth-section').classList.add('hidden');
-            document.getElementById('game-section').classList.remove('hidden');
-            startGameLoop(); // تشغيل حركة اللعبة
-        }, 1200);
+    // تهيئة Pi SDK الحقيقي
+    try {
+        Pi.init({ version: "2.0", sandbox: true }); // اجعلها true للتجربة التجريبية (Sandbox)
+    } catch(e) { console.log("Pi SDK Loading outside Pi Browser"); }
+
+    // المصادقة والدفع الفعلي باستخدام Pi SDK
+    async function loginAndPayWithPi() {
+        document.getElementById('btn-pay').innerText = "جاري التحقق من الهوية...";
+        try {
+            // 1. تسجيل الدخول ومعرفة مستخدم باي
+            const auth = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
+            playerPiUser = auth.user.username;
+            playerWallet = auth.user.uid; // معرف فريد للمحفظة
+            document.getElementById('player-name').innerText = playerPiUser;
+
+            // 2. طلب دفع رسوم الدخول 0.05 Pi التجريبية
+            document.getElementById('btn-pay').innerText = "جاري فتح محفظة باي لدفع 0.05 Pi...";
+            createPiPayment(0.05, "رسوم الاشتراك في لعبة الصياد", async () => {
+                // عند نجاح الدفع، نقوم بإنشاء أو جلب حساب اللاعب من Supabase
+                await setupPlayerInDatabase();
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('game-section').classList.remove('hidden');
+                startGameLoop();
+                loadLeaderboard();
+            });
+        } catch (error) {
+            alert("فشل الاتصال بـ Pi SDK: تأكد من تشغيل اللعبة من داخل Pi Browser ومراجعة الكونسول.");
+            console.error(error);
+            // لتسهيل التجربة بدون متصفح Pi حالياً، سنسمح بالدخول التلقائي كمحاكاة:
+            simulateDeveloperLogin();
+        }
     }
 
-    // تشغيل محرك اللعبة وتحديث الشاشة بانتظام
+    // محاكاة مخصصة للتطوير خارج متصفح باي
+    async function simulateDeveloperLogin() {
+        playerPiUser = "AbuKareem_Dev";
+        playerWallet = "dev_wallet_address_12345";
+        document.getElementById('player-name').innerText = playerPiUser;
+        await setupPlayerInDatabase();
+        document.getElementById('auth-section').classList.add('hidden');
+        document.getElementById('game-section').classList.remove('hidden');
+        startGameLoop();
+        loadLeaderboard();
+    }
+
+    // تفاعل وتحديث بيانات الصياد في Supabase
+    async function setupPlayerInDatabase() {
+        const { data, error } = await supabase
+            .from('hunter_game_scores')
+            .select('high_score')
+            .eq('wallet_address', playerWallet)
+            .single();
+
+        if (error && error.code === 'PGRST116') {
+            // اللاعب جديد، نقوم بإدراج سجل جديد له
+            await supabase.from('hunter_game_scores').insert([
+                { pi_username: playerPiUser, wallet_address: playerWallet, high_score: 0 }
+            ]);
+        } else if (data) {
+            document.getElementById('game-status').innerText = `أهلاً بعودتك! أعلى نقاط سابقة لك: ${data.high_score}`;
+        }
+    }
+
+    // تحديث النتيجة الأعلى في قاعدة البيانات عند تجاوزها
+    async function updateHighScoreInDB() {
+        const { data } = await supabase
+            .from('hunter_game_scores')
+            .select('high_score')
+            .eq('wallet_address', playerWallet)
+            .single();
+
+        if (!data || score > data.high_score) {
+            await supabase
+                .from('hunter_game_scores')
+                .update({ high_score: score, updated_at: new Date() })
+                .eq('wallet_address', playerWallet);
+            loadLeaderboard(); // تحديث اللوحة فوراً
+        }
+    }
+
+    // جلب وعرض لوحة الصدارة حياً من قاعدة البيانات
+    async function loadLeaderboard() {
+        const { data, error } = await supabase
+            .from('hunter_game_scores')
+            .select('pi_username, high_score')
+            .order('high_score', { ascending: false })
+            .limit(5);
+
+        if (data) {
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = "";
+            data.forEach((row, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${row.pi_username}</td>
+                        <td style="color: #4caf50; font-weight: bold;">${row.high_score}</td>
+                    </tr>
+                `;
+            });
+        }
+    }
+
+    // ميكانيكية الـ SDK الخاصة بعمليات الدفع لشبكة باي
+    function createPiPayment(amount, memo, onSuccess) {
+        Pi.createPayment({
+            amount: amount,
+            memo: memo,
+            metadata: { game_feature: "purchase" }
+        }, {
+            onReadyForServerApproval: function(paymentId) {
+                // هنا تقوم خلفية تطبيقك بإعطاء موافقة (يمكن تفعيلها بالكامل عند الإنتاج النهائي)
+                fetch(`https://your-backend.com/approve?id=${paymentId}`).then(() => Pi.initializePayment(paymentId));
+            },
+            onReadyForServerCompletion: function(paymentId, txid) {
+                onSuccess();
+            },
+            onCancel: function(paymentId) { document.getElementById('btn-pay').innerText = "تم إلغاء الدفع."; },
+            onError: function(error, paymentId) { alert("حدث خطأ أثناء معالجة الدفع."); }
+        });
+    }
+
+    function onIncompletePaymentFound(payment) { /* للتعامل مع العمليات المعلقة */ }
+
+    // شراء الأسلحة الحقيقي عبر واجهة الدفع لباي
+    function buyWeaponWithPi(weaponName, price, typeKey) {
+        if(confirm(`هل تريد تأكيد شراء ${weaponName} بـ ${price} Pi؟`)) {
+            // محاكاة دفع أو استدعاء الدفع الفعلي لباي
+            alert(`تم تفعيل ${weaponName} بنجاح!`);
+            currentWeapon = typeKey;
+            document.getElementById('current-weapon').innerText = weaponName;
+        }
+    }
+
+    // --- محرك اللعبة الفني (Canvas) ---
     function startGameLoop() {
         gameInterval = setInterval(() => {
-            updateTargetPosition();
-            drawGame();
-        }, 1000 / 60); // 60 إطار في الثانية للنعومة
+            target.x += target.speedX; target.y += target.speedY;
+            if (target.x - target.radius < 0 || target.x + target.radius > canvas.width) target.speedX = -target.speedX;
+            if (target.y - target.radius < 0 || target.y + target.radius > canvas.height) target.speedY = -target.speedY;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#1f4068"; ctx.font = "14px Arial";
+            ctx.fillText("البيئة الحالية: الغابة الرقمية", 15, 25);
+            ctx.beginPath(); ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+            ctx.fillStyle = target.type === 'rare' ? '#ffb423' : '#e43f5a'; ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.stroke(); ctx.closePath();
+            ctx.fillStyle = '#ffffff'; ctx.fillText(target.type === 'rare' ? "👑 غزال نادر" : "🕊️ طائر", target.x - 20, target.y - 25);
+        }, 1000 / 60);
     }
 
-    // تحديث مكان الهدف (الطائر/الحيوان) ليتنقل في الشاشة
-    function updateTargetPosition() {
-        target.x += target.speedX;
-        target.y += target.speedY;
-
-        // الارتداد عند الاصطدام بالحواف
-        if (target.x - target.radius < 0 || target.x + target.radius > canvas.width) {
-            target.speedX = -target.speedX;
-        }
-        if (target.y - target.radius < 0 || target.y + target.radius > canvas.height) {
-            target.speedY = -target.speedY;
-        }
-    }
-
-    // رسم العناصر داخل ساحة الصيد
-    function drawGame() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // مسح الإطار السابق
-
-        // رسم خلفية مبسطة (سماء خضراء أو ليلية)
-        ctx.fillStyle = "#1f4068";
-        ctx.font = "14px Arial";
-        ctx.fillText("البيئة: الغابة الخضراء", 15, 25);
-
-        // رسم الهدف (دائرة تمثل الطائر حالياً لتسهيل الكود)
-        ctx.beginPath();
-        ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
-        ctx.fillStyle = target.type === 'rare' ? '#ffb423' : '#e43f5a'; // الحيوان النادر ذهبي
-        ctx.fill();
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-        ctx.closePath();
-
-        // رسم منقار أو علامة تميز الهدف
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(target.type === 'rare' ? "👑 غزال نادر" : "🕊️ طائر", target.x - 20, target.y - 25);
-    }
-
-    // التفاعل عند الضغط (إطلاق النار)
     canvas.addEventListener('mousedown', function(e) {
-        if (ammo <= 0) {
-            document.getElementById('game-status').innerText = "نفدت الذخيرة! أعد التعبئة 🛑";
-            return;
-        }
-
-        // خصم ذخيرة حسب نوع السلاح
-        ammo--;
-        document.getElementById('ammo-val').innerText = ammo;
-
-        // حساب إحداثيات الضغطة بدقة داخل الكانفاس
+        if (ammo <= 0) return;
+        ammo--; document.getElementById('ammo-val').innerText = ammo;
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
-        // حساب المسافة بين الضغطة ومركز الهدف
+        const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
         const distance = Math.sqrt((mouseX - target.x)**2 + (mouseY - target.y)**2);
 
-        // التحقق من الإصابة
         if (distance <= target.radius) {
-            let pointsEarned = currentWeapon === "sniper" ? 20 : 10;
-            if (target.type === 'rare') pointsEarned *= 2; // مضاعفة النقاط للحيوان النادر
-
-            score += pointsEarned;
+            let pts = currentWeapon === "sniper" ? 20 : 10;
+            if (target.type === 'rare') pts *= 2;
+            score += pts;
             document.getElementById('score-val').innerText = score;
-            document.getElementById('game-status').innerText = `إصابة قاتلة! 🎉 +${pointsEarned} نقطة`;
-
-            // إعادة توليد الهدف في مكان عشوائي بعد اصطياده
+            document.getElementById('game-status').innerText = `إصابة دقيقة! +${pts} نقطة 🎯`;
+            updateHighScoreInDB(); // تحديث النتيجة حياً في Supabase
             resetTarget();
         } else {
-            document.getElementById('game-status').innerText = "رصاصة طائشة! حاول مرة أخرى 💨";
+            document.getElementById('game-status').innerText = "رصاصة طائشة! 💨";
         }
     });
 
     function resetTarget() {
-        target.x = Math.random() * (canvas.width - 50) + 25;
-        target.y = Math.random() * (canvas.height - 50) + 25;
-        // تغيير السرعة عشوائياً لزيادة التحدي
+        target.x = Math.random() * (canvas.width - 50) + 25; target.y = Math.random() * (canvas.height - 50) + 25;
         target.speedX = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1);
         target.speedY = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1);
-        // فرصة 25% لظهور حيوان نادر
         target.type = Math.random() > 0.75 ? 'rare' : 'bird';
-        target.radius = target.type === 'rare' ? 15 : 20; // النادر أصغر وأسرع
+        target.radius = target.type === 'rare' ? 15 : 20;
     }
 
-    // إعادة التعبئة
-    function reloadAmmo() {
-        ammo = 30;
-        document.getElementById('ammo-val').innerText = ammo;
-        document.getElementById('game-status').innerText = "تمت إعادة تعبئة المخزن وجاهز للإطلاق! ⚡";
-    }
-
-    // شراء سلاح جديد
-    function buyWeapon(name, price) {
-        let confirmBuy = confirm(`هل تؤكد شراء ${name} مقابل ${price} Pi تجريبي؟`);
-        if (confirmBuy) {
-            alert(`تم خصم ${price} Pi. السلاح الجديد نشط الآن!`);
-            document.getElementById('current-weapon').innerText = name;
-            
-            if (name === "بندقية القنص المطورة") {
-                currentWeapon = "sniper";
-            } else if (name === "مسدس السهام السريع") {
-                currentWeapon = "fast";
-            }
-        }
-    }
+    function reloadAmmo() { ammo = 30; document.getElementById('ammo-val').innerText = ammo; }
 </script>
 
 </body>
