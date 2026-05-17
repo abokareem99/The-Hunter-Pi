@@ -35,14 +35,14 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         
-        /* شاشة الواجهة المحدثة مع دمج صورتك ككود نصي ثابت داخل الـ CSS */
+        /* قراءة الصورة مباشرة من المجلد المحلي بحسب فكرتك الذكية */
         .welcome-card {
             background-image: linear-gradient(to bottom, rgba(30, 41, 59, 0.1), rgba(15, 23, 42, 0.85)), 
-                              url('https://api.minepi.com/v2/apps/icon_placeholder'); /* سيتم تبديلها تلقائياً بصورتك عبر الـ JavaScript بالأسفل لضمان ثباتها */
+                              url('hunter.jpg'); 
             background-size: cover;
             background-position: center center;
             border-radius: 15px;
-            padding: 170px 15px 25px 15px; 
+            padding: 170px 15px 25px 15px; /* مساحة مناسبة لإبقاء مظهر الفارس واضحاً */
             border: 2px solid #38bdf8;
             box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
             margin-top: 15px;
@@ -56,8 +56,6 @@
             text-shadow: 2px 2px 4px #000000, -2px -2px 4px #000000;
             font-weight: bold;
             margin-bottom: 15px;
-            position: relative;
-            z-index: 2;
         }
 
         .btn {
@@ -73,8 +71,6 @@
             box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
             display: inline-block;
             width: 85%;
-            position: relative;
-            z-index: 2;
         }
         .btn:hover { 
             transform: scale(1.03);
@@ -135,7 +131,7 @@
     <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار فخم متصل بـ Supabase & Pi Network</p>
 
     <div id="auth-section">
-        <div class="welcome-card" id="dynamic-welcome-card">
+        <div class="welcome-card">
             <p>مرحباً بك في ميدان الصيد الرقمي!<br>اربط حسابك وانطلق مجاناً</p>
             <button class="btn" id="btn-login" onclick="freeLoginWithPi()">دخول مجاني وبدء اللعب 🚀</button>
         </div>
@@ -184,10 +180,6 @@
 </div>
 
 <script>
-    // حقن كود الصورة الشخصية مباشرة كخلفية لضمان الظهور الفوري والدائم في TrebEdit
-    const hunterImageRaw = "https://images.gemini.googleusercontent.com/blob/1acbccce-1a57-4568-ace7-9bbac56d45ac-1_all_49.jpg";
-    document.getElementById('dynamic-welcome-card').style.backgroundImage = `linear-gradient(to bottom, rgba(30, 41, 59, 0.1), rgba(15, 23, 42, 0.85)), url('${hunterImageRaw}')`;
-
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co"; 
     const SUPABASE_ANON_KEY = "sb_publishable_PzP2Iko5vX3xlonGzF3a4w_qMogivll";
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -203,6 +195,7 @@
     const ctx = canvas.getContext('2d');
     let gameInterval;
 
+    // دالة دخول قسرية وسريعة تتخطى لوحات المنع الأمنية الخارجية
     function freeLoginWithPi() {
         document.getElementById('btn-login').innerText = "جاري فتح الميدان...";
         
