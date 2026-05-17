@@ -25,7 +25,7 @@
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        h1 { color: #e43f5a; margin-bottom: 5px; }
+        h1 { color: #e43f5a; margin-bottom: 5px; direction: ltr; text-align: center; }
         .btn {
             background-color: #e43f5a;
             color: white;
@@ -68,7 +68,6 @@
             width: 48%;
             box-sizing: border-box;
         }
-        /* لوحة الصدارة */
         .leaderboard-table {
             width: 100%;
             margin-top: 15px;
@@ -138,14 +137,12 @@
 </div>
 
 <script>
-    // تم الربط بمفاتيح مشروعك الفعلي لـ "جسر التواصل" هنا بشكل صحيح
+    // روابط مشروعك الفعلي لـ "جسر التواصل"
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co"; 
     const SUPABASE_ANON_KEY = "sb_publishable_PzP2Iko5vX3xlonGzF3a4w_qMogivll";
     
-    // تصحيح تهيئة عميل سوبابيز
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // متغيرات اللعبة
     let score = 0;
     let ammo = 30;
     let currentWeapon = "classic"; 
@@ -157,48 +154,43 @@
     const ctx = canvas.getContext('2d');
     let gameInterval;
 
-    // تهيئة Pi SDK
     try {
         Pi.init({ version: "2.0", sandbox: true });
-    } catch(e) { console.log("Pi SDK Loading outside Pi Browser"); }
+    } catch(e) { console.log("Pi SDK error"); }
 
-    // المصادقة والدفع الفعلي باستخدام Pi SDK
     async function loginAndPayWithPi() {
         document.getElementById('btn-pay').innerText = "جاري التحقق من الهوية...";
         try {
+            // محاولة جلب اسم الحساب الحقيقي من متصفح باي
             const auth = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
             playerPiUser = auth.user.username;
             playerWallet = auth.user.uid;
             document.getElementById('player-name').innerText = playerPiUser;
-
-            document.getElementById('btn-pay').innerText = "جاري فتح محفظة باي لدفع 0.05 Pi...";
-            createPiPayment(0.05, "رسوم الاشتراك في لعبة الصياد", async () => {
-                await setupPlayerInDatabase();
-                document.getElementById('auth-section').classList.add('hidden');
-                document.getElementById('game-section').classList.remove('hidden');
-                startGameLoop();
-                loadLeaderboard();
-            });
+            
+            // الانتقال المباشر للعب لتخزين البيانات حياً فوراً في سوبابيز
+            await setupPlayerInDatabase();
+            enterGameView();
         } catch (error) {
-            console.error(error);
-            // محاكاة للتطوير السلس خارج متصفح باي لكي يشتغل الاتصال حياً فوراً
+            // إذا كنا خارج متصفح باي أو لم تكتمل الموافقات، يتم تفعيل الطور التطويري التلقائي
             simulateDeveloperLogin();
         }
     }
 
-    // محاكاة مخصصة للتطوير خارج متصفح باي
     async function simulateDeveloperLogin() {
         playerPiUser = "AbuKareem_Dev";
         playerWallet = "dev_wallet_address_12345";
         document.getElementById('player-name').innerText = playerPiUser;
         await setupPlayerInDatabase();
+        enterGameView();
+    }
+
+    function enterGameView() {
         document.getElementById('auth-section').classList.add('hidden');
         document.getElementById('game-section').classList.remove('hidden');
         startGameLoop();
         loadLeaderboard();
     }
 
-    // تفاعل وتحديث بيانات الصياد في Supabase
     async function setupPlayerInDatabase() {
         const { data, error } = await supabase
             .from('hunter_game_scores')
@@ -215,7 +207,6 @@
         }
     }
 
-    // تحديث النتيجة الأعلى في قاعدة البيانات عند تجاوزها
     async function updateHighScoreInDB() {
         const { data } = await supabase
             .from('hunter_game_scores')
@@ -232,9 +223,8 @@
         }
     }
 
-    // جلب وعرض لوحة الصدارة حياً من قاعدة البيانات
     async function loadLeaderboard() {
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('hunter_game_scores')
             .select('pi_username, high_score')
             .order('high_score', { ascending: false })
@@ -255,24 +245,6 @@
         }
     }
 
-    // ميكانيكية الـ SDK الخاصة بعمليات الدفع لشبكة باي
-    function createPiPayment(amount, memo, onSuccess) {
-        Pi.createPayment({
-            amount: amount,
-            memo: memo,
-            metadata: { game_feature: "purchase" }
-        }, {
-            onReadyForServerApproval: function(paymentId) {
-                Pi.initializePayment(paymentId);
-            },
-            onReadyForServerCompletion: function(paymentId, txid) {
-                onSuccess();
-            },
-            onCancel: function(paymentId) { document.getElementById('btn-pay').innerText = "تم إلغاء الدفع."; },
-            onError: function(error, paymentId) { alert("حدث خطأ أثناء معالجة الدفع."); }
-        });
-    }
-
     function onIncompletePaymentFound(payment) { }
 
     function buyWeaponWithPi(weaponName, price, typeKey) {
@@ -283,7 +255,6 @@
         }
     }
 
-    // --- محرك اللعبة الفني (Canvas) ---
     function startGameLoop() {
         gameInterval = setInterval(() => {
             target.x += target.speedX; target.y += target.speedY;
