@@ -87,18 +87,17 @@
 
 <div class="container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #b5b5b5;">إصدار متكامل مع متصفح وبنية Pi Network</p>
+    <p style="margin-top: 0; color: #b5b5b5;">دخول مجاني ودفع عند تطوير الأسلحة</p>
 
     <div id="auth-section">
-        <p>مرحباً بك أيها الصياد! يرجى تسجيل الدخول بحساب Pi والدخول التجريبي للعب.</p>
-        <p><strong>تكلفة الدخول:</strong> <span style="color: #4caf50;">0.05 Test Pi</span></p>
-        <button class="btn" id="btn-pay" onclick="loginAndPayWithPi()">تسجيل الدخول والاشتراك الحقيقي 🚀</button>
+        <p>مرحباً بك أيها الصياد! اضغط لربط حسابك وبدء الصيد مجاناً.</p>
+        <button class="btn" id="btn-login" onclick="freeLoginWithPi()">دخول مجاني وبدء اللعب 🚀</button>
     </div>
 
     <div id="game-section" class="hidden">
         <div class="stats-bar">
             <div>الصياد: <span id="player-name" style="color: #ffb423;">...</span></div>
-            <div>النقاط الحالية: <span id="score-val" style="color: #4caf50;">0</span> 🎯</div>
+            <div>النقاط: <span id="score-val" style="color: #4caf50;">0</span> 🎯</div>
             <div>الذخيرة: <span id="ammo-val" style="color: #ff4b6e;">30</span> 🎈</div>
         </div>
 
@@ -112,11 +111,12 @@
         <div class="weapons-market">
             <div class="weapon-card">
                 <h4>مسدس السهام السريع</h4>
-                <button class="btn" style="font-size: 13px; padding: 5px 10px;" onclick="buyWeaponWithPi('مسدس السهام السريع', 0.10, 'fast')">شراء بـ 0.10 Pi</button>
+                <button class="btn" style="font-size: 13px; padding: 5px 10px; background-color: #4caf50;" onclick="buyWeaponFree('مسدس السهام السريع', 'fast')">تفعيل مجاني 🎁</button>
             </div>
             <div class="weapon-card">
                 <h4>بندقية القنص المطورة</h4>
-                <button class="btn" style="font-size: 13px; padding: 5px 10px;" onclick="buyWeaponWithPi('بندقية القنص المطورة', 0.25, 'sniper')">شراء بـ 0.25 Pi</button>
+                <p style="margin: 5px 0; font-size: 12px; color: #ffb423;">تمنحك 20 نقطة لكل إصابة</p>
+                <button class="btn" style="font-size: 13px; padding: 5px 10px;" onclick="buySniperWithPi()">شراء بـ 0.25 Pi 🪙</button>
             </div>
         </div>
 
@@ -137,10 +137,8 @@
 </div>
 
 <script>
-    // روابط مشروعك الفعلي لـ "جسر التواصل"
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co"; 
     const SUPABASE_ANON_KEY = "sb_publishable_PzP2Iko5vX3xlonGzF3a4w_qMogivll";
-    
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let score = 0;
@@ -158,30 +156,25 @@
         Pi.init({ version: "2.0", sandbox: true });
     } catch(e) { console.log("Pi SDK error"); }
 
-    async function loginAndPayWithPi() {
-        document.getElementById('btn-pay').innerText = "جاري التحقق من الهوية...";
+    async function freeLoginWithPi() {
+        document.getElementById('btn-login').innerText = "جاري الاتصال...";
         try {
-            // محاولة جلب اسم الحساب الحقيقي من متصفح باي
             const auth = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
             playerPiUser = auth.user.username;
             playerWallet = auth.user.uid;
             document.getElementById('player-name').innerText = playerPiUser;
-            
-            // الانتقال المباشر للعب لتخزين البيانات حياً فوراً في سوبابيز
             await setupPlayerInDatabase();
             enterGameView();
         } catch (error) {
-            // إذا كنا خارج متصفح باي أو لم تكتمل الموافقات، يتم تفعيل الطور التطويري التلقائي
             simulateDeveloperLogin();
         }
     }
 
-    async function simulateDeveloperLogin() {
+    function simulateDeveloperLogin() {
         playerPiUser = "AbuKareem_Dev";
         playerWallet = "dev_wallet_address_12345";
         document.getElementById('player-name').innerText = playerPiUser;
-        await setupPlayerInDatabase();
-        enterGameView();
+        setupPlayerInDatabase().then(() => enterGameView());
     }
 
     function enterGameView() {
@@ -234,26 +227,48 @@
             const tbody = document.getElementById('leaderboard-body');
             tbody.innerHTML = "";
             data.forEach((row, index) => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${row.pi_username}</td>
-                        <td style="color: #4caf50; font-weight: bold;">${row.high_score}</td>
-                    </tr>
-                `;
+                tbody.innerHTML += `<tr><td>${index + 1}</td><td>${row.pi_username}</td><td style="color: #4caf50; font-weight: bold;">${row.high_score}</td></tr>`;
             });
         }
     }
 
-    function onIncompletePaymentFound(payment) { }
-
-    function buyWeaponWithPi(weaponName, price, typeKey) {
-        if(confirm(`هل تريد تأكيد شراء ${weaponName} بـ ${price} Pi؟`)) {
-            alert(`تم تفعيل ${weaponName} بنجاح!`);
-            currentWeapon = typeKey;
-            document.getElementById('current-weapon').innerText = weaponName;
-        }
+    // الدفع الحقيقي لبندقية القنص المطورة والربط مع السيرفر
+    function buySniperWithPi() {
+        Pi.createPayment({
+            amount: 0.25,
+            memo: "شراء بندقية القنص المطورة في لعبة الصياد",
+            metadata: { weapon_type: "sniper" }
+        }, {
+            onReadyForServerApproval: function(paymentId) {
+                fetch('/api/pi-callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentId: paymentId, action: 'approve' })
+                }).then(() => Pi.initializePayment(paymentId));
+            },
+            onReadyForServerCompletion: function(paymentId, txid) {
+                fetch('/api/pi-callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentId: paymentId, action: 'complete', txid: txid })
+                }).then(() => {
+                    currentWeapon = "sniper";
+                    document.getElementById('current-weapon').innerText = "بندقية القنص المطورة 👑";
+                    document.getElementById('game-status').innerText = "تم تأكيد عملية الشراء على البلوكتشين بنجاح! 🎯";
+                });
+            },
+            onCancel: function(paymentId) { alert("تم إلغاء عملية الشراء"); },
+            onError: function(error, paymentId) { alert("خطأ في الدفع: " + error.message); }
+        });
     }
+
+    function buyWeaponFree(name, typeKey) {
+        currentWeapon = typeKey;
+        document.getElementById('current-weapon').innerText = name;
+        document.getElementById('game-status').innerText = `تم تفعيل ${name} مجاناً!`;
+    }
+
+    function onIncompletePaymentFound(payment) { }
 
     function startGameLoop() {
         gameInterval = setInterval(() => {
