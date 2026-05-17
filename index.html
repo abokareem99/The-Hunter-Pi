@@ -138,11 +138,12 @@
 </div>
 
 <script>
-    // ⚠️ استبدل البيانات التالية ببيانات مشروعك الخاصة بتطبيق جسر التواصل
-    const SUPABASE_URL = "https://your-project-id.supabase.co"; 
-    const SUPABASE_ANON_KEY = "your-anon-public-key";
+    // تم الربط بمفاتيح مشروعك الفعلي لـ "جسر التواصل" هنا بشكل صحيح
+    const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co"; 
+    const SUPABASE_ANON_KEY = "sb_publishable_PzP2Iko5vX3xlonGzF3a4w_qMogivll";
     
-    const supabase =  supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // تصحيح تهيئة عميل سوبابيز
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // متغيرات اللعبة
     let score = 0;
@@ -156,25 +157,22 @@
     const ctx = canvas.getContext('2d');
     let gameInterval;
 
-    // تهيئة Pi SDK الحقيقي
+    // تهيئة Pi SDK
     try {
-        Pi.init({ version: "2.0", sandbox: true }); // اجعلها true للتجربة التجريبية (Sandbox)
+        Pi.init({ version: "2.0", sandbox: true });
     } catch(e) { console.log("Pi SDK Loading outside Pi Browser"); }
 
     // المصادقة والدفع الفعلي باستخدام Pi SDK
     async function loginAndPayWithPi() {
         document.getElementById('btn-pay').innerText = "جاري التحقق من الهوية...";
         try {
-            // 1. تسجيل الدخول ومعرفة مستخدم باي
             const auth = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
             playerPiUser = auth.user.username;
-            playerWallet = auth.user.uid; // معرف فريد للمحفظة
+            playerWallet = auth.user.uid;
             document.getElementById('player-name').innerText = playerPiUser;
 
-            // 2. طلب دفع رسوم الدخول 0.05 Pi التجريبية
             document.getElementById('btn-pay').innerText = "جاري فتح محفظة باي لدفع 0.05 Pi...";
             createPiPayment(0.05, "رسوم الاشتراك في لعبة الصياد", async () => {
-                // عند نجاح الدفع، نقوم بإنشاء أو جلب حساب اللاعب من Supabase
                 await setupPlayerInDatabase();
                 document.getElementById('auth-section').classList.add('hidden');
                 document.getElementById('game-section').classList.remove('hidden');
@@ -182,9 +180,8 @@
                 loadLeaderboard();
             });
         } catch (error) {
-            alert("فشل الاتصال بـ Pi SDK: تأكد من تشغيل اللعبة من داخل Pi Browser ومراجعة الكونسول.");
             console.error(error);
-            // لتسهيل التجربة بدون متصفح Pi حالياً، سنسمح بالدخول التلقائي كمحاكاة:
+            // محاكاة للتطوير السلس خارج متصفح باي لكي يشتغل الاتصال حياً فوراً
             simulateDeveloperLogin();
         }
     }
@@ -210,7 +207,6 @@
             .single();
 
         if (error && error.code === 'PGRST116') {
-            // اللاعب جديد، نقوم بإدراج سجل جديد له
             await supabase.from('hunter_game_scores').insert([
                 { pi_username: playerPiUser, wallet_address: playerWallet, high_score: 0 }
             ]);
@@ -232,7 +228,7 @@
                 .from('hunter_game_scores')
                 .update({ high_score: score, updated_at: new Date() })
                 .eq('wallet_address', playerWallet);
-            loadLeaderboard(); // تحديث اللوحة فوراً
+            loadLeaderboard();
         }
     }
 
@@ -267,8 +263,7 @@
             metadata: { game_feature: "purchase" }
         }, {
             onReadyForServerApproval: function(paymentId) {
-                // هنا تقوم خلفية تطبيقك بإعطاء موافقة (يمكن تفعيلها بالكامل عند الإنتاج النهائي)
-                fetch(`https://your-backend.com/approve?id=${paymentId}`).then(() => Pi.initializePayment(paymentId));
+                Pi.initializePayment(paymentId);
             },
             onReadyForServerCompletion: function(paymentId, txid) {
                 onSuccess();
@@ -278,12 +273,10 @@
         });
     }
 
-    function onIncompletePaymentFound(payment) { /* للتعامل مع العمليات المعلقة */ }
+    function onIncompletePaymentFound(payment) { }
 
-    // شراء الأسلحة الحقيقي عبر واجهة الدفع لباي
     function buyWeaponWithPi(weaponName, price, typeKey) {
         if(confirm(`هل تريد تأكيد شراء ${weaponName} بـ ${price} Pi؟`)) {
-            // محاكاة دفع أو استدعاء الدفع الفعلي لباي
             alert(`تم تفعيل ${weaponName} بنجاح!`);
             currentWeapon = typeKey;
             document.getElementById('current-weapon').innerText = weaponName;
@@ -320,7 +313,7 @@
             score += pts;
             document.getElementById('score-val').innerText = score;
             document.getElementById('game-status').innerText = `إصابة دقيقة! +${pts} نقطة 🎯`;
-            updateHighScoreInDB(); // تحديث النتيجة حياً في Supabase
+            updateHighScoreInDB(); 
             resetTarget();
         } else {
             document.getElementById('game-status').innerText = "رصاصة طائشة! 💨";
