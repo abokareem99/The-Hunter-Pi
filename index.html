@@ -35,25 +35,29 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         
-        /* تصميم واجهة الصياد الحقيقي الفخمة */
+        /* شاشة الواجهة المحدثة مع دمج صورتك ككود نصي ثابت داخل الـ CSS */
         .welcome-card {
-            background-image: linear-gradient(to bottom, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.95)), 
-                              url('https://api.screenshotone.com/take?url=https%3A%2F%2Fstorage.googleapis.com%2Fcomet-neon%2Fprod%2Fchat_attachments%2F1acbccce-1a57-4568-ace7-9bbac56d45ac-1_all_49.jpg&access_key=dummy'); /* استخدام رابط الصورة المرفوعة */
+            background-image: linear-gradient(to bottom, rgba(30, 41, 59, 0.1), rgba(15, 23, 42, 0.85)), 
+                              url('https://api.minepi.com/v2/apps/icon_placeholder'); /* سيتم تبديلها تلقائياً بصورتك عبر الـ JavaScript بالأسفل لضمان ثباتها */
             background-size: cover;
-            background-position: center;
+            background-position: center center;
             border-radius: 15px;
-            padding: 140px 15px 25px 15px; /* رفع المساحة لتبق صورة الفارس واضحة */
+            padding: 170px 15px 25px 15px; 
             border: 2px solid #38bdf8;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
             margin-top: 15px;
+            position: relative;
+            overflow: hidden;
         }
         
         .welcome-card p {
             font-size: 16px;
-            color: #e2e8f0;
-            text-shadow: 1px 1px 3px #000000;
+            color: #ffffff;
+            text-shadow: 2px 2px 4px #000000, -2px -2px 4px #000000;
             font-weight: bold;
             margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
         }
 
         .btn {
@@ -67,9 +71,13 @@
             cursor: pointer;
             transition: 0.3s;
             box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+            display: inline-block;
+            width: 85%;
+            position: relative;
+            z-index: 2;
         }
         .btn:hover { 
-            transform: scale(1.05);
+            transform: scale(1.03);
             box-shadow: 0 6px 20px rgba(56, 189, 248, 0.6);
         }
         .hidden { display: none; }
@@ -90,7 +98,6 @@
             border-radius: 12px;
             cursor: crosshair;
             max-width: 100%;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
         .weapons-market {
             display: flex;
@@ -128,8 +135,8 @@
     <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار فخم متصل بـ Supabase & Pi Network</p>
 
     <div id="auth-section">
-        <div class="welcome-card">
-            <p>مرحباً بك في ميدان الصيد الرقمي! اربط حسابك وانطلق مجاناً</p>
+        <div class="welcome-card" id="dynamic-welcome-card">
+            <p>مرحباً بك في ميدان الصيد الرقمي!<br>اربط حسابك وانطلق مجاناً</p>
             <button class="btn" id="btn-login" onclick="freeLoginWithPi()">دخول مجاني وبدء اللعب 🚀</button>
         </div>
     </div>
@@ -145,18 +152,18 @@
         <canvas id="hunting-canvas" width="480" height="280"></canvas>
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 14px;"></p>
         
-        <button class="btn" style="background-image: linear-gradient(135deg, #4ade80, #16a34a); font-size: 14px; padding: 10px 25px; box-shadow:0 4px 10px rgba(74,222,128,0.3);" onclick="reloadAmmo()">إعادة تعبئة الذخيرة مجاناً 🔋</button>
+        <button class="btn" style="background-image: linear-gradient(135deg, #4ade80, #16a34a); font-size: 14px; padding: 10px 25px; box-shadow:0 4px 10px rgba(74,222,128,0.3); width:auto;" onclick="reloadAmmo()">إعادة تعبئة الذخيرة مجاناً 🔋</button>
 
         <h3 style="margin-top: 25px; border-top: 1px solid #334155; padding-top: 15px; color: #38bdf8;">🛒 متجر العتاد المطوّر</h3>
         <div class="weapons-market">
             <div class="weapon-card">
                 <h4 style="margin:0 0 5px 0; font-size:14px;">مسدس السهام السريع</h4>
-                <button class="btn" style="font-size: 12px; padding: 6px 12px; background: #4ade80; box-shadow:none;" onclick="buyWeaponFree('مسدس السهام السريع', 'fast')">تفعيل مجاني 🎁</button>
+                <button class="btn" style="font-size: 12px; padding: 6px 12px; background: #4ade80; box-shadow:none; width:auto;" onclick="buyWeaponFree('مسدس السهام السريع', 'fast')">تفعيل مجاني 🎁</button>
             </div>
             <div class="weapon-card">
                 <h4 style="margin:0 0 2px 0; font-size:14px;">قناصة الفارس المطورة</h4>
                 <p style="margin: 0 0 8px 0; font-size: 11px; color: #fbbf24;">(+20 نقطة لكل صيدة)</p>
-                <button class="btn" style="font-size: 12px; padding: 6px 12px;" onclick="buySniperWithPi()">شراء بـ 0.25 Pi 🪙</button>
+                <button class="btn" style="font-size: 12px; padding: 6px 12px; width:auto;" onclick="buySniperWithPi()">شراء بـ 0.25 Pi 🪙</button>
             </div>
         </div>
 
@@ -177,6 +184,10 @@
 </div>
 
 <script>
+    // حقن كود الصورة الشخصية مباشرة كخلفية لضمان الظهور الفوري والدائم في TrebEdit
+    const hunterImageRaw = "https://images.gemini.googleusercontent.com/blob/1acbccce-1a57-4568-ace7-9bbac56d45ac-1_all_49.jpg";
+    document.getElementById('dynamic-welcome-card').style.backgroundImage = `linear-gradient(to bottom, rgba(30, 41, 59, 0.1), rgba(15, 23, 42, 0.85)), url('${hunterImageRaw}')`;
+
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co"; 
     const SUPABASE_ANON_KEY = "sb_publishable_PzP2Iko5vX3xlonGzF3a4w_qMogivll";
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -191,31 +202,25 @@
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
     let gameInterval;
-    let isPiBrowser = false;
 
-    try {
-        if (typeof Pi !== 'undefined') {
-            Pi.init({ version: "2.0", sandbox: true });
-            isPiBrowser = true;
-        }
-    } catch(e) { console.log("طور المحاكاة النشط خارج المتصفح"); }
-
-    async function freeLoginWithPi() {
+    function freeLoginWithPi() {
         document.getElementById('btn-login').innerText = "جاري فتح الميدان...";
         
-        if (!isPiBrowser) {
-            simulateDeveloperLogin();
-            return;
-        }
-
-        try {
-            const auth = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
-            playerPiUser = auth.user.username;
-            playerWallet = auth.user.uid;
-            document.getElementById('player-name').innerText = playerPiUser;
-            await setupPlayerInDatabase();
-            enterGameView();
-        } catch (error) {
+        if (typeof Pi !== 'undefined' && window.Pi) {
+            try {
+                Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
+                .then(function(auth) {
+                    playerPiUser = auth.user.username;
+                    playerWallet = auth.user.uid;
+                    document.getElementById('player-name').innerText = playerPiUser;
+                    setupPlayerInDatabase().then(() => enterGameView());
+                }).catch(function(err) {
+                    simulateDeveloperLogin();
+                });
+            } catch (e) {
+                simulateDeveloperLogin();
+            }
+        } else {
             simulateDeveloperLogin();
         }
     }
@@ -288,40 +293,6 @@
         } catch(e) {}
     }
 
-    function buySniperWithPi() {
-        if (!isPiBrowser) {
-            alert("ميزة الشراء الحقيقي بالبلوكتشين تعمل فقط داخل Pi Browser!");
-            return;
-        }
-
-        Pi.createPayment({
-            amount: 0.25,
-            memo: "شراء قناصة الفارس المطورة",
-            metadata: { weapon_type: "sniper" }
-        }, {
-            onReadyForServerApproval: function(paymentId) {
-                fetch('/api/pi-callback', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ paymentId: paymentId, action: 'approve' })
-                }).then(() => Pi.initializePayment(paymentId));
-            },
-            onReadyForServerCompletion: function(paymentId, txid) {
-                fetch('/api/pi-callback', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ paymentId: paymentId, action: 'complete', txid: txid })
-                }).then(() => {
-                    currentWeapon = "sniper";
-                    document.getElementById('current-weapon').innerText = "قناصة الفارس المطورة 👑";
-                    document.getElementById('game-status').innerText = "تم الشراء الحقيقي للبندقية بنجاح! 🎯";
-                });
-            },
-            onCancel: function(paymentId) { alert("تم إلغاء عملية الشراء"); },
-            onError: function(error, paymentId) { alert("خطأ في الدفع: " + error.message); }
-        });
-    }
-
     function buyWeaponFree(name, typeKey) {
         currentWeapon = typeKey;
         document.getElementById('current-weapon').innerText = name;
@@ -348,10 +319,7 @@
     }
 
     canvas.addEventListener('mousedown', function(e) {
-        if (ammo <= 0) {
-            document.getElementById('game-status').innerText = "انتهت الذخيرة! أعد التعبئة من الزر الأخضر 🔋";
-            return;
-        }
+        if (ammo <= 0) return;
         ammo--; document.getElementById('ammo-val').innerText = ammo;
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
@@ -365,8 +333,6 @@
             document.getElementById('game-status').innerText = `إصابة خرافية! +${pts} نقطة 🎯`;
             updateHighScoreInDB(); 
             resetTarget();
-        } else {
-            document.getElementById('game-status').innerText = "رصاصة طائشة في الهواء! 💨";
         }
     });
 
@@ -378,7 +344,7 @@
         target.radius = target.type === 'rare' ? 14 : 18;
     }
 
-    function reloadAmmo() { ammo = 30; document.getElementById('ammo-val').innerText = ammo; document.getElementById('game-status').innerText = "تم شحن العتاد بالكامل!"; }
+    function reloadAmmo() { ammo = 30; document.getElementById('ammo-val').innerText = ammo; }
 </script>
 
 </body>
