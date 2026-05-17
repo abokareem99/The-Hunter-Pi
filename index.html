@@ -151,13 +151,27 @@
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
     let gameInterval;
+    let isPiBrowser = false;
 
+    // تهيئة مأمونة للـ SDK
     try {
-        Pi.init({ version: "2.0", sandbox: true });
-    } catch(e) { console.log("Pi SDK error"); }
+        if (typeof Pi !== 'undefined') {
+            Pi.init({ version: "2.0", sandbox: true });
+            isPiBrowser = true;
+        }
+    } catch(e) { 
+        console.log("خارج متصفح باي - تفعيل طور المحاكاة"); 
+    }
 
     async function freeLoginWithPi() {
         document.getElementById('btn-login').innerText = "جاري الاتصال...";
+        
+        // فحص صريح: إذا لم نكن داخل متصفح باي، ننتقل فوراً للمحاكاة دون تعليق الكود
+        if (!isPiBrowser) {
+            simulateDeveloperLogin();
+            return;
+        }
+
         try {
             const auth = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
             playerPiUser = auth.user.username;
@@ -166,6 +180,7 @@
             await setupPlayerInDatabase();
             enterGameView();
         } catch (error) {
+            console.error("فشل تسجيل الدخول الرسمي:", error);
             simulateDeveloperLogin();
         }
     }
@@ -185,55 +200,67 @@
     }
 
     async function setupPlayerInDatabase() {
-        const { data, error } = await supabase
-            .from('hunter_game_scores')
-            .select('high_score')
-            .eq('wallet_address', playerWallet)
-            .single();
+        try {
+            const { data, error } = await supabase
+                .from('hunter_game_scores')
+                .select('high_score')
+                .eq('wallet_address', playerWallet)
+                .single();
 
-        if (error && error.code === 'PGRST116') {
-            await supabase.from('hunter_game_scores').insert([
-                { pi_username: playerPiUser, wallet_address: playerWallet, high_score: 0 }
-            ]);
-        } else if (data) {
-            document.getElementById('game-status').innerText = `أهلاً بعودتك! أعلى نقاط سابقة لك: ${data.high_score}`;
+            if (error && error.code === 'PGRST116') {
+                await supabase.from('hunter_game_scores').insert([
+                    { pi_username: playerPiUser, wallet_address: playerWallet, high_score: 0 }
+                ]);
+            } else if (data) {
+                document.getElementById('game-status').innerText = `أهلاً بعودتك! أعلى نقاط سابقة لك: ${data.high_score}`;
+            }
+        } catch(e) {
+            console.log("خطأ في الاتصال بقاعدة البيانات:", e);
         }
     }
 
     async function updateHighScoreInDB() {
-        const { data } = await supabase
-            .from('hunter_game_scores')
-            .select('high_score')
-            .eq('wallet_address', playerWallet)
-            .single();
-
-        if (!data || score > data.high_score) {
-            await supabase
+        try {
+            const { data } = await supabase
                 .from('hunter_game_scores')
-                .update({ high_score: score, updated_at: new Date() })
-                .eq('wallet_address', playerWallet);
-            loadLeaderboard();
-        }
+                .select('high_score')
+                .eq('wallet_address', playerWallet)
+                .single();
+
+            if (!data || score > data.high_score) {
+                await supabase
+                    .from('hunter_game_scores')
+                    .update({ high_score: score, updated_at: new Date() })
+                    .eq('wallet_address', playerWallet);
+                loadLeaderboard();
+            }
+        } catch(e) { }
     }
 
     async function loadLeaderboard() {
-        const { data } = await supabase
-            .from('hunter_game_scores')
-            .select('pi_username, high_score')
-            .order('high_score', { ascending: false })
-            .limit(5);
+        try {
+            const { data } = await supabase
+                .from('hunter_game_scores')
+                .select('pi_username, high_score')
+                .order('high_score', { ascending: false })
+                .limit(5);
 
-        if (data) {
-            const tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = "";
-            data.forEach((row, index) => {
-                tbody.innerHTML += `<tr><td>${index + 1}</td><td>${row.pi_username}</td><td style="color: #4caf50; font-weight: bold;">${row.high_score}</td></tr>`;
-            });
-        }
+            if (data) {
+                const tbody = document.getElementById('leaderboard-body');
+                tbody.innerHTML = "";
+                data.forEach((row, index) => {
+                    tbody.innerHTML += `<tr><td>${index + 1}</td><td>${row.pi_username}</td><td style="color: #4caf50; font-weight: bold;">${row.high_score}</td></tr>`;
+                });
+            }
+        } catch(e) { }
     }
 
-    // الدفع الحقيقي لبندقية القنص المطورة والربط مع السيرفر
     function buySniperWithPi() {
+        if (!isPiBrowser) {
+            alert("ميزة الشراء الحقيقي تعمل فقط من داخل متصفح Pi Browser!");
+            return;
+        }
+
         Pi.createPayment({
             amount: 0.25,
             memo: "شراء بندقية القنص المطورة في لعبة الصياد",
@@ -271,6 +298,7 @@
     function onIncompletePaymentFound(payment) { }
 
     function startGameLoop() {
+        if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
             target.x += target.speedX; target.y += target.speedY;
             if (target.x - target.radius < 0 || target.x + target.radius > canvas.width) target.speedX = -target.speedX;
