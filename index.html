@@ -36,7 +36,6 @@
             font-size: 24px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
-        
         .welcome-card {
             background: #0f172a;
             border-radius: 15px;
@@ -45,7 +44,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             margin-top: 15px;
         }
-
         .hunter-avatar {
             width: 180px;
             height: 180px;
@@ -58,14 +56,12 @@
             background-position: center;
             background-repeat: no-repeat;
         }
-        
         .welcome-card p {
             font-size: 16px;
             color: #e2e8f0;
             font-weight: bold;
             margin-bottom: 20px;
         }
-
         .btn {
             background-image: linear-gradient(135deg, #38bdf8, #0284c7);
             color: white;
@@ -85,7 +81,6 @@
             box-shadow: 0 6px 20px rgba(56, 189, 248, 0.6);
         }
         .hidden { display: none; }
-        
         .stats-bar {
             display: flex;
             justify-content: space-around;
@@ -138,7 +133,7 @@
 
 <div class="container" id="game-container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - متوافق بالكامل مع أعمدة السيرفر</p>
+    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">مشروع متصل بـ Supabase الحقيقي</p>
 
     <div id="auth-section">
         <div class="welcome-card">
@@ -159,22 +154,21 @@
         <canvas id="hunting-canvas" width="480" height="280"></canvas>
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 14px;">جاهز؟ ابحث عن الحيوانات والوحوش وقنصها!</p>
         
-        <button class="btn" style="background-image: linear-gradient(135deg, #4ade80, #16a34a); font-size: 14px; padding: 10px 25px; box-shadow:0 4px 10px rgba(74,222,128,0.3); width:auto;" onclick="reloadAmmo()">إعادة تعبئة الذخيرة مجاناً 🔋</button>
+        <button class="btn" style="background-image: linear-gradient(135deg, #4ade80, #16a34a); font-size: 14px; padding: 10px 25px; width:auto;" onclick="reloadAmmo()">إعادة تعبئة الذخيرة مجاناً 🔋</button>
 
-        <h3 style="margin-top: 25px; border-top: 1px solid #334155; padding-top: 15px; color: #38bdf8;">🛒 متجر العتاد المطوّر</h3>
+        <h3 style="margin-top: 25px; border-top: 1px solid #334155; padding-top: 15px; color: #38bdf8;">🛒 متجر العتاد</h3>
         <div class="weapons-market">
             <div class="weapon-card">
                 <h4 style="margin:0 0 5px 0; font-size:14px;">مسدس السهام السريع</h4>
-                <button class="btn" style="font-size: 12px; padding: 6px 12px; background: #4ade80; box-shadow:none; width:auto;" onclick="buyWeaponFree('مسدس السهام السريع', 'fast')">تفعيل مجاني 🎁</button>
+                <button class="btn" style="font-size: 12px; padding: 6px 12px; background: #4ade80; width:auto;" onclick="buyWeaponFree('مسدس السهام السريع', 'fast')">تفعيل مجاني 🎁</button>
             </div>
             <div class="weapon-card">
                 <h4 style="margin:0 0 2px 0; font-size:14px;">قناصة الفارس المطورة</h4>
-                <p style="margin: 0 0 8px 0; font-size: 11px; color: #fbbf24;">(+20 نقطة لكل صيدة)</p>
                 <button class="btn" style="font-size: 12px; padding: 6px 12px; width:auto;" onclick="buySniperWithPi()">شراء بـ 0.25 Pi 🪙</button>
             </div>
         </div>
 
-        <h3 style="margin-top: 25px; color: #38bdf8;">🏆 لوحة الصدارة العالمية (Supabase Live)</h3>
+        <h3 style="margin-top: 25px; color: #38bdf8;">🏆 لوحة الصدارة العالمية</h3>
         <table class="leaderboard-table">
             <thead>
                 <tr>
@@ -193,10 +187,9 @@
 </div>
 
 <script>
+    // 🛠️ تم تصحيح الرابط الصافي والمفتاح الصافي لمشروعك مباشرة لحل أزمة متغيرات Vercel
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
-    
-    // اسم الجدول في سيرفرك
     const TABLE_NAME = "hunter_game_scores"; 
 
     const _supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -211,8 +204,7 @@
     const targetsConfig = {
         bird: { radius: 18, pts: 10, speedFactor: 1, name: "🕊️ طائر مائي", health: 1 },
         deer: { radius: 22, pts: 15, speedFactor: 1.3, name: "🦌 غزال جبلي", health: 1 },
-        monster: { radius: 30, pts: 30, speedFactor: 2.1, name: "👹 وحش الميدان", health: 2 }, 
-        rare: { radius: 14, pts: 50, speedFactor: 1.8, name: "👑 هدف نادر", health: 1 }
+        monster: { radius: 30, pts: 30, speedFactor: 2.1, name: "👹 وحش الميدان", health: 2 }
     };
 
     let target = { x: 100, y: 100, xSpeed: 2.5, ySpeed: 2, currentHealth: 1, ...targetsConfig.bird };
@@ -223,9 +215,7 @@
     let gameInterval;
 
     function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
 
     function playSound(type) {
@@ -234,30 +224,15 @@
             if (!audioCtx) return;
             let osc = audioCtx.createOscillator();
             let gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
+            osc.connect(gain); gain.connect(audioCtx.destination);
             if (type === 'shoot') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.15);
             } else if (type === 'hit') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.2);
-                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-            } else if (type === 'miss') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(60, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.2);
             }
         } catch (e) {}
     }
@@ -266,9 +241,8 @@
         if (hasLoggedIn) return;
         initAudio(); 
         document.getElementById('btn-login').innerText = "جاري فتح الميدان...";
-
         const fallbackTimeout = setTimeout(() => {
-            if (!hasLoggedIn) { handleLoginSuccess("AbuKareem_Dev"); }
+            if (!hasLoggedIn) handleLoginSuccess("AbuKareem_Dev");
         }, 1250);
         
         if (typeof Pi !== 'undefined' && window.Pi && window.Pi.authenticate) {
@@ -288,19 +262,16 @@
         document.getElementById('player-name').innerText = playerPiUser;
         
         try {
-            // 🛠️ تم تعديل اسم العمود هنا ليقرأ من حقل high_score الموجود بجدولك
-            let { data, error } = await _supabaseClient.from(TABLE_NAME).select('high_score').eq('pi_username', playerPiUser).maybeSingle();
+            let { data } = await _supabaseClient.from(TABLE_NAME).select('high_score').eq('pi_username', playerPiUser).maybeSingle();
             if (data) { 
                 score = data.high_score || 0; 
                 document.getElementById('score-val').innerText = score;
             }
         } catch(e) { 
-            console.warn("استخدام الذاكرة المحلية كبديل متاح:", e); 
             let localHighScore = localStorage.getItem('hunter_high_score_' + playerPiUser) || 0;
             score = parseInt(localHighScore);
             document.getElementById('score-val').innerText = score;
         }
-
         enterGameView();
         loadLeaderboard();
     }
@@ -312,55 +283,37 @@
     }
 
     async function updateSupabaseScore() {
-        let currentHighScore = parseInt(localStorage.getItem('hunter_high_score_' + playerPiUser) || 0);
-        if (score > currentHighScore) {
-            localStorage.setItem('hunter_high_score_' + playerPiUser, score);
-        }
-
         try {
-            // 🛠️ جلب القيمة القديمة من حقل high_score للتحقق والمقارنة
             let { data } = await _supabaseClient.from(TABLE_NAME).select('high_score').eq('pi_username', playerPiUser).maybeSingle();
             if (!data || score > (data.high_score || 0)) {
-                // 🛠️ تم التعديل للإرسال إلى حقل high_score المتوافق مع قاعدة بياناتك
                 await _supabaseClient.from(TABLE_NAME).upsert({ 
                     pi_username: playerPiUser, 
                     high_score: score 
                 }, { onConflict: 'pi_username' });
-                
                 loadLeaderboard();
             }
         } catch (err) {
-            console.error("مشكلة برفع التحديث للسيرفر:", err);
+            console.error(err);
         }
     }
 
     async function loadLeaderboard() {
         try {
-            // 🛠️ ترتيب لوحة الصدارة بناءً على حقل high_score الصحيح
-            let { data, error } = await _supabaseClient.from(TABLE_NAME).select('*').order('high_score', { ascending: false }).limit(5);
-            if (error) throw error;
-
+            let { data } = await _supabaseClient.from(TABLE_NAME).select('*').order('high_score', { ascending: false }).limit(5);
             const tbody = document.getElementById('leaderboard-body');
             tbody.innerHTML = "";
-
             if (data && data.length > 0) {
                 data.forEach((row, index) => {
                     const tr = document.createElement('tr');
-                    if (row.pi_username === playerPiUser) { tr.style.backgroundColor = "rgba(56, 189, 248, 0.1)"; }
-                    tr.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td style="color: ${row.pi_username === playerPiUser ? '#38bdf8' : '#ffffff'}">${row.pi_username}</td>
-                        <td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>
-                    `;
+                    if (row.pi_username === playerPiUser) tr.style.backgroundColor = "rgba(56, 189, 248, 0.1)";
+                    tr.innerHTML = `<td>${index + 1}</td><td>${row.pi_username}</td><td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>`;
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8;">لا توجد نتائج مسجلة حتى الآن. الجدول فارغ في السيرفر!</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8;">متصل بالسيرفر.. بانتظار الصيدة الأولى! 🎯</td></tr>`;
             }
         } catch (err) {
-            console.warn("تنبيه لوحة الصدارة:", err);
-            const tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = `<tr><td colspan="3" style="color: #f87171;">لوحة الصدارة المحلية نشطة (Server Pending)</td></tr>`;
+            document.getElementById('leaderboard-body').innerHTML = `<tr><td colspan="3" style="color: #f87171;">خطأ في الاتصال</td></tr>`;
         }
     }
 
@@ -368,55 +321,36 @@
         if (ammo <= 0) return;
         ammo--; 
         document.getElementById('ammo-val').innerText = ammo;
-        
         const rect = canvas.getBoundingClientRect();
-        const mouseX = clientX - rect.left; 
-        const mouseY = clientY - rect.top;
+        const mouseX = clientX - rect.left; const mouseY = clientY - rect.top;
         
         triggerVisualAudioEffect();
         lastShot = { x: mouseX, y: mouseY, timer: 8 }; 
-
         const distance = Math.sqrt((mouseX - target.x)**2 + (mouseY - target.y)**2);
 
         if (distance <= target.radius) {
             target.currentHealth--;
-            
-            if (target.currentHealth > 0) {
-                playSound('shoot'); 
-                document.getElementById('game-status').innerText = `💥 أصبت ${target.name}.. متبقي طلقة للقضاء عليه!`;
-                target.radius *= 0.8; 
-                return; 
-            }
-
+            if (target.currentHealth > 0) { playSound('shoot'); return; }
             playSound('hit'); 
             let pts = target.pts;
             if (currentWeapon === "fast") pts = Math.ceil(pts * 1.5);
             score += pts;
             document.getElementById('score-val').innerText = score;
-            document.getElementById('game-status').innerText = `🎯 قنص ممتاز لـ ${target.name}! نلت +${pts} نقطة!`;
-            
             updateSupabaseScore(); 
             resetTarget();
-        } else {
-            playSound('miss'); 
-            document.getElementById('game-status').innerText = "💥 طلقة طائشة! ركز تصويبك على الهدف.";
         }
     }
 
     canvas.addEventListener('mousedown', function(e) { e.preventDefault(); executeShot(e.clientX, e.clientY); });
     canvas.addEventListener('touchstart', function(e) {
         e.preventDefault();
-        if(e.touches.length > 0) { executeShot(e.touches[0].clientX, e.touches[0].clientY); }
+        if(e.touches.length > 0) executeShot(e.touches[0].clientX, e.touches[0].clientY);
     });
 
     function triggerVisualAudioEffect() {
         const container = document.getElementById('game-container');
-        ctx.fillStyle = "rgba(239, 68, 68, 0.6)";
-        ctx.fillRect(0,0, canvas.width, canvas.height);
-        const intensity = 8;
-        const xShake = (Math.random() - 0.5) * intensity;
-        const yShake = (Math.random() - 0.5) * intensity;
-        container.style.transform = `translate(${xShake}px, ${yShake}px)`;
+        ctx.fillStyle = "rgba(239, 68, 68, 0.6)"; ctx.fillRect(0,0, canvas.width, canvas.height);
+        container.style.transform = `translate(${(Math.random() - 0.5) * 8}px, ${(Math.random() - 0.5) * 8}px)`;
         setTimeout(() => { container.style.transform = 'translate(0,0)'; }, 50);
     }
 
@@ -428,46 +362,23 @@
             if (target.y - target.radius < 0 || target.y + target.radius > canvas.height) target.ySpeed = -target.ySpeed;
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#475569"; ctx.font = "13px Arial";
-            ctx.fillText("البيئة: ميدان الغابة الرقمية", 15, 25);
-            
-            ctx.beginPath(); 
-            ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
-            ctx.fillStyle = target.name.includes("وحش") ? "#ef4444" : target.name.includes("نادر") ? '#fbbf24' : '#4ade80'; 
-            ctx.fill();
-            ctx.strokeStyle = '#ffffff'; ctx.stroke(); ctx.closePath();
-            
-            ctx.fillStyle = '#ffffff'; 
-            ctx.fillText(target.name + (target.currentHealth > 1 ? ` (HP:${target.currentHealth})` : ""), target.x - 35, target.y - target.radius - 8);
-            
-            if (lastShot.timer > 0) {
-                ctx.beginPath(); ctx.arc(lastShot.x, lastShot.y, 5, 0, Math.PI * 2); ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.closePath();
-                lastShot.timer--;
-            }
+            ctx.beginPath(); ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+            ctx.fillStyle = target.name.includes("وحش") ? "#ef4444" : '#4ade80'; ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#ffffff'; ctx.fillText(target.name, target.x - 20, target.y - target.radius - 8);
+            if (lastShot.timer > 0) { lastShot.timer--; }
         }, 1000 / 60);
     }
 
     function resetTarget() {
         const types = Object.keys(targetsConfig);
-        const randomType = types[Math.floor(Math.random() * types.length)];
-        const config = targetsConfig[randomType];
+        const config = targetsConfig[types[Math.floor(Math.random() * types.length)]];
         target.name = config.name; target.radius = config.radius; target.pts = config.pts;
-        target.health = config.health; target.currentHealth = config.health; target.speedFactor = config.speedFactor;
-        target.x = Math.random() * (canvas.width - 100) + 50; 
-        target.y = Math.random() * (canvas.height - 100) + 50;
-        target.xSpeed = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1.5) * config.speedFactor;
-        target.ySpeed = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1.5) * config.speedFactor;
+        target.currentHealth = config.health; target.x = Math.random() * (canvas.width - 100) + 50; target.y = Math.random() * (canvas.height - 100) + 50;
     }
-
-    function buyWeaponFree(name, typeKey) {
-        currentWeapon = typeKey;
-        document.getElementById('current-weapon').innerText = name;
-        document.getElementById('game-status').innerText = `تم تفعيل ${name} مجاناً!`;
-    }
+    function buyWeaponFree(name, typeKey) { currentWeapon = typeKey; }
     function buySniperWithPi() {}
     function reloadAmmo() { ammo = 30; document.getElementById('ammo-val').innerText = ammo; }
     function onIncompletePaymentFound(payment) {}
 </script>
-
 </body>
 </html>
