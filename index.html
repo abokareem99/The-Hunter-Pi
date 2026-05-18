@@ -187,7 +187,6 @@
 </div>
 
 <script>
-    // 🛠️ تم تصحيح الرابط الصافي والمفتاح الصافي لمشروعك مباشرة لحل أزمة متغيرات Vercel
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
@@ -241,19 +240,20 @@
         if (hasLoggedIn) return;
         initAudio(); 
         document.getElementById('btn-login').innerText = "جاري فتح الميدان...";
-        const fallbackTimeout = setTimeout(() => {
-            if (!hasLoggedIn) handleLoginSuccess("AbuKareem_Dev");
-        }, 1250);
         
-        if (typeof Pi !== 'undefined' && window.Pi && window.Pi.authenticate) {
-            Pi.authenticate(['username', 'payments'], onIncompletePaymentFound).then(function(auth) {
-                clearTimeout(fallbackTimeout);
-                handleLoginSuccess(auth.user.username);
-            }).catch(() => {
-                clearTimeout(fallbackTimeout);
-                handleLoginSuccess("AbuKareem_Dev");
-            });
+        // التحقق الذكي من بيئة التصفح لتأمين الدخول التجريبي على الكمبيوتر والحقيقي في متصفح باي
+        if (typeof Pi === 'undefined' || !window.Pi || !window.Pi.authenticate) {
+            console.log("تم رصد متصفح خارجي - تفعيل حساب المطور الاحتياطي");
+            handleLoginSuccess("AbuKareem_Dev");
+            return;
         }
+        
+        Pi.authenticate(['username', 'payments'], onIncompletePaymentFound).then(function(auth) {
+            handleLoginSuccess(auth.user.username);
+        }).catch((err) => {
+            console.warn("خطأ مصادقة Pi SDK، التحول للاحتياطي:", err);
+            handleLoginSuccess("AbuKareem_Dev");
+        });
     }
 
     async function handleLoginSuccess(username) {
@@ -284,16 +284,39 @@
 
     async function updateSupabaseScore() {
         try {
-            let { data } = await _supabaseClient.from(TABLE_NAME).select('high_score').eq('pi_username', playerPiUser).maybeSingle();
-            if (!data || score > (data.high_score || 0)) {
-                await _supabaseClient.from(TABLE_NAME).upsert({ 
-                    pi_username: playerPiUser, 
-                    high_score: score 
-                }, { onConflict: 'pi_username' });
-                loadLeaderboard();
+            console.log("محاولة فحص السكور للسيرفر...");
+            
+            // 1. الاستعلام عن وجود الصياد مسبقاً في جدول السيرفر الجديد
+            let { data: playerRow, error: fetchErr } = await _supabaseClient
+                .from(TABLE_NAME)
+                .select('id, high_score')
+                .eq('pi_username', playerPiUser)
+                .maybeSingle();
+
+            if (fetchErr) throw fetchErr;
+
+            if (playerRow) {
+                // 2. إذا كان الحساب مسجلاً، نقوم بتحديث الـ high_score فقط عند كسر الرقم القياسي السابق
+                if (score > (playerRow.high_score || 0)) {
+                    await _supabaseClient
+                        .from(TABLE_NAME)
+                        .update({ high_score: score, updated_at: new Date() })
+                        .eq('id', playerRow.id);
+                    console.log("تم تحديث السكور الأعلى في السيرفر بنجاح!");
+                }
+            } else {
+                // 3. إذا كان أول دخول للصياد في الجدول الجديد، نقوم بعملية إدخال (Insert) نظيفة
+                await _supabaseClient
+                    .from(TABLE_NAME)
+                    .insert([{ pi_username: playerPiUser, high_score: score }]);
+                console.log("تسجيل صياد جديد بنجاح في السيرفر!");
             }
+            
+            // تحديث لوحة الصدارة بعد الاستجابة
+            loadLeaderboard();
+            
         } catch (err) {
-            console.error(err);
+            console.error("خطأ أثناء ترحيل النقاط لـ Supabase:", err);
         }
     }
 
@@ -310,10 +333,10 @@
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8;">متصل بالسيرفر.. بانتظار الصيدة الأولى! 🎯</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8;">متصل بالسيرفر الآمن.. بانتظار السكور الأول! 🎯</td></tr>`;
             }
         } catch (err) {
-            document.getElementById('leaderboard-body').innerHTML = `<tr><td colspan="3" style="color: #f87171;">خطأ في الاتصال</td></tr>`;
+            document.getElementById('leaderboard-body').innerHTML = `<tr><td colspan="3" style="color: #f87171;">خطأ في جلب الصدارة</td></tr>`;
         }
     }
 
