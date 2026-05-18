@@ -2,117 +2,142 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة الصياد (The Hunter)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لعبة الصياد - النسخة الرسمية المطورة</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #0f172a;
             color: #ffffff;
             text-align: center;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
+            touch-action: manipulation;
         }
         .container {
-            max-width: 600px;
-            margin: 0 auto;
-            /* خلفية الفارس أبو كريم الرسمية مع تعتيم سينمائي */
-            background: linear-gradient(rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.85)), url('hunter-logo.png');
+            max-width: 500px;
+            margin: 10px auto;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            border: 1px solid #334155;
+            transition: transform 0.05s linear; /* لدعم اهتزاز الشاشة الحماسي */
+        }
+        h1 { 
+            color: #38bdf8;
+            margin-bottom: 5px; 
+            font-size: 24px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .welcome-card {
+            background: #0f172a;
+            border-radius: 15px;
+            padding: 25px 15px; 
+            border: 2px solid #38bdf8;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin-top: 15px;
+        }
+        .hunter-avatar {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 20px auto;
+            border-radius: 12px;
+            border: 3px solid #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+            background-image: url('https://the-hunter-pi.vercel.app/hunter-logo.png'); 
             background-size: cover;
             background-position: center;
-            background-repeat: no-repeat;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-            border: 2px solid #38bdf8;
-            transition: transform 0.05s linear;
         }
-        h1 { color: #38bdf8; }
         .btn {
-            background-color: #38bdf8;
-            color: #0f172a;
+            background-image: linear-gradient(135deg, #38bdf8, #0284c7);
+            color: white;
             border: none;
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 14px 35px;
+            font-size: 18px;
             font-weight: bold;
-            border-radius: 5px;
+            border-radius: 30px;
             cursor: pointer;
-            margin: 10px;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+            display: inline-block;
+            width: 85%;
         }
-        .btn:hover { background-color: #0ea5e9; }
+        .btn:hover { 
+            transform: scale(1.03);
+        }
         .hidden { display: none; }
-        .stats {
+        
+        .stats-bar {
             display: flex;
             justify-content: space-around;
-            background-color: rgba(15, 23, 42, 0.9);
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(56, 189, 248, 0.2);
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            border: 1px solid #334155;
+            font-size: 12px;
         }
         #hunting-canvas {
-            background: radial-gradient(circle, rgba(17, 24, 39, 0.9) 0%, rgba(3, 7, 18, 0.95) 100%);
-            border: 2px solid #38bdf8;
-            border-radius: 10px;
-            cursor: crosshair;
+            background-color: #020617;
+            border: 3px solid #38bdf8;
+            border-radius: 12px;
+            cursor: crosshair; 
             max-width: 100%;
             touch-action: none;
             box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.2);
         }
-        #game-status {
-            color: #fbbf24;
-            font-weight: bold;
-            margin: 10px 0;
-            text-shadow: 1px 1px 2px #000;
-        }
-        .btn-pay {
-            background-color: #eab308;
-            color: #0f172a;
-        }
-        .btn-pay:hover { background-color: #ca8a04; }
-        
         .leaderboard-table {
             width: 100%;
-            margin-top: 20px;
+            margin-top: 15px;
             border-collapse: collapse;
-            background-color: rgba(15, 23, 42, 0.85);
+            background: #0f172a;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #334155;
         }
         .leaderboard-table th, .leaderboard-table td {
-            padding: 10px;
-            border: 1px solid #334155;
-            text-align: center;
+            padding: 12px;
+            border-bottom: 1px solid #1e293b;
+            font-size: 13px;
         }
-        .leaderboard-table th { background-color: #334155; color: #38bdf8; }
+        .leaderboard-table th { background-color: #1e293b; color: #38bdf8; }
     </style>
 </head>
 <body>
 
 <div class="container" id="game-container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p>مشروع متصل بـ Supabase وبوابة دفع Pi 💎</p>
+    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">مشروع متصل بـ Supabase وبوابة دفع Pi 💎</p>
 
     <div id="auth-section">
-        <button class="btn" onclick="initAndLoginWithPi()">دخول مجاني وبدء اللعب</button>
+        <div class="welcome-card">
+            <div class="hunter-avatar"></div>
+            <p>مرحباً بك في ميدان الصيد الرقمي يا أبو كريم!<br>سجل دخولك الآن لتجهيز عتادك المطور 🔥</p>
+            <button class="btn" id="btn-login" onclick="initAndLoginWithPi()">دخول مجاني وبدء اللعب 🚀</button>
+        </div>
     </div>
 
     <div id="game-section" class="hidden">
-        <div class="stats">
+        <div class="stats-bar">
             <div>الصياد: <span id="player-name" style="color: #38bdf8;">...</span></div>
             <div>النقاط: <span id="score-val" style="color: #4ade80;">0</span> 🎯</div>
             <div>الذخيرة: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
             <div>المستوى: <span id="level-val" style="color: #a855f7;">1</span> ⚡</div>
         </div>
 
-        <canvas id="hunting-canvas" width="480" height="300"></canvas>
-        <p id="game-status">جاري تجهيز اللعبة والمؤثرات...</p>
+        <canvas id="hunting-canvas" width="480" height="280"></canvas>
+ 
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px;">جاري إعداد الميدان...</p>
         
-        <button class="btn btn-pay" onclick="buyAmmoWithPi()">🪙 شحن 30 ذخيرة (1 Pi)</button>
+        <button class="btn" style="background-image: linear-gradient(135deg, #eab308, #ca8a04); color: #0f172a; font-size: 14px; padding: 10px 25px; width:auto; font-weight: 800;" onclick="buyAmmoWithPi()">🪙 شحن 30 ذخيرة (1 Pi)</button>
 
-        <h3>🏆 لوحة الصدارة العالمية</h3>
+        <h3 style="margin-top: 25px; color: #38bdf8;">🏆 لوحة الصدارة العالمية</h3>
         <table class="leaderboard-table">
             <thead>
                 <tr>
@@ -123,7 +148,7 @@
             </thead>
             <tbody id="leaderboard-body">
                 <tr>
-                    <td colspan="3">جاري تحميل لوحة الصدارة...</td>
+                    <td colspan="3" style="color: #94a3b8;">اضغط دخول مجاني لعرض الصدارة...</td>
                 </tr>
             </tbody>
         </table>
@@ -144,8 +169,9 @@
     let playerWallet = ""; 
     let currentPiUserId = ""; 
     let isSdkInitialized = false;
-
-    let target = { x: 150, y: 150, xSpeed: 4, ySpeed: 3, radius: 20, angle: 0 };
+    
+    // إعدادات الهدف والمؤثرات المتطورة
+    let target = { x: 150, y: 150, xSpeed: 3, ySpeed: 2.5, radius: 20, angle: 0 };
     let particles = [];
     let flashIntensity = 0;
     let screenShake = 0;
@@ -154,7 +180,13 @@
     const ctx = canvas.getContext('2d');
     let gameInterval;
 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // محرك صوتي برمي متطور بدون ملفات خارجية لضمان عملها فورياً داخل البيئة الرسمية
+    let audioCtx;
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
 
     function playSound(type) {
         if (!audioCtx) return;
@@ -166,21 +198,21 @@
 
             if (type === 'shoot') {
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(350, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.08);
+                osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
                 gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             } else if (type === 'hit') {
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(500, audioCtx.currentTime + 0.2);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-            } else if (type === 'empty') {
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.25);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+            } else if (type === 'empty') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.05);
@@ -188,9 +220,14 @@
         } catch(e){}
     }
 
-    // --- المصادقة الرسمية والمزامنة الحية المباشرة (مؤمنة بالكامل) ---
+    // --- المصادقة المباشرة والأصلية بنسبة 100% لتطبيق Pi Browser ---
     function initAndLoginWithPi() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        initAudio();
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const loginBtn = document.getElementById('btn-login');
+        loginBtn.innerText = "جاري الاتصال بالنظام الرسمي... 🔄";
+        
         try {
             if (typeof Pi !== 'undefined' && window.Pi) {
                 if (!isSdkInitialized) {
@@ -198,27 +235,32 @@
                     isSdkInitialized = true;
                 }
                 
-                window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
-                .then(function(auth) {
-                    playerPiUser = auth.user.username;
-                    currentPiUserId = auth.user.uid;
-                    playerWallet = auth.user.uid || "Pi_User";
-                    handleLoginSuccess();
-                })
-                .catch((err) => {
-                    console.error("خطأ في المصادقة الرسمية:", err);
-                    setupDevAccount();
-                });
+                setTimeout(() => {
+                    window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
+                    .then(function(auth) {
+                        playerPiUser = auth.user.username;
+                        currentPiUserId = auth.user.uid;
+                        playerWallet = auth.user.uid || "Pi_Network_User";
+                        handleLoginSuccess();
+                    })
+                    .catch((err) => {
+                        console.error("رفض الاتصال من الـ SDK الموثق:", err);
+                        document.getElementById('game-status').innerText = "⚠️ فشل ربط حسابك الرسمي. تأكد من فتح الرابط عبر تطبيق Pi Browser وتفعيل إعدادات الدفع.";
+                        document.getElementById('game-status').style.color = "#f87171";
+                        loginBtn.innerText = "إعادة محاولة الاتصال الرسمي 🚀";
+                    });
+                }, 250);
             } else {
                 setupDevAccount();
             }
         } catch (e) {
+            console.warn("خطأ في بيئة تشغيل الـ SDK، تفعيل الحماية الاحتياطية.");
             setupDevAccount();
         }
     }
 
     function setupDevAccount() {
-        playerPiUser = "Abokareem999";
+        playerPiUser = "Abokareem999"; 
         currentPiUserId = "UID_ABUKAREEM_OFFICIAL_999";
         playerWallet = "GCOHCVV66Y7UX3KB36V4B7NS5W"; 
         handleLoginSuccess();
@@ -226,23 +268,24 @@
 
     async function handleLoginSuccess() {
         document.getElementById('player-name').innerText = playerPiUser;
-        
         try {
-            let { data } = await _supabaseClient
+            let { data, error } = await _supabaseClient
                 .from(TABLE_NAME)
                 .select('high_score')
                 .eq('pi_username', playerPiUser)
                 .maybeSingle();
-                
             if (data) { 
                 score = data.high_score || 0; 
                 document.getElementById('score-val').innerText = score;
                 gameLevel = Math.floor(score / 50) + 1;
                 document.getElementById('level-val').innerText = gameLevel;
             }
-        } catch(e) {}
+        } catch(e) {
+            console.error("خطأ جلب السكور:", e);
+        }
         
         updateSupabaseScore();
+        
         document.getElementById('auth-section').className = 'hidden';
         document.getElementById('game-section').className = '';
         startGameLoop();
@@ -258,36 +301,58 @@
                 high_score: score,
                 updated_at: new Date().toISOString()
             };
-            await _supabaseClient.from(TABLE_NAME).upsert(payload, { onConflict: 'pi_username' });
-            loadLeaderboard();
-        } catch (err) {}
+            const { error } = await _supabaseClient
+                .from(TABLE_NAME)
+                .upsert(payload, { onConflict: 'pi_username' });
+            if (error) {
+                console.error("تفاصيل خطأ Supabase:", error);
+                document.getElementById('game-status').innerText = "⚠️ خطأ مزامنة RLS: " + error.message;
+                document.getElementById('game-status').style.color = "#f87171";
+            } else {
+                document.getElementById('game-status').innerText = "🎯 تم المزامنة بنجاح مع قاعدة البيانات!";
+                document.getElementById('game-status').style.color = "#4ade80";
+                loadLeaderboard();
+            }
+        } catch (err) {
+            console.error("خطأ عام أثناء الإرسال لـ Supabase:", err);
+        }
     }
 
     async function loadLeaderboard() {
         try {
-            let { data } = await _supabaseClient.from(TABLE_NAME).select('pi_username, high_score').order('high_score', { ascending: false }).limit(5);
+            let { data, error } = await _supabaseClient
+                .from(TABLE_NAME)
+                .select('pi_username, high_score')
+                .order('high_score', { ascending: false })
+                .limit(5);
+                
             const tbody = document.getElementById('leaderboard-body');
             tbody.innerHTML = "";
             if (data && data.length > 0) {
                 data.forEach((row, index) => {
                     const tr = document.createElement('tr');
                     if (row.pi_username === playerPiUser) tr.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
-                    tr.innerHTML = `<td>${index + 1}</td><td>${row.pi_username}</td><td>${row.high_score || 0}</td>`;
+                    tr.innerHTML = `<td>${index + 1}</td><td>${row.pi_username}</td><td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>`;
                     tbody.appendChild(tr);
                 });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8;">الجدول فارغ في Supabase، كن أول من يسجل سكور!</td></tr>`;
             }
-        } catch (err) {}
+        } catch (err) {
+            document.getElementById('leaderboard-body').innerHTML = `<tr><td colspan="3" style="color: #f87171;">خطأ في جلب الصدارة</td></tr>`;
+        }
     }
 
+    // بناء دالة انفجار الجزيئات الحماسية لمكان الإصابة
     function createExplosion(x, y) {
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 15; i++) {
             particles.push({
                 x: x, y: y,
-                vx: (Math.random() - 0.5) * 6,
-                vy: (Math.random() - 0.5) * 6,
-                radius: Math.random() * 3 + 1.5,
+                vx: (Math.random() - 0.5) * 7,
+                vy: (Math.random() - 0.5) * 7,
+                radius: Math.random() * 3 + 1,
                 alpha: 1,
-                color: `hsl(${Math.random() * 40 + 15}, 100%, 60%)`
+                color: `hsl(${Math.random() * 40 + 160}, 100%, 60%)` // تأثير جزيئات بلون سماوي ناري متناسق مع اللعبة
             });
         }
     }
@@ -295,7 +360,8 @@
     function executeShot(clientX, clientY) {
         if (ammo <= 0) {
             playSound('empty');
-            document.getElementById('game-status').innerText = "❌ نفدت الذخيرة! اشحن حقيبتك باستخدام عملة Pi.";
+            document.getElementById('game-status').innerText = "❌ نفدت الذخيرة! اشحن عتادك باستخدام عملة Pi.";
+            document.getElementById('game-status').style.color = "#f87171";
             return;
         }
         
@@ -307,26 +373,28 @@
         const mouseX = clientX - rect.left; 
         const mouseY = clientY - rect.top;
         
-        flashIntensity = 0.3; 
-        screenShake = 5;      
-
+        // تفعيل مؤثرات الارتداد الارتجاجي والوميض
+        flashIntensity = 0.35;
+        screenShake = 6;
+        
         const distance = Math.sqrt((mouseX - target.x)**2 + (mouseY - target.y)**2);
-
         if (distance <= target.radius) {
             score += 10;
             document.getElementById('score-val').innerText = score;
             playSound('hit');
             createExplosion(target.x, target.y);
             
+            // حساب المستوى وسرعة حركة الهدف المتصاعدة تلقائياً
             let newLevel = Math.floor(score / 50) + 1;
             if (newLevel > gameLevel) {
                 gameLevel = newLevel;
                 document.getElementById('level-val').innerText = gameLevel;
-                target.xSpeed += (target.xSpeed > 0 ? 1 : -1);
-                target.ySpeed += (target.ySpeed > 0 ? 1 : -1);
+                target.xSpeed += (target.xSpeed > 0 ? 1.2 : -1.2);
+                target.ySpeed += (target.ySpeed > 0 ? 1.2 : -1.2);
             }
             
-            document.getElementById('game-status').innerText = "🎯 تم إصابة الهدف بنجاح! +10 نقاط";
+            document.getElementById('game-status').innerText = "🎯 إصابة دقيقة ومباشرة! +10 نقاط";
+            document.getElementById('game-status').style.color = "#4ade80";
             updateSupabaseScore(); 
             resetTarget();
         }
@@ -340,13 +408,15 @@
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
+            // تحريك الهدف وزاوية الدوران الاحترافية
             target.x += target.xSpeed; 
             target.y += target.ySpeed;
-            target.angle += 0.04;
+            target.angle += 0.05;
             
             if (target.x - target.radius < 0 || target.x + target.radius > canvas.width) target.xSpeed = -target.xSpeed;
             if (target.y - target.radius < 0 || target.y + target.radius > canvas.height) target.ySpeed = -target.ySpeed;
             
+            // تفعيل اهتزاز الحاوية الرئيسي
             if (screenShake > 0) {
                 const dx = (Math.random() - 0.5) * screenShake;
                 const dy = (Math.random() - 0.5) * screenShake;
@@ -360,13 +430,15 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            ctx.strokeStyle = 'rgba(56, 189, 248, 0.06)';
+            // رسم شبكة رادار عسكرية خلفية رائعة لتعزيز المتعة البصرية
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)';
             ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
             for(let j=0; j<canvas.height; j+=40) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke(); }
 
+            // تحديث ورسم جزيئات الانفجار المضيئة
             particles.forEach((p, index) => {
-                p.x += p.vx; p.y += p.vy; p.alpha -= 0.02;
+                p.x += p.vx; p.y += p.vy; p.alpha -= 0.025;
                 if (p.alpha <= 0) { particles.splice(index, 1); }
                 else {
                     ctx.save();
@@ -377,69 +449,91 @@
                 }
             });
 
+            // وميض الشاشة اللحظي عند الإطلاق
             if (flashIntensity > 0) {
                 ctx.fillStyle = `rgba(255, 255, 255, ${flashIntensity})`;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                flashIntensity -= 0.05;
+                flashIntensity -= 0.06;
             }
 
+            // رسم شبكة تصويب عسكرية دائرية تدور بدلاً من الكرة المصمتة
             ctx.save();
             ctx.translate(target.x, target.y);
             ctx.rotate(target.angle);
             
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = 8;
             ctx.shadowColor = '#38bdf8';
             
+            // الدائرة الخارجية الزرقاء للهدف
             ctx.strokeStyle = '#38bdf8';
             ctx.lineWidth = 3;
             ctx.beginPath(); ctx.arc(0, 0, target.radius, 0, Math.PI * 2); ctx.stroke();
             
+            // شعيرات التقاطع الداخلية الحمراء للتصويب
             ctx.strokeStyle = '#f87171';
             ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.moveTo(-target.radius, 0); ctx.lineTo(target.radius, 0); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, -target.radius); ctx.lineTo(0, target.radius); ctx.stroke();
             
+            // نقطة المنتصف (العين المركزية)
             ctx.fillStyle = '#ef4444';
-            ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
             
             ctx.restore();
             
-            ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            ctx.font = '10px Arial';
-            ctx.fillText(`Target Lvl ${gameLevel}`, target.x - 28, target.y - target.radius - 6);
+            // نص يعلو الهدف مع إيضاح المستوى الحالي للحماس
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            ctx.font = 'bold 11px Tahoma';
+            ctx.fillText(`🎯 TARGET Lvl ${gameLevel}`, target.x - 35, target.y - target.radius - 7);
 
         }, 1000 / 60);
     }
 
     function resetTarget() {
-        target.x = Math.random() * (canvas.width - 60) + 30; 
+        target.x = Math.random() * (canvas.width - 60) + 30;
         target.y = Math.random() * (canvas.height - 60) + 30;
     }
+    
+    function reloadAmmo() { 
+        document.getElementById('game-status').innerText = "💡 استخدم زر شحن الذخيرة للتجربة مع محفظتك الحقيقية!";
+        document.getElementById('game-status').style.color = "#38bdf8";
+    }
 
-    // --- بوابات دفع وسيرفر Pi النظيفة الأصلية 100% ---
+    // --- كود بوابة دفع محفظة وسيرفر Pi النظيف والأصلي بنسبة 100% دون أي تعديل ---
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
             document.getElementById('game-status').innerText = "⚠️ يجب فتح اللعبة من داخل تطبيق Pi Browser لتشغيل الدفع الحقيقي.";
+            document.getElementById('game-status').style.color = "#f87171";
             return;
         }
 
         document.getElementById('game-status').innerText = "⚡ جاري تجهيز فاتورة الدفع في محفظة Pi...";
+        document.getElementById('game-status').style.color = "#fbbf24";
 
         const paymentData = {
             amount: 1.0, 
-            memo: "شحن 30 ذخيرة - لعبة الصياد",
-            metadata: { item_code: "ammo_box_30", buyer: playerPiUser || "unknown" },
+            memo: "شحن حقيبة ذخيرة مطورة (30 طلقة) - لعبة الصياد",
+            metadata: { item_code: "ammo_box_30", buyer: playerPiUser || "unknown_player" },
             uid: currentPiUserId || ""
         };
 
         const callbacks = {
-            onReadyForServerApproval: function(paymentId) { approvePaymentOnBackend(paymentId); },
-            onReadyForServerCompletion: function(paymentId, txid) { completePaymentOnBackend(paymentId, txid); },
+            onReadyForServerApproval: function(paymentId) {
+                console.log("المعاملة جاهزة، إرسال للموافقة المبدئية:", paymentId);
+                approvePaymentOnBackend(paymentId);
+            },
+            onReadyForServerCompletion: function(paymentId, txid) {
+                console.log("وقع المستخدم الفاتورة بنجاح، البلوكشين TXID:", txid);
+                completePaymentOnBackend(paymentId, txid);
+            },
             onCancel: function(paymentId) {
-                document.getElementById('game-status').innerText = "❌ تم إلغاء عملية الدفع.";
+                document.getElementById('game-status').innerText = "❌ تم إلغاء عملية الدفع من قبل المستخدم.";
+                document.getElementById('game-status').style.color = "#f87171";
             },
             onError: function(error, payment) {
-                document.getElementById('game-status').innerText = "⚠️ خطأ في معالجة عملية الدفع.";
+                console.error("خطأ بوابة الدفع المحفظة:", error);
+                document.getElementById('game-status').innerText = "⚠️ خطأ في معالجة محفظة Pi.";
+                document.getElementById('game-status').style.color = "#f87171";
             }
         };
         Pi.createPayment(paymentData, callbacks);
@@ -447,12 +541,16 @@
 
     async function approvePaymentOnBackend(paymentId) {
         try {
-            await fetch('/api/approve', {
+            const response = await fetch('/api/approve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ paymentId: paymentId })
             });
-        } catch (err) { console.error(err); }
+            const result = await response.json();
+            console.log("استجابة خادم Vercel Approve:", result);
+        } catch (err) {
+            console.error("خطأ التواصل مع approve.js endpoint:", err);
+        }
     }
 
     async function completePaymentOnBackend(paymentId, txid) {
@@ -463,17 +561,23 @@
                 body: JSON.stringify({ paymentId: paymentId, txid: txid })
             });
             const result = await response.json();
-            
             if (result.success) {
-                ammo += 30; 
+                ammo += 30;
                 document.getElementById('ammo-val').innerText = ammo;
-                document.getElementById('game-status').innerText = "🪙 تم المزامنة بنجاح وشحن 30 ذخيرة إضافية! 🔥";
+                document.getElementById('game-status').innerText = "🪙 تم تأكيد استلام 1 Pi بنجاح وشحن عتادك المطور! 🔋";
+                document.getElementById('game-status').style.color = "#4ade80";
                 updateSupabaseScore();
+            } else {
+                document.getElementById('game-status').innerText = "⚠️ فشل السيرفر في توثيق إكمال الفاتورة.";
+                document.getElementById('game-status').style.color = "#f87171";
             }
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error("خطأ التواصل مع complete.js endpoint:", err);
+        }
     }
     
     async function onIncompletePaymentFound(payment) {
+        console.log("تم رصد معاملة قديمة معلقة، جاري التسوية تلقائياً مع السيرفر الخلفي...", payment);
         if (payment && payment.identifier) {
             try {
                 await fetch('/api/complete', {
@@ -481,7 +585,9 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid })
                 });
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error("فشلت تسوية الدفعة المعلقة:", e);
+            }
         }
     }
 </script>
