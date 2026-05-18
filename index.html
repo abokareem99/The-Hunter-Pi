@@ -138,7 +138,7 @@
 
 <div class="container" id="game-container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - ربط سحابي كامل لـ Supabase</p>
+    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - ربط سحابي مرن</p>
 
     <div id="auth-section">
         <div class="welcome-card">
@@ -157,7 +157,7 @@
 
         <p>السلاح: <strong id="current-weapon" style="color: #fbbf24;">بندقية الصيد الكلاسيكية</strong></p>
         <canvas id="hunting-canvas" width="480" height="280"></canvas>
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 14px;">جاهز؟ ابحث عن الحيوانات والوحوش وقنصها بالصوت والمؤثرات!</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 14px;">جاهز؟ ابحث عن الحيوانات والوحوش وقنصها!</p>
         
         <button class="btn" style="background-image: linear-gradient(135deg, #4ade80, #16a34a); font-size: 14px; padding: 10px 25px; box-shadow:0 4px 10px rgba(74,222,128,0.3); width:auto;" onclick="reloadAmmo()">إعادة تعبئة الذخيرة مجاناً 🔋</button>
 
@@ -193,12 +193,10 @@
 </div>
 
 <script>
-    // 🔑 متغيرات الربط السحابي المستخرجة بنجاح
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
-    const TABLE_NAME = "hunter_scores"; // تأكد من مطابقة اسم الجدول الذي أضفته
+    const TABLE_NAME = "hunter_scores"; // اسم الجدول الجديد في قاعدة بياناتك
 
-    // تهيئة عميل سوبابيز
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let score = 0;
@@ -232,7 +230,6 @@
         try {
             initAudio();
             if (!audioCtx) return;
-            
             let osc = audioCtx.createOscillator();
             let gain = audioCtx.createGain();
             osc.connect(gain);
@@ -269,10 +266,8 @@
         document.getElementById('btn-login').innerText = "جاري فتح الميدان...";
 
         const fallbackTimeout = setTimeout(() => {
-            if (!hasLoggedIn) {
-                simulateDeveloperLogin();
-            }
-        }, 1200);
+            if (!hasLoggedIn) { handleLoginSuccess("AbuKareem_Dev"); }
+        }, 1250);
         
         if (typeof Pi !== 'undefined' && window.Pi && window.Pi.authenticate) {
             Pi.authenticate(['username', 'payments'], onIncompletePaymentFound).then(function(auth) {
@@ -280,27 +275,31 @@
                 handleLoginSuccess(auth.user.username);
             }).catch(() => {
                 clearTimeout(fallbackTimeout);
-                simulateDeveloperLogin();
+                handleLoginSuccess("AbuKareem_Dev");
             });
         }
     }
-
-    function simulateDeveloperLogin() { handleLoginSuccess("AbuKareem_Dev"); }
 
     async function handleLoginSuccess(username) {
         hasLoggedIn = true;
         playerPiUser = username;
         document.getElementById('player-name').innerText = playerPiUser;
         
-        // جلب أعلى سكور مسجل للاعب حالياً في قاعدة البيانات
+        // جلب سكور اللاعب مع حماية الكود من التوقف (Try/Catch)
         try {
             let { data, error } = await supabase.from(TABLE_NAME).select('score').eq('username', playerPiUser).maybeSingle();
             if (data) { 
                 score = data.score; 
                 document.getElementById('score-val').innerText = score;
             }
-        } catch(e) { console.error("خطأ أثناء جلب سكور اللاعب من سوبابيز:", e); }
+        } catch(e) { 
+            console.warn("فشل الاتصال بـ سوبابيز، سيتم استخدام التخزين المحلي مؤقتاً:", e); 
+            let localHighScore = localStorage.getItem('hunter_high_score_' + playerPiUser) || 0;
+            score = parseInt(localHighScore);
+            document.getElementById('score-val').innerText = score;
+        }
 
+        // دخول اللعبة فوراً دون انتظار أي رد خارجي يعطل الصفحة
         enterGameView();
         loadLeaderboard();
     }
@@ -311,22 +310,25 @@
         startGameLoop();
     }
 
-    // 🌐 دالة تحديث السكور سحابياً عند تخطي السكور القديم
     async function updateSupabaseScore() {
+        // تحديث محلي احتياطي أولاً
+        let currentHighScore = parseInt(localStorage.getItem('hunter_high_score_' + playerPiUser) || 0);
+        if (score > currentHighScore) {
+            localStorage.setItem('hunter_high_score_' + playerPiUser, score);
+        }
+
+        // محاولة الرفع للسيرفر
         try {
             let { data } = await supabase.from(TABLE_NAME).select('score').eq('username', playerPiUser).maybeSingle();
-            
-            // إذا لم يكن لديه سجل، أو السكور الحالي أعلى من المسجل، نقوم بالتحديث
             if (!data || score > data.score) {
                 await supabase.from(TABLE_NAME).upsert({ username: playerPiUser, score: score }, { onConflict: 'username' });
-                loadLeaderboard(); // إعادة تحديث اللوحة مباشرة لرؤية الترتيب الجديد
+                loadLeaderboard();
             }
         } catch (err) {
             console.error("خطأ أثناء تحديث البيانات السحابية:", err);
         }
     }
 
-    // 📊 دالة جلب أفضل 5 صيادين لعرضهم في جدول الصدارة اللحظي
     async function loadLeaderboard() {
         try {
             let { data, error } = await supabase.from(TABLE_NAME).select('*').order('score', { ascending: false }).limit(5);
@@ -338,9 +340,7 @@
             if (data && data.length > 0) {
                 data.forEach((row, index) => {
                     const tr = document.createElement('tr');
-                    // تمييز صف اللاعب الحالي بلون خلفية خفيف
                     if (row.username === playerPiUser) { tr.style.backgroundColor = "rgba(56, 189, 248, 0.1)"; }
-                    
                     tr.innerHTML = `
                         <td>${index + 1}</td>
                         <td style="color: ${row.username === playerPiUser ? '#38bdf8' : '#ffffff'}">${row.username}</td>
@@ -352,7 +352,9 @@
                 tbody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8;">لا توجد نتائج مسجلة حتى الآن.</td></tr>`;
             }
         } catch (err) {
-            console.error("خطأ في تحميل لوحة الصدارة:", err);
+            console.warn("خطأ في تحميل لوحة الصدارة أونلاين:", err);
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = `<tr><td colspan="3" style="color: #f87171;">وضع اللعب المحلي نشط (Offline)</td></tr>`;
         }
     }
 
@@ -387,7 +389,7 @@
             document.getElementById('score-val').innerText = score;
             document.getElementById('game-status').innerText = `🎯 قنص ممتاز لـ ${target.name}! نلت +${pts} نقطة!`;
             
-            updateSupabaseScore(); // رفع السكور وتحديث الصدارة فوراً
+            updateSupabaseScore(); 
             resetTarget();
         } else {
             playSound('miss'); 
@@ -395,28 +397,20 @@
         }
     }
 
-    canvas.addEventListener('mousedown', function(e) {
-        e.preventDefault();
-        executeShot(e.clientX, e.clientY);
-    });
-
+    canvas.addEventListener('mousedown', function(e) { e.preventDefault(); executeShot(e.clientX, e.clientY); });
     canvas.addEventListener('touchstart', function(e) {
         e.preventDefault();
-        if(e.touches.length > 0) {
-            executeShot(e.touches[0].clientX, e.touches[0].clientY);
-        }
+        if(e.touches.length > 0) { executeShot(e.touches[0].clientX, e.touches[0].clientY); }
     });
 
     function triggerVisualAudioEffect() {
         const container = document.getElementById('game-container');
         ctx.fillStyle = "rgba(239, 68, 68, 0.6)";
         ctx.fillRect(0,0, canvas.width, canvas.height);
-        
         const intensity = 8;
         const xShake = (Math.random() - 0.5) * intensity;
         const yShake = (Math.random() - 0.5) * intensity;
         container.style.transform = `translate(${xShake}px, ${yShake}px)`;
-        
         setTimeout(() => { container.style.transform = 'translate(0,0)'; }, 50);
     }
 
@@ -435,16 +429,13 @@
             ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
             ctx.fillStyle = target.name.includes("وحش") ? "#ef4444" : target.name.includes("نادر") ? '#fbbf24' : '#4ade80'; 
             ctx.fill();
-            ctx.strokeStyle = '#ffffff'; 
-            ctx.stroke(); 
-            ctx.closePath();
+            ctx.strokeStyle = '#ffffff'; ctx.stroke(); ctx.closePath();
             
             ctx.fillStyle = '#ffffff'; 
             ctx.fillText(target.name + (target.currentHealth > 1 ? ` (HP:${target.currentHealth})` : ""), target.x - 35, target.y - target.radius - 8);
             
             if (lastShot.timer > 0) {
                 ctx.beginPath(); ctx.arc(lastShot.x, lastShot.y, 5, 0, Math.PI * 2); ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.closePath();
-                ctx.beginPath(); ctx.arc(lastShot.x, lastShot.y, 1.5, 0, Math.PI * 2); ctx.fillStyle = "#000000"; ctx.fill(); ctx.closePath();
                 lastShot.timer--;
             }
         }, 1000 / 60);
@@ -454,17 +445,10 @@
         const types = Object.keys(targetsConfig);
         const randomType = types[Math.floor(Math.random() * types.length)];
         const config = targetsConfig[randomType];
-        
-        target.name = config.name;
-        target.radius = config.radius;
-        target.pts = config.pts;
-        target.health = config.health;
-        target.currentHealth = config.health;
-        target.speedFactor = config.speedFactor;
-        
+        target.name = config.name; target.radius = config.radius; target.pts = config.pts;
+        target.health = config.health; target.currentHealth = config.health; target.speedFactor = config.speedFactor;
         target.x = Math.random() * (canvas.width - 100) + 50; 
         target.y = Math.random() * (canvas.height - 100) + 50;
-        
         target.xSpeed = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1.5) * config.speedFactor;
         target.ySpeed = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1.5) * config.speedFactor;
     }
