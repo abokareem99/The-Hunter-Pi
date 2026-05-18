@@ -241,7 +241,6 @@
         initAudio(); 
         document.getElementById('btn-login').innerText = "جاري فتح الميدان...";
         
-        // التحقق الذكي من بيئة التصفح لتأمين الدخول التجريبي على الكمبيوتر والحقيقي في متصفح باي
         if (typeof Pi === 'undefined' || !window.Pi || !window.Pi.authenticate) {
             console.log("تم رصد متصفح خارجي - تفعيل حساب المطور الاحتياطي");
             handleLoginSuccess("AbuKareem_Dev");
@@ -262,7 +261,13 @@
         document.getElementById('player-name').innerText = playerPiUser;
         
         try {
-            let { data } = await _supabaseClient.from(TABLE_NAME).select('high_score').eq('pi_username', playerPiUser).maybeSingle();
+            // جلب السكور القديم بأمان عند الدخول
+            let { data, error } = await _supabaseClient
+                .from(TABLE_NAME)
+                .select('high_score')
+                .eq('pi_username', playerPiUser)
+                .maybeSingle();
+                
             if (data) { 
                 score = data.high_score || 0; 
                 document.getElementById('score-val').innerText = score;
@@ -284,39 +289,25 @@
 
     async function updateSupabaseScore() {
         try {
-            console.log("محاولة فحص السكور للسيرفر...");
+            console.log("إرسال السكور الجديد للسيرفر عبر UPSERT المباشر الحركي...");
             
-            // 1. الاستعلام عن وجود الصياد مسبقاً في جدول السيرفر الجديد
-            let { data: playerRow, error: fetchErr } = await _supabaseClient
+            // تحديث أو إدخال فوري ذكي يعتمد على حقل pi_username الفريد (Unique) دون تعارض مع الـ id
+            const { error } = await _supabaseClient
                 .from(TABLE_NAME)
-                .select('id, high_score')
-                .eq('pi_username', playerPiUser)
-                .maybeSingle();
+                .upsert(
+                    { pi_username: playerPiUser, high_score: score, updated_at: new Date() },
+                    { onConflict: 'pi_username' }
+                );
 
-            if (fetchErr) throw fetchErr;
-
-            if (playerRow) {
-                // 2. إذا كان الحساب مسجلاً، نقوم بتحديث الـ high_score فقط عند كسر الرقم القياسي السابق
-                if (score > (playerRow.high_score || 0)) {
-                    await _supabaseClient
-                        .from(TABLE_NAME)
-                        .update({ high_score: score, updated_at: new Date() })
-                        .eq('id', playerRow.id);
-                    console.log("تم تحديث السكور الأعلى في السيرفر بنجاح!");
-                }
+            if (error) {
+                console.error("فشل إرسال البيانات لجدار حماية الـ RLS:", error.message);
             } else {
-                // 3. إذا كان أول دخول للصياد في الجدول الجديد، نقوم بعملية إدخال (Insert) نظيفة
-                await _supabaseClient
-                    .from(TABLE_NAME)
-                    .insert([{ pi_username: playerPiUser, high_score: score }]);
-                console.log("تسجيل صياد جديد بنجاح في السيرفر!");
+                console.log("تم تحديث النقاط بنجاح صلب داخل الجدول! 🎯");
+                loadLeaderboard();
             }
             
-            // تحديث لوحة الصدارة بعد الاستجابة
-            loadLeaderboard();
-            
         } catch (err) {
-            console.error("خطأ أثناء ترحيل النقاط لـ Supabase:", err);
+            console.error("خطأ غير متوقع في معالجة النقاط:", err);
         }
     }
 
