@@ -289,22 +289,21 @@
     }
 
     function buyAmmoWithPi() {
-        if (!isSdkInitialized || playerPiUser === "AbuKareem_Dev") {
-            document.getElementById('game-status').innerText = "⚙️ وضع التطوير: محاكاة دفع 1 Pi نجحت!";
-            document.getElementById('game-status').style.color = "#fbbf24";
-            ammo += 30;
-            document.getElementById('ammo-val').innerText = ammo;
+        // التحقق أولاً من وجود بيئة تفعيل الـ SDK لمنع تخطي الخطوات خارج التطبيق الرسمي
+        if (typeof Pi === 'undefined' || !window.Pi) {
+            document.getElementById('game-status').innerText = "⚠️ يجب فتح اللعبة من داخل تطبيق Pi Browser لتشغيل الدفع الحقيقي.";
+            document.getElementById('game-status').style.color = "#f87171";
             return;
         }
 
-        document.getElementById('game-status').innerText = "⚡ جاري تجهيز فاتورة Pi الدفع...";
+        document.getElementById('game-status').innerText = "⚡ جاري تجهيز فاتورة الدفع في محفظة Pi...";
         document.getElementById('game-status').style.color = "#fbbf24";
 
         const paymentData = {
             amount: 1.0, 
             memo: "شحن حقيبة ذخيرة مطورة (30 طلقة) - لعبة الصياد",
-            metadata: { item_code: "ammo_box_30", buyer: playerPiUser },
-            uid: currentPiUserId
+            metadata: { item_code: "ammo_box_30", buyer: playerPiUser || "unknown_player" },
+            uid: currentPiUserId || ""
         };
 
         const callbacks = {
@@ -423,7 +422,6 @@
         document.getElementById('game-status').style.color = "#38bdf8";
     }
     
-    // معالجة ذكية ومستمرة لتسوية الدفعات المعلقة لضمان عدم قفل حساب المستخدم
     async function onIncompletePaymentFound(payment) {
         console.log("تم رصد معاملة قديمة معلقة، جاري التسوية تلقائياً مع السيرفر الخلفي...", payment);
         if (payment && payment.identifier) {
