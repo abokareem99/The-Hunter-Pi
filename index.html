@@ -151,7 +151,6 @@
 </div>
 
 <script>
-    // إعدادات البيئة لـ Supabase المتوافقة مع الـ 6 أعمدة الحالية
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
@@ -162,7 +161,7 @@
     let ammo = 30;
     let playerPiUser = "";
     let playerWallet = ""; 
-    let currentPiUserId = ""; // لتخزين الـ UID المميز لطلبات المحفظة
+    let currentPiUserId = ""; 
     let isSdkInitialized = false;
 
     let target = { x: 150, y: 150, xSpeed: 3, ySpeed: 2.5, radius: 20 };
@@ -170,7 +169,6 @@
     const ctx = canvas.getContext('2d');
     let gameInterval;
 
-    // دالة الدخول الذكية لحل خطأ postMessage والمتصفح العادي
     function initAndLoginWithPi() {
         document.getElementById('btn-login').innerText = "جاري الاتصال بالنظام...";
         
@@ -234,6 +232,7 @@
         loadLeaderboard();
     }
 
+    // تأكيد آلية القيمة الفريدة والدمج الآمن لمنع التكرار
     async function updateSupabaseScore() {
         if (!playerPiUser) return;
         
@@ -245,6 +244,7 @@
                 updated_at: new Date().toISOString()
             };
 
+            // الـ Upsert هنا مبني وموجه للتحقق من قيد العمود الفريد (pi_username)
             const { error } = await _supabaseClient
                 .from(TABLE_NAME)
                 .upsert(payload, { onConflict: 'pi_username' });
@@ -290,13 +290,8 @@
         }
     }
 
-    // ==========================================
-    // 🪙 محرك معالجة وبوابة دفع المحفظة (Pi Wallet)
-    // ==========================================
-
     function buyAmmoWithPi() {
         if (!isSdkInitialized || playerPiUser === "AbuKareem_Dev") {
-            // محاكاة وضع المطور المريح لكي تختبر نجاح الوظائف داخل المتصفح العادي
             document.getElementById('game-status').innerText = "⚙️ وضع التطوير: محاكاة دفع 1 Pi نجحت!";
             document.getElementById('game-status').style.color = "#fbbf24";
             ammo += 30;
@@ -361,7 +356,6 @@
             const result = await response.json();
             
             if (result.success) {
-                // شحن العتاد للاعب بنجاح كامل فور استلام إشارة التأكيد
                 ammo += 30; 
                 document.getElementById('ammo-val').innerText = ammo;
                 document.getElementById('game-status').innerText = "🪙 تم تأكيد استلام 1 Pi بنجاح وشحن عتادك المطور! 🔋";
@@ -374,8 +368,6 @@
             console.error("خطأ التواصل مع complete.js endpoint:", err);
         }
     }
-
-    // ==========================================
 
     function executeShot(clientX, clientY) {
         if (ammo <= 0) {
