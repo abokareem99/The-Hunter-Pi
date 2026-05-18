@@ -232,7 +232,6 @@
         loadLeaderboard();
     }
 
-    // تأكيد آلية القيمة الفريدة والدمج الآمن لمنع التكرار
     async function updateSupabaseScore() {
         if (!playerPiUser) return;
         
@@ -244,7 +243,6 @@
                 updated_at: new Date().toISOString()
             };
 
-            // الـ Upsert هنا مبني وموجه للتحقق من قيد العمود الفريد (pi_username)
             const { error } = await _supabaseClient
                 .from(TABLE_NAME)
                 .upsert(payload, { onConflict: 'pi_username' });
@@ -360,6 +358,7 @@
                 document.getElementById('ammo-val').innerText = ammo;
                 document.getElementById('game-status').innerText = "🪙 تم تأكيد استلام 1 Pi بنجاح وشحن عتادك المطور! 🔋";
                 document.getElementById('game-status').style.color = "#4ade80";
+                updateSupabaseScore();
             } else {
                 document.getElementById('game-status').innerText = "⚠️ فشل السيرفر في توثيق إكمال الفاتورة.";
                 document.getElementById('game-status').style.color = "#f87171";
@@ -424,8 +423,20 @@
         document.getElementById('game-status').style.color = "#38bdf8";
     }
     
-    function onIncompletePaymentFound(payment) {
-        console.log("تم العثور على معاملة معلقة قديمة:", payment);
+    // معالجة ذكية ومستمرة لتسوية الدفعات المعلقة لضمان عدم قفل حساب المستخدم
+    async function onIncompletePaymentFound(payment) {
+        console.log("تم رصد معاملة قديمة معلقة، جاري التسوية تلقائياً مع السيرفر الخلفي...", payment);
+        if (payment && payment.identifier) {
+            try {
+                await fetch('/api/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid })
+                });
+            } catch (e) {
+                console.error("فشلت تسوية الدفعة المعلقة:", e);
+            }
+        }
     }
 </script>
 </body>
