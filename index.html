@@ -26,7 +26,7 @@
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.6);
             border: 1px solid #334155;
-            transition: transform 0.05s linear; /* لدعم اهتزاز الشاشة الحماسي */
+            transition: transform 0.05s linear;
         }
         h1 { 
             color: #38bdf8;
@@ -131,9 +131,9 @@
             <div>المستوى: <span id="level-val" style="color: #a855f7;">1</span> ⚡</div>
         </div>
 
-        <canvas id="hunting-canvas" width="480" height="280"></canvas>
+        <canvas id="hunting-canvas" width="480" height="320"></canvas>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px;">جاري إعداد الميدان...</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px;">حرك إصبعك أو الماوس على الشاشة للتنشين بالكلاش واصطد الدائرة!</p>
         
         <button class="btn" style="background-image: linear-gradient(135deg, #eab308, #ca8a04); color: #0f172a; font-size: 14px; padding: 10px 25px; width:auto; font-weight: 800;" onclick="buyAmmoWithPi()">🪙 شحن 30 ذخيرة (1 Pi)</button>
 
@@ -170,17 +170,22 @@
     let currentPiUserId = ""; 
     let isSdkInitialized = false;
     
-    // إعدادات الهدف والمؤثرات المتطورة
-    let target = { x: 150, y: 150, xSpeed: 3, ySpeed: 2.5, radius: 20, angle: 0 };
+    // إعدادات الهدف
+    let target = { x: 150, y: 100, xSpeed: 3, ySpeed: 2.5, radius: 20, angle: 0 };
     let particles = [];
     let flashIntensity = 0;
     let screenShake = 0;
+
+    // إعدادات نظام التنشين بالكلاشينكوف المطور
+    let aimX = 240;
+    let aimY = 100;
+    let weaponRecoil = 0;
+    let isFiringEffect = 0;
 
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
     let gameInterval;
 
-    // محرك صوتي برمي متطور بدون ملفات خارجية لضمان عملها فورياً داخل البيئة الرسمية
     let audioCtx;
     function initAudio() {
         if (!audioCtx) {
@@ -198,21 +203,21 @@
 
             if (type === 'shoot') {
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(320, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(380, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.12);
             } else if (type === 'hit') {
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.25);
-                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(650, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
             } else if (type === 'empty') {
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.05);
@@ -254,7 +259,6 @@
                 setupDevAccount();
             }
         } catch (e) {
-            console.warn("خطأ في بيئة تشغيل الـ SDK، تفعيل الحماية الاحتياطية.");
             setupDevAccount();
         }
     }
@@ -269,7 +273,7 @@
     async function handleLoginSuccess() {
         document.getElementById('player-name').innerText = playerPiUser;
         try {
-            let { data, error } = await _supabaseClient
+            let { data } = await _supabaseClient
                 .from(TABLE_NAME)
                 .select('high_score')
                 .eq('pi_username', playerPiUser)
@@ -280,12 +284,9 @@
                 gameLevel = Math.floor(score / 50) + 1;
                 document.getElementById('level-val').innerText = gameLevel;
             }
-        } catch(e) {
-            console.error("خطأ جلب السكور:", e);
-        }
+        } catch(e) {}
         
         updateSupabaseScore();
-        
         document.getElementById('auth-section').className = 'hidden';
         document.getElementById('game-section').className = '';
         startGameLoop();
@@ -301,26 +302,14 @@
                 high_score: score,
                 updated_at: new Date().toISOString()
             };
-            const { error } = await _supabaseClient
-                .from(TABLE_NAME)
-                .upsert(payload, { onConflict: 'pi_username' });
-            if (error) {
-                console.error("تفاصيل خطأ Supabase:", error);
-                document.getElementById('game-status').innerText = "⚠️ خطأ مزامنة RLS: " + error.message;
-                document.getElementById('game-status').style.color = "#f87171";
-            } else {
-                document.getElementById('game-status').innerText = "🎯 تم المزامنة بنجاح مع قاعدة البيانات!";
-                document.getElementById('game-status').style.color = "#4ade80";
-                loadLeaderboard();
-            }
-        } catch (err) {
-            console.error("خطأ عام أثناء الإرسال لـ Supabase:", err);
-        }
+            await _supabaseClient.from(TABLE_NAME).upsert(payload, { onConflict: 'pi_username' });
+            loadLeaderboard();
+        } catch (err) {}
     }
 
     async function loadLeaderboard() {
         try {
-            let { data, error } = await _supabaseClient
+            let { data } = await _supabaseClient
                 .from(TABLE_NAME)
                 .select('pi_username, high_score')
                 .order('high_score', { ascending: false })
@@ -335,15 +324,10 @@
                     tr.innerHTML = `<td>${index + 1}</td><td>${row.pi_username}</td><td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>`;
                     tbody.appendChild(tr);
                 });
-            } else {
-                tbody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8;">الجدول فارغ في Supabase، كن أول من يسجل سكور!</td></tr>`;
             }
-        } catch (err) {
-            document.getElementById('leaderboard-body').innerHTML = `<tr><td colspan="3" style="color: #f87171;">خطأ في جلب الصدارة</td></tr>`;
-        }
+        } catch (err) {}
     }
 
-    // بناء دالة انفجار الجزيئات الحماسية لمكان الإصابة
     function createExplosion(x, y) {
         for (let i = 0; i < 15; i++) {
             particles.push({
@@ -352,7 +336,7 @@
                 vy: (Math.random() - 0.5) * 7,
                 radius: Math.random() * 3 + 1,
                 alpha: 1,
-                color: `hsl(${Math.random() * 40 + 160}, 100%, 60%)` // تأثير جزيئات بلون سماوي ناري متناسق مع اللعبة
+                color: `hsl(${Math.random() * 40 + 10}, 100%, 60%)` 
             });
         }
     }
@@ -370,21 +354,21 @@
         playSound('shoot');
         
         const rect = canvas.getBoundingClientRect();
-        const mouseX = clientX - rect.left; 
-        const mouseY = clientY - rect.top;
+        aimX = clientX - rect.left; 
+        aimY = clientY - rect.top;
         
-        // تفعيل مؤثرات الارتداد الارتجاجي والوميض
-        flashIntensity = 0.35;
-        screenShake = 6;
+        flashIntensity = 0.4;
+        screenShake = 7;
+        weaponRecoil = 15; // تأثير ارتداد السلاح للخلف عند الإطلاق
+        isFiringEffect = 5; // مدة ظهور لهب الإطلاق
         
-        const distance = Math.sqrt((mouseX - target.x)**2 + (mouseY - target.y)**2);
+        const distance = Math.sqrt((aimX - target.x)**2 + (aimY - target.y)**2);
         if (distance <= target.radius) {
             score += 10;
             document.getElementById('score-val').innerText = score;
             playSound('hit');
             createExplosion(target.x, target.y);
             
-            // حساب المستوى وسرعة حركة الهدف المتصاعدة تلقائياً
             let newLevel = Math.floor(score / 50) + 1;
             if (newLevel > gameLevel) {
                 gameLevel = newLevel;
@@ -393,22 +377,39 @@
                 target.ySpeed += (target.ySpeed > 0 ? 1.2 : -1.2);
             }
             
-            document.getElementById('game-status').innerText = "🎯 إصابة دقيقة ومباشرة! +10 نقاط";
+            document.getElementById('game-status').innerText = "🎯 إصابة مباشرة بالكلاشينكوف! +10 نقاط";
             document.getElementById('game-status').style.color = "#4ade80";
             updateSupabaseScore(); 
             resetTarget();
+        } else {
+            document.getElementById('game-status').innerText = "💨 طلقة طائشة! ركز في التنشين.";
+            document.getElementById('game-status').style.color = "#fbbf24";
         }
     }
 
+    // تتبع حركة إصبع المستخدم أو الماوس للتنشين وتوجيه السلاح
+    function updateAimPosition(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        aimX = clientX - rect.left;
+        aimY = clientY - rect.top;
+    }
+
+    canvas.addEventListener('mousemove', (e) => updateAimPosition(e.clientX, e.clientY));
     canvas.addEventListener('mousedown', (e) => executeShot(e.clientX, e.clientY));
+    
+    canvas.addEventListener('touchmove', (e) => {
+        if(e.touches.length > 0) updateAimPosition(e.touches[0].clientX, e.touches[0].clientY);
+    });
     canvas.addEventListener('touchstart', (e) => {
-        if(e.touches.length > 0) executeShot(e.touches[0].clientX, e.touches[0].clientY);
+        if(e.touches.length > 0) {
+            updateAimPosition(e.touches[0].clientX, e.touches[0].clientY);
+            executeShot(e.touches[0].clientX, e.touches[0].clientY);
+        }
     });
 
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
-            // تحريك الهدف وزاوية الدوران الاحترافية
             target.x += target.xSpeed; 
             target.y += target.ySpeed;
             target.angle += 0.05;
@@ -416,7 +417,6 @@
             if (target.x - target.radius < 0 || target.x + target.radius > canvas.width) target.xSpeed = -target.xSpeed;
             if (target.y - target.radius < 0 || target.y + target.radius > canvas.height) target.ySpeed = -target.ySpeed;
             
-            // تفعيل اهتزاز الحاوية الرئيسي
             if (screenShake > 0) {
                 const dx = (Math.random() - 0.5) * screenShake;
                 const dy = (Math.random() - 0.5) * screenShake;
@@ -430,13 +430,13 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // رسم شبكة رادار عسكرية خلفية رائعة لتعزيز المتعة البصرية
+            // رسم شبكة رادار الخلفية
             ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)';
             ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
             for(let j=0; j<canvas.height; j+=40) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke(); }
 
-            // تحديث ورسم جزيئات الانفجار المضيئة
+            // تحديث ورسم جزيئات الانفجار
             particles.forEach((p, index) => {
                 p.x += p.vx; p.y += p.vy; p.alpha -= 0.025;
                 if (p.alpha <= 0) { particles.splice(index, 1); }
@@ -449,54 +449,102 @@
                 }
             });
 
-            // وميض الشاشة اللحظي عند الإطلاق
+            // وميض الإطلاق
             if (flashIntensity > 0) {
                 ctx.fillStyle = `rgba(255, 255, 255, ${flashIntensity})`;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 flashIntensity -= 0.06;
             }
 
-            // رسم شبكة تصويب عسكرية دائرية تدور بدلاً من الكرة المصمتة
+            // --- رسم الهدف (الدائرة المتحركة المطلوب صيدها) ---
             ctx.save();
             ctx.translate(target.x, target.y);
             ctx.rotate(target.angle);
-            
-            ctx.shadowBlur = 8;
-            ctx.shadowColor = '#38bdf8';
-            
-            // الدائرة الخارجية الزرقاء للهدف
-            ctx.strokeStyle = '#38bdf8';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#4ade80';
+            ctx.strokeStyle = '#4ade80';
             ctx.lineWidth = 3;
             ctx.beginPath(); ctx.arc(0, 0, target.radius, 0, Math.PI * 2); ctx.stroke();
-            
-            // شعيرات التقاطع الداخلية الحمراء للتصويب
-            ctx.strokeStyle = '#f87171';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(-target.radius, 0); ctx.lineTo(target.radius, 0); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(0, -target.radius); ctx.lineTo(0, target.radius); ctx.stroke();
-            
-            // نقطة المنتصف (العين المركزية)
-            ctx.fillStyle = '#ef4444';
-            ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
-            
+            ctx.fillStyle = 'rgba(74, 222, 128, 0.2)';
+            ctx.fill();
             ctx.restore();
             
-            // نص يعلو الهدف مع إيضاح المستوى الحالي للحماس
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.font = 'bold 11px Tahoma';
-            ctx.fillText(`🎯 TARGET Lvl ${gameLevel}`, target.x - 35, target.y - target.radius - 7);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 10px Tahoma';
+            ctx.fillText(`🎯 الهدف الطائر`, target.x - 28, target.y - target.radius - 6);
+
+            // --- رسم خط الليزر للتنشين من السلاح إلى نقطة المؤشر ---
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.35)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, canvas.height - 10);
+            ctx.lineTo(aimX, aimY);
+            ctx.stroke();
+            ctx.setLineDash([]); // إعادة الخط لوضعه الطبيعي
+
+            // --- رسم نقطة التنشين المتقاطعة (Crosshair) ---
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(aimX - 8, aimY); ctx.lineTo(aimX + 8, aimY);
+            ctx.moveTo(aimX, aimY - 8); ctx.lineTo(aimX, aimY + 8);
+            ctx.stroke();
+
+            // --- عملية حساب زاوية التفات السلاح نحو المؤشر ---
+            let gunBaseX = canvas.width / 2;
+            let gunBaseY = canvas.height + 10;
+            let angleToAim = Math.atan2(aimY - gunBaseY, aimX - gunBaseX);
+
+            // تقليص الارتداد تدريجياً ليعود السلاح لمكانه
+            if (weaponRecoil > 0) weaponRecoil -= 2;
+
+            // --- رسم بندقية الكلاشينكوف (AK-47) برمجياً بأسفل المنتصف ---
+            ctx.save();
+            ctx.translate(gunBaseX, gunBaseY + weaponRecoil);
+            ctx.rotate(angleToAim + Math.PI / 2); // توجيه فوهة السلاح للأعلى باتجاه زاوية التنشين
+
+            // تأثير لهب النار من الفوهة عند الإطلاق
+            if (isFiringEffect > 0) {
+                isFiringEffect--;
+                ctx.fillStyle = '#f97316';
+                ctx.beginPath();
+                ctx.moveTo(-6, -85); ctx.lineTo(0, -115); ctx.lineTo(6, -85);
+                ctx.fill();
+                ctx.fillStyle = '#eab308';
+                ctx.beginPath();
+                ctx.moveTo(-3, -85); ctx.lineTo(0, -105); ctx.lineTo(3, -85);
+                ctx.fill();
+            }
+
+            // رسم المقبض والبدن الخشبي الخلفي للـ AK-47
+            ctx.fillStyle = '#78350f'; // لون خشبي
+            ctx.fillRect(-7, -20, 14, 30); // المقبض الرئيسي
+            ctx.fillRect(-6, 5, 12, 25);  // الأخمص الخلفي
+
+            // جسم السلاح والحديد ومخزن الذخيرة المنحني
+            ctx.fillStyle = '#334155'; // لون حديدي داكن
+            ctx.fillRect(-5, -55, 10, 40); // بدن السلاح الأوسط
+            
+            // مخزن الذخيرة الكلاش المنحني المميز (Magazine)
+            ctx.beginPath();
+            ctx.arc(-10, -35, 15, 0, Math.PI / 2);
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            // ماسورة السلاح الطويلة (Barrel) والفوهة
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(-2, -85, 4, 30); 
+
+            ctx.restore();
 
         }, 1000 / 60);
     }
 
     function resetTarget() {
         target.x = Math.random() * (canvas.width - 60) + 30;
-        target.y = Math.random() * (canvas.height - 60) + 30;
-    }
-    
-    function reloadAmmo() { 
-        document.getElementById('game-status').innerText = "💡 استخدم زر شحن الذخيرة للتجربة مع محفظتك الحقيقية!";
-        document.getElementById('game-status').style.color = "#38bdf8";
+        target.y = Math.random() * (canvas.height - 120) + 30; // إبقاء الهدف بعيداً قليلاً عن السلاح بالأسفل
     }
 
     // --- كود بوابة دفع محفظة وسيرفر Pi النظيف والأصلي بنسبة 100% دون أي تعديل ---
@@ -518,20 +566,13 @@
         };
 
         const callbacks = {
-            onReadyForServerApproval: function(paymentId) {
-                console.log("المعاملة جاهزة، إرسال للموافقة المبدئية:", paymentId);
-                approvePaymentOnBackend(paymentId);
-            },
-            onReadyForServerCompletion: function(paymentId, txid) {
-                console.log("وقع المستخدم الفاتورة بنجاح، البلوكشين TXID:", txid);
-                completePaymentOnBackend(paymentId, txid);
-            },
+            onReadyForServerApproval: function(paymentId) { approvePaymentOnBackend(paymentId); },
+            onReadyForServerCompletion: function(paymentId, txid) { completePaymentOnBackend(paymentId, txid); },
             onCancel: function(paymentId) {
                 document.getElementById('game-status').innerText = "❌ تم إلغاء عملية الدفع من قبل المستخدم.";
                 document.getElementById('game-status').style.color = "#f87171";
             },
             onError: function(error, payment) {
-                console.error("خطأ بوابة الدفع المحفظة:", error);
                 document.getElementById('game-status').innerText = "⚠️ خطأ في معالجة محفظة Pi.";
                 document.getElementById('game-status').style.color = "#f87171";
             }
@@ -541,16 +582,12 @@
 
     async function approvePaymentOnBackend(paymentId) {
         try {
-            const response = await fetch('/api/approve', {
+            await fetch('/api/approve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ paymentId: paymentId })
             });
-            const result = await response.json();
-            console.log("استجابة خادم Vercel Approve:", result);
-        } catch (err) {
-            console.error("خطأ التواصل مع approve.js endpoint:", err);
-        }
+        } catch (err) { console.error(err); }
     }
 
     async function completePaymentOnBackend(paymentId, txid) {
@@ -564,20 +601,14 @@
             if (result.success) {
                 ammo += 30;
                 document.getElementById('ammo-val').innerText = ammo;
-                document.getElementById('game-status').innerText = "🪙 تم تأكيد استلام 1 Pi بنجاح وشحن عتادك المطور! 🔋";
+                document.getElementById('game-status').innerText = "🪙 تم تأكيد استلاف 1 Pi بنجاح وشحن عتادك المطور! 🔋";
                 document.getElementById('game-status').style.color = "#4ade80";
                 updateSupabaseScore();
-            } else {
-                document.getElementById('game-status').innerText = "⚠️ فشل السيرفر في توثيق إكمال الفاتورة.";
-                document.getElementById('game-status').style.color = "#f87171";
             }
-        } catch (err) {
-            console.error("خطأ التواصل مع complete.js endpoint:", err);
-        }
+        } catch (err) { console.error(err); }
     }
     
     async function onIncompletePaymentFound(payment) {
-        console.log("تم رصد معاملة قديمة معلقة، جاري التسوية تلقائياً مع السيرفر الخلفي...", payment);
         if (payment && payment.identifier) {
             try {
                 await fetch('/api/complete', {
@@ -585,9 +616,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid })
                 });
-            } catch (e) {
-                console.error("فشلت تسوية الدفعة المعلقة:", e);
-            }
+            } catch (e) { console.error(e); }
         }
     }
 </script>
