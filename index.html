@@ -51,7 +51,7 @@
             border-radius: 12px;
             border: 3px solid #38bdf8;
             box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
-            background-image: url('hunter-logo.png'); 
+            background-image: url('https://the-hunter-pi.vercel.app/hunter-logo.png'); 
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -137,7 +137,7 @@
 
     <div id="auth-section">
         <div class="welcome-card">
-            <div class="hunter-avatar"></div>
+            <div class="hunter-avatar" style="background-image: url('https://the-hunter-pi.vercel.app/hunter-logo.png');"></div>
             <p>مرحباً بك في ميدان الصيد الرقمي!<br>اربط حسابك وانطلق مجاناً</p>
             <button class="btn" id="btn-login" onclick="freeLoginWithPi()">دخول مجاني وبدء اللعب 🚀</button>
         </div>
@@ -213,18 +213,6 @@
     const ctx = canvas.getContext('2d');
     let gameInterval;
 
-    // تهيئة الـ SDK فور تحميل الصفحة لتجنب خطأ Uninitialized
-    window.addEventListener('DOMContentLoaded', () => {
-        try {
-            if (typeof Pi !== 'undefined' && window.Pi && window.Pi.init) {
-                Pi.init({ version: "2.0", sandbox: true });
-                console.log("تمت تهيئة Pi SDK بنجاح.");
-            }
-        } catch (e) {
-            console.warn("فشلت تهيئة الـ SDK بسبب البيئة الخارجية:", e);
-        }
-    });
-
     function initAudio() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -253,22 +241,31 @@
         initAudio(); 
         document.getElementById('btn-login').innerText = "جاري فتح الميدان...";
         
-        // التحقق الآمن والمباشر لتجنب أي كراش خارجي
-        if (typeof Pi === 'undefined' || !window.Pi || !window.Pi.authenticate) {
-            console.log("تم رصد متصفح خارجي - تفعيل حساب المطور الاحتياطي فوراً");
+        // فحص وجود الـ SDK أولاً بشكل صريح وثابت
+        if (typeof Pi === 'undefined' || !window.Pi) {
+            console.log("الـ SDK غير متاح نهائياً - التحول الفوري للمطور الاحتياطي");
             handleLoginSuccess("AbuKareem_Dev");
             return;
         }
         
+        // حاوية آمنة لعملية التهيئة والمصادقة لمنع أي كراش يوقف المتصفح
         try {
-            Pi.authenticate(['username', 'payments'], onIncompletePaymentFound).then(function(auth) {
+            console.log("جاري محاولة تهيئة ومصادقة الـ Pi SDK...");
+            
+            // تهيئة إلزامية سريعة قبل الاستدعاء لتفادي خطأ uninitialized
+            if(window.Pi.init) {
+                window.Pi.init({ version: "2.0", sandbox: true });
+            }
+
+            window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound).then(function(auth) {
                 handleLoginSuccess(auth.user.username);
             }).catch((err) => {
-                console.warn("خطأ مصادقة Pi SDK، التحول للاحتياطي:", err);
+                console.warn("رفض المصادقة من الـ SDK، الانتقال للاحتياطي:", err);
                 handleLoginSuccess("AbuKareem_Dev");
             });
+
         } catch (err) {
-            console.warn("تم الإمساك بخطأ الـ SDK، التحول للاحتياطي اليدوي:", err);
+            console.warn("تم اعتراض خطأ الـ SDK بنجاح وتجاوزه: ", err.message);
             handleLoginSuccess("AbuKareem_Dev");
         }
     }
