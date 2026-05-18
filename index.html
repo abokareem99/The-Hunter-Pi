@@ -175,7 +175,8 @@
         try {
             if (typeof Pi !== 'undefined' && window.Pi) {
                 if (!isSdkInitialized) {
-                    window.Pi.init({ version: "2.0", sandbox: true });
+                    // تم إزالة وضع sandbox لتتوافق البيئة تلقائياً مع متصفح Pi الحقيقي في الهاتف وتفادي خطأ postMessage
+                    window.Pi.init({ version: "2.0" });
                     isSdkInitialized = true;
                 }
                 
@@ -249,7 +250,7 @@
 
             if (error) {
                 console.error("تفاصيل خطأ Supabase:", error);
-                document.getElementById('game-status').innerText = "⚠️ خطأ مزامنة: " + error.message;
+                document.getElementById('game-status').innerText = "⚠️ خطأ مزامنة RLS: " + error.message;
                 document.getElementById('game-status').style.color = "#f87171";
             } else {
                 document.getElementById('game-status').innerText = "🎯 تم المزامنة بنجاح مع قاعدة البيانات!";
@@ -289,7 +290,6 @@
     }
 
     function buyAmmoWithPi() {
-        // التحقق أولاً من وجود بيئة تفعيل الـ SDK لمنع تخطي الخطوات خارج التطبيق الرسمي
         if (typeof Pi === 'undefined' || !window.Pi) {
             document.getElementById('game-status').innerText = "⚠️ يجب فتح اللعبة من داخل تطبيق Pi Browser لتشغيل الدفع الحقيقي.";
             document.getElementById('game-status').style.color = "#f87171";
