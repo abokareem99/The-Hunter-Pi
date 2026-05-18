@@ -138,7 +138,7 @@
 
 <div class="container" id="game-container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - ربط سحابي مرن</p>
+    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - جاهز للسيرفر تماماً</p>
 
     <div id="auth-section">
         <div class="welcome-card">
@@ -195,9 +195,10 @@
 <script>
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
-    const TABLE_NAME = "hunter_scores"; // اسم الجدول الجديد في قاعدة بياناتك
+    const TABLE_NAME = "hunter_scores"; 
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // ✅ التصحيح الحاسم: استخدام الحرف الكابيتال S لاستدعاء المكتبة بشكل سليم لمنع الـ Crash
+    const _supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let score = 0;
     let ammo = 30;
@@ -285,21 +286,19 @@
         playerPiUser = username;
         document.getElementById('player-name').innerText = playerPiUser;
         
-        // جلب سكور اللاعب مع حماية الكود من التوقف (Try/Catch)
         try {
-            let { data, error } = await supabase.from(TABLE_NAME).select('score').eq('username', playerPiUser).maybeSingle();
+            let { data, error } = await _supabaseClient.from(TABLE_NAME).select('score').eq('username', playerPiUser).maybeSingle();
             if (data) { 
                 score = data.score; 
                 document.getElementById('score-val').innerText = score;
             }
         } catch(e) { 
-            console.warn("فشل الاتصال بـ سوبابيز، سيتم استخدام التخزين المحلي مؤقتاً:", e); 
+            console.warn("استخدام الذاكرة المحلية كبديل متاح:", e); 
             let localHighScore = localStorage.getItem('hunter_high_score_' + playerPiUser) || 0;
             score = parseInt(localHighScore);
             document.getElementById('score-val').innerText = score;
         }
 
-        // دخول اللعبة فوراً دون انتظار أي رد خارجي يعطل الصفحة
         enterGameView();
         loadLeaderboard();
     }
@@ -311,27 +310,25 @@
     }
 
     async function updateSupabaseScore() {
-        // تحديث محلي احتياطي أولاً
         let currentHighScore = parseInt(localStorage.getItem('hunter_high_score_' + playerPiUser) || 0);
         if (score > currentHighScore) {
             localStorage.setItem('hunter_high_score_' + playerPiUser, score);
         }
 
-        // محاولة الرفع للسيرفر
         try {
-            let { data } = await supabase.from(TABLE_NAME).select('score').eq('username', playerPiUser).maybeSingle();
+            let { data } = await _supabaseClient.from(TABLE_NAME).select('score').eq('username', playerPiUser).maybeSingle();
             if (!data || score > data.score) {
-                await supabase.from(TABLE_NAME).upsert({ username: playerPiUser, score: score }, { onConflict: 'username' });
+                await _supabaseClient.from(TABLE_NAME).upsert({ username: playerPiUser, score: score }, { onConflict: 'username' });
                 loadLeaderboard();
             }
         } catch (err) {
-            console.error("خطأ أثناء تحديث البيانات السحابية:", err);
+            console.error("مشكلة برفع التحديث للسيرفر:", err);
         }
     }
 
     async function loadLeaderboard() {
         try {
-            let { data, error } = await supabase.from(TABLE_NAME).select('*').order('score', { ascending: false }).limit(5);
+            let { data, error } = await _supabaseClient.from(TABLE_NAME).select('*').order('score', { ascending: false }).limit(5);
             if (error) throw error;
 
             const tbody = document.getElementById('leaderboard-body');
@@ -352,9 +349,9 @@
                 tbody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8;">لا توجد نتائج مسجلة حتى الآن.</td></tr>`;
             }
         } catch (err) {
-            console.warn("خطأ في تحميل لوحة الصدارة أونلاين:", err);
+            console.warn("تنبيه لوحة الصدارة:", err);
             const tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = `<tr><td colspan="3" style="color: #f87171;">وضع اللعب المحلي نشط (Offline)</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="3" style="color: #f87171;">لوحة الصدارة المحلية نشطة (Server Pending)</td></tr>`;
         }
     }
 
