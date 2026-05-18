@@ -138,7 +138,7 @@
 
 <div class="container" id="game-container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - جاهز للسيرفر تماماً</p>
+    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - ربط متوافق مع السيرفر الجديد</p>
 
     <div id="auth-section">
         <div class="welcome-card">
@@ -195,9 +195,10 @@
 <script>
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
-    const TABLE_NAME = "hunter_scores"; 
+    
+    // 🛠️ تحديث ليتطابق تماماً مع اسم الجدول في سيرفرك الموضح بالصورة
+    const TABLE_NAME = "hunter_game_scores"; 
 
-    // ✅ التصحيح الحاسم: استخدام الحرف الكابيتال S لاستدعاء المكتبة بشكل سليم لمنع الـ Crash
     const _supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let score = 0;
@@ -287,7 +288,8 @@
         document.getElementById('player-name').innerText = playerPiUser;
         
         try {
-            let { data, error } = await _supabaseClient.from(TABLE_NAME).select('score').eq('username', playerPiUser).maybeSingle();
+            // 🛠️ تحديث اسم العمود البرمجي ليتوافق مع pi_username
+            let { data, error } = await _supabaseClient.from(TABLE_NAME).select('score').eq('pi_username', playerPiUser).maybeSingle();
             if (data) { 
                 score = data.score; 
                 document.getElementById('score-val').innerText = score;
@@ -316,9 +318,10 @@
         }
 
         try {
-            let { data } = await _supabaseClient.from(TABLE_NAME).select('score').eq('username', playerPiUser).maybeSingle();
+            // 🛠️ تحديث اسم العمود البرمجي ليتوافق مع pi_username عند الإرسال والـ upsert
+            let { data } = await _supabaseClient.from(TABLE_NAME).select('score').eq('pi_username', playerPiUser).maybeSingle();
             if (!data || score > data.score) {
-                await _supabaseClient.from(TABLE_NAME).upsert({ username: playerPiUser, score: score }, { onConflict: 'username' });
+                await _supabaseClient.from(TABLE_NAME).upsert({ pi_username: playerPiUser, score: score }, { onConflict: 'pi_username' });
                 loadLeaderboard();
             }
         } catch (err) {
@@ -337,10 +340,10 @@
             if (data && data.length > 0) {
                 data.forEach((row, index) => {
                     const tr = document.createElement('tr');
-                    if (row.username === playerPiUser) { tr.style.backgroundColor = "rgba(56, 189, 248, 0.1)"; }
+                    if (row.pi_username === playerPiUser) { tr.style.backgroundColor = "rgba(56, 189, 248, 0.1)"; }
                     tr.innerHTML = `
                         <td>${index + 1}</td>
-                        <td style="color: ${row.username === playerPiUser ? '#38bdf8' : '#ffffff'}">${row.username}</td>
+                        <td style="color: ${row.pi_username === playerPiUser ? '#38bdf8' : '#ffffff'}">${row.pi_username}</td>
                         <td style="color:#4ade80; font-weight:bold;">${row.score}</td>
                     `;
                     tbody.appendChild(tr);
