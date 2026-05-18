@@ -170,32 +170,39 @@
     let gameInterval;
 
     function initAndLoginWithPi() {
-        document.getElementById('btn-login').innerText = "جاري الاتصال بالنظام...";
+        const loginBtn = document.getElementById('btn-login');
+        loginBtn.innerText = "جاري الاتصال بالنظام الرسمي... 🔄";
         
         try {
+            // التحقق من وجود إضافة الـ SDK والـ Pi Browser الحقيقي
             if (typeof Pi !== 'undefined' && window.Pi) {
                 if (!isSdkInitialized) {
-                    // تم إزالة وضع sandbox لتتوافق البيئة تلقائياً مع متصفح Pi الحقيقي في الهاتف وتفادي خطأ postMessage
                     window.Pi.init({ version: "2.0" });
                     isSdkInitialized = true;
                 }
                 
-                window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
-                .then(function(auth) {
-                    playerPiUser = auth.user.username;
-                    currentPiUserId = auth.user.uid;
-                    playerWallet = auth.user.uid || "Pi_Network_User";
-                    handleLoginSuccess();
-                })
-                .catch((err) => {
-                    console.warn("بيئة خارجية أو رفض اتصال من الـ SDK، التحويل للوضع التجريبي الآمن.");
-                    setupDevAccount();
-                });
+                // إعطاء المتصفح مهلة 250ms للاستقرار قبل بدء المصادقة الرسمية
+                setTimeout(() => {
+                    window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
+                    .then(function(auth) {
+                        playerPiUser = auth.user.username;
+                        currentPiUserId = auth.user.uid;
+                        playerWallet = auth.user.uid || "Pi_Network_User";
+                        handleLoginSuccess();
+                    })
+                    .catch((err) => {
+                        console.error("رفض الاتصال من الـ SDK الموثق:", err);
+                        document.getElementById('game-status').innerText = "⚠️ فشل ربط حسابك الرسمي. تأكد من فتح الرابط عبر تطبيق Pi Browser وتفعيل إعدادات الدفع.";
+                        document.getElementById('game-status').style.color = "#f87171";
+                        loginBtn.innerText = "إعادة محاولة الاتصال الرسمي 🚀";
+                    });
+                }, 250);
             } else {
+                // إذا كنا نتصفح يقيناً من متصفح عادي خارجي كـ Chrome
                 setupDevAccount();
             }
         } catch (e) {
-            console.warn("تم رصد خطأ في بيئة تشغيل الـ SDK (PostMessage)، تم تفعيل حماية المتصفح العادي.");
+            console.warn("خطأ في بيئة تشغيل الـ SDK، تفعيل الحماية الاحتياطية.");
             setupDevAccount();
         }
     }
