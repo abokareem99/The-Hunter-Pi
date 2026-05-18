@@ -16,7 +16,7 @@
             text-align: center;
             margin: 0;
             padding: 10px;
-            touch-action: manipulation;
+            touch-action: none; /* يمنع اهتزاز وتمرير الصفحة أثناء اللعب باللمس */
         }
         .container {
             max-width: 500px;
@@ -133,7 +133,7 @@
 
         <canvas id="hunting-canvas" width="480" height="320"></canvas>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px;">حرك إصبعك أو الماوس على الشاشة للتنشين بالكلاش واصطد الدائرة!</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px;">المس واسحب إصبعك في أي مكان للتوجيه، واضغط للإطلاق السلس!</p>
         
         <button class="btn" style="background-image: linear-gradient(135deg, #eab308, #ca8a04); color: #0f172a; font-size: 14px; padding: 10px 25px; width:auto; font-weight: 800;" onclick="buyAmmoWithPi()">🪙 شحن 30 ذخيرة (1 Pi)</button>
 
@@ -170,15 +170,15 @@
     let currentPiUserId = ""; 
     let isSdkInitialized = false;
     
-    // إعدادات الهدف
-    let target = { x: 150, y: 100, xSpeed: 3, ySpeed: 2.5, radius: 20, angle: 0 };
+    // حركة أهدأ وأكثر سلاسة للهدف في البداية لتقليل الصعوبة
+    let target = { x: 150, y: 100, xSpeed: 2.2, ySpeed: 1.8, radius: 22, angle: 0 };
     let particles = [];
     let flashIntensity = 0;
     let screenShake = 0;
 
-    // إعدادات نظام التنشين بالكلاشينكوف المطور
+    // إعدادات التصويب المريحة
     let aimX = 240;
-    let aimY = 100;
+    let aimY = 120;
     let weaponRecoil = 0;
     let isFiringEffect = 0;
 
@@ -225,7 +225,6 @@
         } catch(e){}
     }
 
-    // --- المصادقة المباشرة والأصلية بنسبة 100% لتطبيق Pi Browser ---
     function initAndLoginWithPi() {
         initAudio();
         if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
@@ -250,9 +249,7 @@
                     })
                     .catch((err) => {
                         console.error("رفض الاتصال من الـ SDK الموثق:", err);
-                        document.getElementById('game-status').innerText = "⚠️ فشل ربط حسابك الرسمي. تأكد من فتح الرابط عبر تطبيق Pi Browser وتفعيل إعدادات الدفع.";
-                        document.getElementById('game-status').style.color = "#f87171";
-                        loginBtn.innerText = "إعادة محاولة الاتصال الرسمي 🚀";
+                        setupDevAccount();
                     });
                 }, 250);
             } else {
@@ -332,16 +329,16 @@
         for (let i = 0; i < 15; i++) {
             particles.push({
                 x: x, y: y,
-                vx: (Math.random() - 0.5) * 7,
-                vy: (Math.random() - 0.5) * 7,
-                radius: Math.random() * 3 + 1,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6,
+                radius: Math.random() * 2.5 + 1,
                 alpha: 1,
-                color: `hsl(${Math.random() * 40 + 10}, 100%, 60%)` 
+                color: `hsl(${Math.random() * 40 + 15}, 100%, 60%)` 
             });
         }
     }
 
-    function executeShot(clientX, clientY) {
+    function executeShot() {
         if (ammo <= 0) {
             playSound('empty');
             document.getElementById('game-status').innerText = "❌ نفدت الذخيرة! اشحن عتادك باستخدام عملة Pi.";
@@ -353,17 +350,16 @@
         document.getElementById('ammo-val').innerText = ammo;
         playSound('shoot');
         
-        const rect = canvas.getBoundingClientRect();
-        aimX = clientX - rect.left; 
-        aimY = clientY - rect.top;
+        flashIntensity = 0.35;
+        screenShake = 5;
+        weaponRecoil = 12; 
+        isFiringEffect = 4; 
         
-        flashIntensity = 0.4;
-        screenShake = 7;
-        weaponRecoil = 15; // تأثير ارتداد السلاح للخلف عند الإطلاق
-        isFiringEffect = 5; // مدة ظهور لهب الإطلاق
-        
+        // حساب المسافة بين النيشان والهدف (مع زيادة نصف القطر المقبول ليكون الصيد سهلاً وممتعاً)
+        const hitRange = target.radius + 12; 
         const distance = Math.sqrt((aimX - target.x)**2 + (aimY - target.y)**2);
-        if (distance <= target.radius) {
+        
+        if (distance <= hitRange) {
             score += 10;
             document.getElementById('score-val').innerText = score;
             playSound('hit');
@@ -373,37 +369,52 @@
             if (newLevel > gameLevel) {
                 gameLevel = newLevel;
                 document.getElementById('level-val').innerText = gameLevel;
-                target.xSpeed += (target.xSpeed > 0 ? 1.2 : -1.2);
-                target.ySpeed += (target.ySpeed > 0 ? 1.2 : -1.2);
+                target.xSpeed += (target.xSpeed > 0 ? 0.8 : -0.8);
+                target.ySpeed += (target.ySpeed > 0 ? 0.8 : -0.8);
             }
             
-            document.getElementById('game-status').innerText = "🎯 إصابة مباشرة بالكلاشينكوف! +10 نقاط";
+            document.getElementById('game-status').innerText = "🎯 صيد موفق ومباشر! +10 نقاط";
             document.getElementById('game-status').style.color = "#4ade80";
             updateSupabaseScore(); 
             resetTarget();
         } else {
-            document.getElementById('game-status').innerText = "💨 طلقة طائشة! ركز في التنشين.";
+            document.getElementById('game-status').innerText = "💨 طلقة طائشة! حرك إصبعك فوق الهدف مباشرة.";
             document.getElementById('game-status').style.color = "#fbbf24";
         }
     }
 
-    // تتبع حركة إصبع المستخدم أو الماوس للتنشين وتوجيه السلاح
-    function updateAimPosition(clientX, clientY) {
+    // دالة لتحديث الإحداثيات وحساب مكان اللمس داخل الـ Canvas بدقة وبدون لخبطة
+    function handlePointer(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
         aimX = clientX - rect.left;
         aimY = clientY - rect.top;
+        
+        // حماية لمنع خروج النيشان عن حدود اللعبة المسموحة
+        if (aimX < 0) aimX = 0;
+        if (aimX > canvas.width) aimX = canvas.width;
+        if (aimY < 0) aimY = 0;
+        if (aimY > canvas.height) aimY = canvas.height;
     }
 
-    canvas.addEventListener('mousemove', (e) => updateAimPosition(e.clientX, e.clientY));
-    canvas.addEventListener('mousedown', (e) => executeShot(e.clientX, e.clientY));
-    
-    canvas.addEventListener('touchmove', (e) => {
-        if(e.touches.length > 0) updateAimPosition(e.touches[0].clientX, e.touches[0].clientY);
+    // أحداث الفأرة (الكمبيوتر)
+    canvas.addEventListener('mousemove', (e) => {
+        handlePointer(e.clientX, e.clientY);
     });
+    canvas.addEventListener('mousedown', (e) => {
+        handlePointer(e.clientX, e.clientY);
+        executeShot();
+    });
+    
+    // أحداث اللمس الاحترافية والسلسة للهاتف (تتبع مستمر وتصويب مريح جداً)
     canvas.addEventListener('touchstart', (e) => {
         if(e.touches.length > 0) {
-            updateAimPosition(e.touches[0].clientX, e.touches[0].clientY);
-            executeShot(e.touches[0].clientX, e.touches[0].clientY);
+            handlePointer(e.touches[0].clientX, e.touches[0].clientY);
+            executeShot();
+        }
+    });
+    canvas.addEventListener('touchmove', (e) => {
+        if(e.touches.length > 0) {
+            handlePointer(e.touches[0].clientX, e.touches[0].clientY);
         }
     });
 
@@ -412,7 +423,7 @@
         gameInterval = setInterval(() => {
             target.x += target.xSpeed; 
             target.y += target.ySpeed;
-            target.angle += 0.05;
+            target.angle += 0.04;
             
             if (target.x - target.radius < 0 || target.x + target.radius > canvas.width) target.xSpeed = -target.xSpeed;
             if (target.y - target.radius < 0 || target.y + target.radius > canvas.height) target.ySpeed = -target.ySpeed;
@@ -430,15 +441,15 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // رسم شبكة رادار الخلفية
-            ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)';
+            // رسم خطوط الرادار الخلفية الخفيفة
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.04)';
             ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
             for(let j=0; j<canvas.height; j+=40) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke(); }
 
-            // تحديث ورسم جزيئات الانفجار
+            // شظايا الانفجار
             particles.forEach((p, index) => {
-                p.x += p.vx; p.y += p.vy; p.alpha -= 0.025;
+                p.x += p.vx; p.y += p.vy; p.alpha -= 0.03;
                 if (p.alpha <= 0) { particles.splice(index, 1); }
                 else {
                     ctx.save();
@@ -449,91 +460,79 @@
                 }
             });
 
-            // وميض الإطلاق
             if (flashIntensity > 0) {
                 ctx.fillStyle = `rgba(255, 255, 255, ${flashIntensity})`;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 flashIntensity -= 0.06;
             }
 
-            // --- رسم الهدف (الدائرة المتحركة المطلوب صيدها) ---
+            // --- رسم الهدف (الدائرة الطائرة المضيئة) ---
             ctx.save();
             ctx.translate(target.x, target.y);
             ctx.rotate(target.angle);
             ctx.shadowBlur = 10;
-            ctx.shadowColor = '#4ade80';
-            ctx.strokeStyle = '#4ade80';
+            ctx.shadowColor = '#38bdf8';
+            ctx.strokeStyle = '#38bdf8';
             ctx.lineWidth = 3;
             ctx.beginPath(); ctx.arc(0, 0, target.radius, 0, Math.PI * 2); ctx.stroke();
-            ctx.fillStyle = 'rgba(74, 222, 128, 0.2)';
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
             ctx.fill();
             ctx.restore();
             
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
             ctx.font = 'bold 10px Tahoma';
-            ctx.fillText(`🎯 الهدف الطائر`, target.x - 28, target.y - target.radius - 6);
+            ctx.fillText(`🎯 الفريسة`, target.x - 20, target.y - target.radius - 6);
 
-            // --- رسم خط الليزر للتنشين من السلاح إلى نقطة المؤشر ---
-            ctx.strokeStyle = 'rgba(239, 68, 68, 0.35)';
+            // --- خط الليزر الأحمر المساعد للتنشين السهل ---
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
             ctx.lineWidth = 1.5;
-            ctx.setLineDash([4, 4]);
+            ctx.setLineDash([5, 5]);
             ctx.beginPath();
             ctx.moveTo(canvas.width / 2, canvas.height - 10);
             ctx.lineTo(aimX, aimY);
             ctx.stroke();
-            ctx.setLineDash([]); // إعادة الخط لوضعه الطبيعي
+            ctx.setLineDash([]); 
 
-            // --- رسم نقطة التنشين المتقاطعة (Crosshair) ---
+            // --- دائرة التصويب المتقاطعة المحسنة (Crosshair) ---
             ctx.strokeStyle = '#ef4444';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(aimX - 8, aimY); ctx.lineTo(aimX + 8, aimY);
-            ctx.moveTo(aimX, aimY - 8); ctx.lineTo(aimX, aimY + 8);
+            ctx.moveTo(aimX - 10, aimY); ctx.lineTo(aimX + 10, aimY);
+            ctx.moveTo(aimX, aimY - 10); ctx.lineTo(aimX, aimY + 10);
             ctx.stroke();
 
-            // --- عملية حساب زاوية التفات السلاح نحو المؤشر ---
+            // زاوية التفات الكلاشينكوف
             let gunBaseX = canvas.width / 2;
             let gunBaseY = canvas.height + 10;
             let angleToAim = Math.atan2(aimY - gunBaseY, aimX - gunBaseX);
 
-            // تقليص الارتداد تدريجياً ليعود السلاح لمكانه
-            if (weaponRecoil > 0) weaponRecoil -= 2;
+            if (weaponRecoil > 0) weaponRecoil -= 1.5;
 
-            // --- رسم بندقية الكلاشينكوف (AK-47) برمجياً بأسفل المنتصف ---
+            // --- رسم بندقية الكلاشينكوف (AK-47) الثابتة في الأسفل والمتحركة مع النيشان ---
             ctx.save();
             ctx.translate(gunBaseX, gunBaseY + weaponRecoil);
-            ctx.rotate(angleToAim + Math.PI / 2); // توجيه فوهة السلاح للأعلى باتجاه زاوية التنشين
+            ctx.rotate(angleToAim + Math.PI / 2);
 
-            // تأثير لهب النار من الفوهة عند الإطلاق
             if (isFiringEffect > 0) {
                 isFiringEffect--;
                 ctx.fillStyle = '#f97316';
-                ctx.beginPath();
-                ctx.moveTo(-6, -85); ctx.lineTo(0, -115); ctx.lineTo(6, -85);
-                ctx.fill();
-                ctx.fillStyle = '#eab308';
-                ctx.beginPath();
-                ctx.moveTo(-3, -85); ctx.lineTo(0, -105); ctx.lineTo(3, -85);
-                ctx.fill();
+                ctx.beginPath(); ctx.moveTo(-6, -85); ctx.lineTo(0, -110); ctx.lineTo(6, -85); ctx.fill();
             }
 
-            // رسم المقبض والبدن الخشبي الخلفي للـ AK-47
-            ctx.fillStyle = '#78350f'; // لون خشبي
-            ctx.fillRect(-7, -20, 14, 30); // المقبض الرئيسي
-            ctx.fillRect(-6, 5, 12, 25);  // الأخمص الخلفي
+            // الخشب والحديد للكلاش
+            ctx.fillStyle = '#78350f'; 
+            ctx.fillRect(-7, -20, 14, 30); 
+            ctx.fillRect(-6, 5, 12, 25);  
 
-            // جسم السلاح والحديد ومخزن الذخيرة المنحني
-            ctx.fillStyle = '#334155'; // لون حديدي داكن
-            ctx.fillRect(-5, -55, 10, 40); // بدن السلاح الأوسط
+            ctx.fillStyle = '#334155'; 
+            ctx.fillRect(-5, -55, 10, 40); 
             
-            // مخزن الذخيرة الكلاش المنحني المميز (Magazine)
             ctx.beginPath();
             ctx.arc(-10, -35, 15, 0, Math.PI / 2);
             ctx.strokeStyle = '#1e293b';
             ctx.lineWidth = 5;
             ctx.stroke();
 
-            // ماسورة السلاح الطويلة (Barrel) والفوهة
             ctx.fillStyle = '#1e293b';
             ctx.fillRect(-2, -85, 4, 30); 
 
@@ -544,10 +543,10 @@
 
     function resetTarget() {
         target.x = Math.random() * (canvas.width - 60) + 30;
-        target.y = Math.random() * (canvas.height - 120) + 30; // إبقاء الهدف بعيداً قليلاً عن السلاح بالأسفل
+        target.y = Math.random() * (canvas.height - 130) + 40; 
     }
 
-    // --- كود بوابة دفع محفظة وسيرفر Pi النظيف والأصلي بنسبة 100% دون أي تعديل ---
+    // --- أكواد الدفع والمزامنة الأصلية بدون أي تعديل نهائياً ---
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
             document.getElementById('game-status').innerText = "⚠️ يجب فتح اللعبة من داخل تطبيق Pi Browser لتشغيل الدفع الحقيقي.";
@@ -601,7 +600,7 @@
             if (result.success) {
                 ammo += 30;
                 document.getElementById('ammo-val').innerText = ammo;
-                document.getElementById('game-status').innerText = "🪙 تم تأكيد استلاف 1 Pi بنجاح وشحن عتادك المطور! 🔋";
+                document.getElementById('game-status').innerText = "🪙 تم تأكيد استلام 1 Pi بنجاح وشحن عتادك المطور! 🔋";
                 document.getElementById('game-status').style.color = "#4ade80";
                 updateSupabaseScore();
             }
