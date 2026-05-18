@@ -6,6 +6,7 @@
     <title>لعبة الصياد - Pi Network</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         body {
@@ -128,6 +129,7 @@
         .leaderboard-table th, .leaderboard-table td {
             padding: 12px;
             border-bottom: 1px solid #1e293b;
+            font-size: 14px;
         }
         .leaderboard-table th { background-color: #1e293b; color: #38bdf8; }
     </style>
@@ -136,7 +138,7 @@
 
 <div class="container" id="game-container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - دخول فوري ومؤثرات كاملة</p>
+    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - ربط سحابي كامل لـ Supabase</p>
 
     <div id="auth-section">
         <div class="welcome-card">
@@ -172,18 +174,18 @@
             </div>
         </div>
 
-        <h3 style="margin-top: 25px; color: #4ade80;">🏆 أعلى سكور شخصي (Local Status)</h3>
+        <h3 style="margin-top: 25px; color: #38bdf8;">🏆 لوحة الصدارة العالمية (Supabase Live)</h3>
         <table class="leaderboard-table">
             <thead>
                 <tr>
-                    <th>اللاعب الحالي</th>
-                    <th>أعلى نقاط مسجلة 🎯</th>
+                    <th>الترتيب</th>
+                    <th>الصياد</th>
+                    <th>أعلى سكور 🎯</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="leaderboard-body">
                 <tr>
-                    <td id="lbl-local-user">...</td>
-                    <td id="lbl-local-score" style="color:#4ade80; font-weight:bold;">0</td>
+                    <td colspan="3" style="color: #94a3b8;">جاري تحميل لوحة الصدارة...</td>
                 </tr>
             </tbody>
         </table>
@@ -191,12 +193,20 @@
 </div>
 
 <script>
+    // 🔑 متغيرات الربط السحابي المستخرجة بنجاح
+    const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
+    const SUPABASE_ANON_KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
+    const TABLE_NAME = "hunter_scores"; // تأكد من مطابقة اسم الجدول الذي أضفته
+
+    // تهيئة عميل سوبابيز
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     let score = 0;
     let ammo = 30;
     let currentWeapon = "classic"; 
     let playerPiUser = "";
     let audioCtx = null;
-    let hasLoggedIn = false; // فحص لمنع الدخول المزدوج
+    let hasLoggedIn = false;
 
     const targetsConfig = {
         bird: { radius: 18, pts: 10, speedFactor: 1, name: "🕊️ طائر مائي", health: 1 },
@@ -258,7 +268,6 @@
         initAudio(); 
         document.getElementById('btn-login').innerText = "جاري فتح الميدان...";
 
-        // 🔥 مؤقت ذكي: إذا لم تستجب الشبكة خلال 1200 ملي ثانية، ادخل فورا تلقائياً
         const fallbackTimeout = setTimeout(() => {
             if (!hasLoggedIn) {
                 simulateDeveloperLogin();
@@ -268,7 +277,7 @@
         if (typeof Pi !== 'undefined' && window.Pi && window.Pi.authenticate) {
             Pi.authenticate(['username', 'payments'], onIncompletePaymentFound).then(function(auth) {
                 clearTimeout(fallbackTimeout);
-                handleLocalLogin(auth.user.username);
+                handleLoginSuccess(auth.user.username);
             }).catch(() => {
                 clearTimeout(fallbackTimeout);
                 simulateDeveloperLogin();
@@ -276,16 +285,24 @@
         }
     }
 
-    function simulateDeveloperLogin() { handleLocalLogin("AbuKareem_Dev"); }
+    function simulateDeveloperLogin() { handleLoginSuccess("AbuKareem_Dev"); }
 
-    function handleLocalLogin(username) {
+    async function handleLoginSuccess(username) {
         hasLoggedIn = true;
         playerPiUser = username;
         document.getElementById('player-name').innerText = playerPiUser;
-        document.getElementById('lbl-local-user').innerText = playerPiUser;
-        let localHighScore = localStorage.getItem('hunter_high_score_' + playerPiUser) || 0;
-        document.getElementById('lbl-local-score').innerText = localHighScore;
+        
+        // جلب أعلى سكور مسجل للاعب حالياً في قاعدة البيانات
+        try {
+            let { data, error } = await supabase.from(TABLE_NAME).select('score').eq('username', playerPiUser).maybeSingle();
+            if (data) { 
+                score = data.score; 
+                document.getElementById('score-val').innerText = score;
+            }
+        } catch(e) { console.error("خطأ أثناء جلب سكور اللاعب من سوبابيز:", e); }
+
         enterGameView();
+        loadLeaderboard();
     }
 
     function enterGameView() {
@@ -294,11 +311,48 @@
         startGameLoop();
     }
 
-    function updateHighScoreLocally() {
-        let currentHighScore = parseInt(localStorage.getItem('hunter_high_score_' + playerPiUser) || 0);
-        if (score > currentHighScore) {
-            localStorage.setItem('hunter_high_score_' + playerPiUser, score);
-            document.getElementById('lbl-local-score').innerText = score;
+    // 🌐 دالة تحديث السكور سحابياً عند تخطي السكور القديم
+    async function updateSupabaseScore() {
+        try {
+            let { data } = await supabase.from(TABLE_NAME).select('score').eq('username', playerPiUser).maybeSingle();
+            
+            // إذا لم يكن لديه سجل، أو السكور الحالي أعلى من المسجل، نقوم بالتحديث
+            if (!data || score > data.score) {
+                await supabase.from(TABLE_NAME).upsert({ username: playerPiUser, score: score }, { onConflict: 'username' });
+                loadLeaderboard(); // إعادة تحديث اللوحة مباشرة لرؤية الترتيب الجديد
+            }
+        } catch (err) {
+            console.error("خطأ أثناء تحديث البيانات السحابية:", err);
+        }
+    }
+
+    // 📊 دالة جلب أفضل 5 صيادين لعرضهم في جدول الصدارة اللحظي
+    async function loadLeaderboard() {
+        try {
+            let { data, error } = await supabase.from(TABLE_NAME).select('*').order('score', { ascending: false }).limit(5);
+            if (error) throw error;
+
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = "";
+
+            if (data && data.length > 0) {
+                data.forEach((row, index) => {
+                    const tr = document.createElement('tr');
+                    // تمييز صف اللاعب الحالي بلون خلفية خفيف
+                    if (row.username === playerPiUser) { tr.style.backgroundColor = "rgba(56, 189, 248, 0.1)"; }
+                    
+                    tr.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td style="color: ${row.username === playerPiUser ? '#38bdf8' : '#ffffff'}">${row.username}</td>
+                        <td style="color:#4ade80; font-weight:bold;">${row.score}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8;">لا توجد نتائج مسجلة حتى الآن.</td></tr>`;
+            }
+        } catch (err) {
+            console.error("خطأ في تحميل لوحة الصدارة:", err);
         }
     }
 
@@ -332,7 +386,8 @@
             score += pts;
             document.getElementById('score-val').innerText = score;
             document.getElementById('game-status').innerText = `🎯 قنص ممتاز لـ ${target.name}! نلت +${pts} نقطة!`;
-            updateHighScoreLocally(); 
+            
+            updateSupabaseScore(); // رفع السكور وتحديث الصدارة فوراً
             resetTarget();
         } else {
             playSound('miss'); 
@@ -421,6 +476,7 @@
     }
     function buySniperWithPi() {}
     function reloadAmmo() { ammo = 30; document.getElementById('ammo-val').innerText = ammo; }
+    function onIncompletePaymentFound(payment) {}
 </script>
 
 </body>
