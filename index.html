@@ -138,7 +138,7 @@
 
 <div class="container" id="game-container">
     <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - ربط متوافق مع السيرفر الجديد</p>
+    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">إصدار الفارس المطوّر - متوافق بالكامل مع أعمدة السيرفر</p>
 
     <div id="auth-section">
         <div class="welcome-card">
@@ -196,7 +196,7 @@
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     
-    // 🛠️ تحديث ليتطابق تماماً مع اسم الجدول في سيرفرك الموضح بالصورة
+    // اسم الجدول في سيرفرك
     const TABLE_NAME = "hunter_game_scores"; 
 
     const _supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -288,10 +288,10 @@
         document.getElementById('player-name').innerText = playerPiUser;
         
         try {
-            // 🛠️ تحديث اسم العمود البرمجي ليتوافق مع pi_username
-            let { data, error } = await _supabaseClient.from(TABLE_NAME).select('score').eq('pi_username', playerPiUser).maybeSingle();
+            // 🛠️ تم تعديل اسم العمود هنا ليقرأ من حقل high_score الموجود بجدولك
+            let { data, error } = await _supabaseClient.from(TABLE_NAME).select('high_score').eq('pi_username', playerPiUser).maybeSingle();
             if (data) { 
-                score = data.score; 
+                score = data.high_score || 0; 
                 document.getElementById('score-val').innerText = score;
             }
         } catch(e) { 
@@ -318,10 +318,15 @@
         }
 
         try {
-            // 🛠️ تحديث اسم العمود البرمجي ليتوافق مع pi_username عند الإرسال والـ upsert
-            let { data } = await _supabaseClient.from(TABLE_NAME).select('score').eq('pi_username', playerPiUser).maybeSingle();
-            if (!data || score > data.score) {
-                await _supabaseClient.from(TABLE_NAME).upsert({ pi_username: playerPiUser, score: score }, { onConflict: 'pi_username' });
+            // 🛠️ جلب القيمة القديمة من حقل high_score للتحقق والمقارنة
+            let { data } = await _supabaseClient.from(TABLE_NAME).select('high_score').eq('pi_username', playerPiUser).maybeSingle();
+            if (!data || score > (data.high_score || 0)) {
+                // 🛠️ تم التعديل للإرسال إلى حقل high_score المتوافق مع قاعدة بياناتك
+                await _supabaseClient.from(TABLE_NAME).upsert({ 
+                    pi_username: playerPiUser, 
+                    high_score: score 
+                }, { onConflict: 'pi_username' });
+                
                 loadLeaderboard();
             }
         } catch (err) {
@@ -331,7 +336,8 @@
 
     async function loadLeaderboard() {
         try {
-            let { data, error } = await _supabaseClient.from(TABLE_NAME).select('*').order('score', { ascending: false }).limit(5);
+            // 🛠️ ترتيب لوحة الصدارة بناءً على حقل high_score الصحيح
+            let { data, error } = await _supabaseClient.from(TABLE_NAME).select('*').order('high_score', { ascending: false }).limit(5);
             if (error) throw error;
 
             const tbody = document.getElementById('leaderboard-body');
@@ -344,12 +350,12 @@
                     tr.innerHTML = `
                         <td>${index + 1}</td>
                         <td style="color: ${row.pi_username === playerPiUser ? '#38bdf8' : '#ffffff'}">${row.pi_username}</td>
-                        <td style="color:#4ade80; font-weight:bold;">${row.score}</td>
+                        <td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8;">لا توجد نتائج مسجلة حتى الآن.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8;">لا توجد نتائج مسجلة حتى الآن. الجدول فارغ في السيرفر!</td></tr>`;
             }
         } catch (err) {
             console.warn("تنبيه لوحة الصدارة:", err);
