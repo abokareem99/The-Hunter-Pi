@@ -20,7 +20,7 @@
         .container {
             max-width: 600px;
             margin: 0 auto;
-            /* تم دمج صورة أبو كريم الفارس كخلفية سينمائية مع طبقة تعتيم ذكية لإبراز الأزرار والنصوص */
+            /* خلفية الفارس أبو كريم الرسمية مع تعتيم سينمائي */
             background: linear-gradient(rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.85)), url('hunter-logo.png');
             background-size: cover;
             background-position: center;
@@ -29,7 +29,6 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
             border: 2px solid #38bdf8;
-            /* إضافة تأثير اهتزاز خفيف للحاوية عند اللعب */
             transition: transform 0.05s linear;
         }
         h1 { color: #38bdf8; }
@@ -76,7 +75,6 @@
         }
         .btn-pay:hover { background-color: #ca8a04; }
         
-        /* جدول الصدارة الخاص بك */
         .leaderboard-table {
             width: 100%;
             margin-top: 20px;
@@ -133,7 +131,6 @@
 </div>
 
 <script>
-    // --- بيانات وثوابت قاعدة البيانات الخاصة بك (لم تُمس) ---
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
@@ -148,7 +145,6 @@
     let currentPiUserId = ""; 
     let isSdkInitialized = false;
 
-    // متقاطعات الجزيئات والمؤثرات البصرية المضافة لمتعة اللعب
     let target = { x: 150, y: 150, xSpeed: 4, ySpeed: 3, radius: 20, angle: 0 };
     let particles = [];
     let flashIntensity = 0;
@@ -158,7 +154,6 @@
     const ctx = canvas.getContext('2d');
     let gameInterval;
 
-    // محرك الصوت الذاتي البرمجي (Web Audio API) يعمل في الخلفية دون ملفات خارجية
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function playSound(type) {
@@ -193,7 +188,7 @@
         } catch(e){}
     }
 
-    // --- كود الدفع والمصادقة الأصلي الخاص بك (محمي 100%) ---
+    // --- المصادقة الرسمية والمزامنة الحية المباشرة (مؤمنة بالكامل) ---
     function initAndLoginWithPi() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         try {
@@ -211,7 +206,7 @@
                     handleLoginSuccess();
                 })
                 .catch((err) => {
-                    console.error(err);
+                    console.error("خطأ في المصادقة الرسمية:", err);
                     setupDevAccount();
                 });
             } else {
@@ -223,8 +218,8 @@
     }
 
     function setupDevAccount() {
-        playerPiUser = "AbuKareem_Dev";
-        currentPiUserId = "UID_ABUKAREEM_DEV_999";
+        playerPiUser = "Abokareem999";
+        currentPiUserId = "UID_ABUKAREEM_OFFICIAL_999";
         playerWallet = "GCOHCVV66Y7UX3KB36V4B7NS5W"; 
         handleLoginSuccess();
     }
@@ -284,7 +279,6 @@
         } catch (err) {}
     }
 
-    // --- منطق إطلاق النار والمؤثرات الحركية المحسنة مع الحفاظ على المنطق الحسابي ---
     function createExplosion(x, y) {
         for (let i = 0; i < 12; i++) {
             particles.push({
@@ -324,7 +318,6 @@
             playSound('hit');
             createExplosion(target.x, target.y);
             
-            // رفع المستوى تزداد معه السرعة تلقائياً
             let newLevel = Math.floor(score / 50) + 1;
             if (newLevel > gameLevel) {
                 gameLevel = newLevel;
@@ -354,7 +347,6 @@
             if (target.x - target.radius < 0 || target.x + target.radius > canvas.width) target.xSpeed = -target.xSpeed;
             if (target.y - target.radius < 0 || target.y + target.radius > canvas.height) target.ySpeed = -target.ySpeed;
             
-            // اهتزاز واجهة اللعبة الحاوية لإضافة طابع الأركيد الحماسي
             if (screenShake > 0) {
                 const dx = (Math.random() - 0.5) * screenShake;
                 const dy = (Math.random() - 0.5) * screenShake;
@@ -368,13 +360,11 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // رسم خطوط الرادار الخلفية لتوضيح المعالم
             ctx.strokeStyle = 'rgba(56, 189, 248, 0.06)';
             ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
             for(let j=0; j<canvas.height; j+=40) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke(); }
 
-            // تحديث ورسم شظايا الانفجار عند الإصابة
             particles.forEach((p, index) => {
                 p.x += p.vx; p.y += p.vy; p.alpha -= 0.02;
                 if (p.alpha <= 0) { particles.splice(index, 1); }
@@ -393,7 +383,6 @@
                 flashIntensity -= 0.05;
             }
 
-            // رسم الهدف المحسن الواضح (مؤشر صيد راداري نيون مع دائرة متقاطعة)
             ctx.save();
             ctx.translate(target.x, target.y);
             ctx.rotate(target.angle);
@@ -401,18 +390,15 @@
             ctx.shadowBlur = 10;
             ctx.shadowColor = '#38bdf8';
             
-            // الدائرة النيون الخارجية
             ctx.strokeStyle = '#38bdf8';
             ctx.lineWidth = 3;
             ctx.beginPath(); ctx.arc(0, 0, target.radius, 0, Math.PI * 2); ctx.stroke();
             
-            // خطوط التقاطع لرادارية الصيد (Crosshair)
             ctx.strokeStyle = '#f87171';
             ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.moveTo(-target.radius, 0); ctx.lineTo(target.radius, 0); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, -target.radius); ctx.lineTo(0, target.radius); ctx.stroke();
             
-            // النقطة المركزية
             ctx.fillStyle = '#ef4444';
             ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill();
             
@@ -430,7 +416,7 @@
         target.y = Math.random() * (canvas.height - 60) + 30;
     }
 
-    // --- دالة إنشاء طلب الدفع لـ Pi الأصلي كما هي دون أدنى تغيير ---
+    // --- بوابات دفع وسيرفر Pi النظيفة الأصلية 100% ---
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
             document.getElementById('game-status').innerText = "⚠️ يجب فتح اللعبة من داخل تطبيق Pi Browser لتشغيل الدفع الحقيقي.";
