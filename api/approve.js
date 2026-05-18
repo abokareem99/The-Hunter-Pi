@@ -1,7 +1,5 @@
-// api/approve.js
-const fetch = require('node-fetch');
-
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
+    // إعدادات الـ CORS لتسمح للعبة بالاتصال بالسيرفر بدون قيود
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -18,10 +16,12 @@ module.exports = async (req, res) => {
     const PI_API_KEY = process.env.PI_API_KEY;
 
     try {
+        // نستخدم الـ fetch المدمجة في Vercel مباشرة دون الحاجة لـ require
         const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, {
             method: 'POST',
             headers: {
-                'Authorization': `Key ${PI_API_KEY}`
+                'Authorization': `Key ${PI_API_KEY}`,
+                'Content-Type': 'application/json'
             }
         });
 
@@ -35,4 +35,4 @@ module.exports = async (req, res) => {
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
-};
+}
