@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE HUNTER Arcade - Cinematic Multi-Color Edition 🔥</title>
+    <title>THE HUNTER Arcade - Cinematic Multi-Color Fixed Edition 🔥</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -229,11 +229,11 @@
             <div>Hits: <span id="hits-val" style="color: #eab308;">0</span> 🎯</div>
             <div>Score: <span id="score-val" style="color: #4ade80;">0</span></div>
             <div>Ammo: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
-            <div>Bird Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown</span></div>
+            <div>Bird Color: <span id="color-name-display" style="font-weight: 900; text-shadow: 0 1px 4px rgba(0,0,0,0.6);">Classic Brown</span></div>
         </div>
 
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
-        <div><span class="audio-indicator">🔊 Fanfare Audio Synthesizer & Multi-Color Active</span></div>
+        <div><span class="audio-indicator">🔊 Fanfare Audio Synthesizer & Color Matrix Fixed</span></div>
  
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Hit the bird 10 times to unlock new color tiers and get 50 FREE AMMO!</p>
         
@@ -277,20 +277,20 @@
 
     let score = 0;
     let ammo = 30;
-    let totalHits = 0; // حساب عدد الإصابات الإجمالي لتغيير اللون والمنح
+    let totalHits = 0; 
     let playerPiUser = "";
     let playerWallet = ""; 
     let currentPiUserId = "";
     let isSdkInitialized = false;
     
-    // مصفوفة الألوان المتطورة - تشمل الألوان الأساسية، و الـ 5 الألوان الأسطورية الصعبة والفريدة في النهاية
+    // مصفوفة تدرج الألوان المعتمدة بشكل كامل وحصري
     const birdColorTiers = [
         { name: "Classic Brown", primary: "#543011", secondary: "#78461b", detail: "#3a1f05" },     // 0-9 إصابات
         { name: "Forest Green", primary: "#15803d", secondary: "#22c55e", detail: "#14532d" },     // 10-19 إصابة
         { name: "Neon Cyan", primary: "#0891b2", secondary: "#22d3ee", detail: "#164e63" },        // 20-29 إصابة
         { name: "Royal Purple", primary: "#7e22ce", secondary: "#a855f7", detail: "#4c1d95" },     // 30-39 إصابة
         
-        // 🏆 بداية الـ 5 الألوان الأخيرة النادرة والصعبة جداً للوصول إليها 🏆
+        // الـ 5 الألوان الأخيرة النادرة والصعبة جداً للوصول إليها
         { name: "Cosmic Amber 🌟", primary: "#d97706", secondary: "#fbbf24", detail: "#78350f" },   // 40-49 إصابة
         { name: "Magma Crimson 🔥", primary: "#b91c1c", secondary: "#f87171", detail: "#450a0a" },  // 50-59 إصابة
         { name: "Prism Rainbow 🌈", primary: "#ec4899", secondary: "#38bdf8", detail: "#6366f1" },  // 60-69 إصابة
@@ -298,6 +298,7 @@
         { name: "GODLIKE GOLD 👑", primary: "#f59e0b", secondary: "#fef08a", detail: "#78350f" }    // 80+ إصابة فما فوق
     ];
 
+    // جعل الكائن يشير مباشرة لأول عنصر لتفادي الجمود
     let currentBirdStyle = birdColorTiers[0];
 
     let target = { 
@@ -343,7 +344,6 @@
         }
     }
 
-    // هندسة النظام الصوتي والموسيقي الحماسي والسينمائي
     function playAdvancedSound(type) {
         if (!audioCtx) return;
         if (audioCtx.state === 'suspended') {
@@ -433,13 +433,11 @@
                     osc.stop(now + delay + 0.06);
                 });
             } else if (type === 'fanfare_bonus') {
-                // 🎵 موسيقى تصاعدية احتفالية حماسية ومبهجة عند الحصول على مكافأة الـ 50 طلقة وتغير اللون
-                const melody = [329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]; // نغمات متصاعدة فخمة
+                const melody = [329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]; 
                 melody.forEach((freq, index) => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     
-                    // استخدام تجميع موجي متناسق ونظيف ليعطي شعور الأركيد المبهج
                     osc.type = (index % 2 === 0) ? 'triangle' : 'sine';
                     osc.frequency.setValueAtTime(freq, now + (index * 0.09));
                     
@@ -533,10 +531,9 @@
             if (data) { 
                 score = data.high_score || 0; 
                 document.getElementById('score-val').innerText = score;
-                // استنتاج الإصابات التقريبية بناء على الحساب القديم لإبقاء تقدم الألوان سليم
                 totalHits = Math.floor(score / 10);
                 document.getElementById('hits-val').innerText = totalHits;
-                updateBirdColorTier();
+                updateBirdColorTier(); // تحديث فوري للون عند جلب البيانات السابقة
             }
         } catch(e) {}
         
@@ -549,16 +546,17 @@
         playAdvancedSound('reload');
     }
 
-    // دالة فحص وتحديث لون الطائر بحسب عدد الإصابات الفعلي للاعب
+    // دالة صارمة وموثقة لتحديث مصفوفة ألوان الطائر وإظهار الاسم واللون بشكل فوري
     function updateBirdColorTier() {
         let tierIndex = Math.floor(totalHits / 10);
         if (tierIndex >= birdColorTiers.length) {
-            tierIndex = birdColorTiers.length - 1; // الثبات على المستوى الأخير الأسطوري المذهب
+            tierIndex = birdColorTiers.length - 1; 
         }
         
+        // التحديث الإجباري للكائن العام المستخدم في حلقة الـ Canvas
         currentBirdStyle = birdColorTiers[tierIndex];
         
-        // تحديث واجهة العرض
+        // تحديث النص العلوي لواجهة العرض بلونه الجديد
         const colorDisplay = document.getElementById('color-name-display');
         colorDisplay.innerText = currentBirdStyle.name;
         colorDisplay.style.color = currentBirdStyle.secondary;
@@ -641,7 +639,7 @@
         const distance = Math.sqrt((aimX - target.x)**2 + (aimY - target.y)**2);
         if (distance <= target.radius + 18) {
             score += 10;
-            totalHits++; // زيادة عدد الإصابات الإجمالي
+            totalHits++; 
             
             document.getElementById('score-val').innerText = score;
             document.getElementById('hits-val').innerText = totalHits;
@@ -649,21 +647,21 @@
             playAdvancedSound('hit');
             createFeatherCloud(target.x, target.y); 
             
-            // تحقق من ميكانيكية الـ 10 إصابات لمنح الذخيرة وتغيير اللون والموسيقى
+            // الميكانيكية الذهبية: عند بلوغ مضاعفات الـ 10، يتم التحديث الفوري والشحن الإجباري
             if (totalHits % 10 === 0) {
-                ammo += 50; // منحة 50 طلقة مجانية للاعب
+                ammo += 50; 
                 document.getElementById('ammo-val').innerText = ammo;
                 
-                updateBirdColorTier(); // تحديث اللون فوراً
-                playAdvancedSound('fanfare_bonus'); // تشغيل الموسيقى الاحتفالية الممتازة
+                updateBirdColorTier(); // تشغيل دالة التغيير اللوني الحاسم
+                playAdvancedSound('fanfare_bonus'); 
                 
-                document.getElementById('game-status').innerText = `🎁 AWESOME! 10 Hits Milestone! Bird Evolved to [${currentBirdStyle.name}] & +50 FREE AMMO granted! 🎉`;
+                document.getElementById('game-status').innerText = `🎁 UNLOCKED! Bird Evolved to [${currentBirdStyle.name}] & +50 FREE AMMO! 🎉`;
                 document.getElementById('game-status').style.color = "#a855f7";
                 
-                // زيادة الصعوبة التدريجية لسرعة حركة الطائر لزيادة التحدي
                 target.xSpeed += (target.xSpeed > 0 ? 0.7 : -0.7);
                 target.ySpeed += (target.ySpeed > 0 ? 0.7 : -0.7);
             } else {
+                updateBirdColorTier(); // التأكيد الإضافي لسلامة وثبات اللون الحالي مع كل قنصة
                 document.getElementById('game-status').innerText = `🎯 TARGET NEUTRALIZED! | ${10 - (totalHits % 10)} more hits until color evolve!`;
                 document.getElementById('game-status').style.color = "#4ade80";
             }
@@ -821,6 +819,7 @@
                 }
             });
 
+            // 🛠️ الضمان الحركي الكامل: جلب واستدعاء الألوان الديناميكية الحالية بانتظام داخل حلقة الـ Canvas
             ctx.save();
             ctx.translate(target.x, target.y);
             
@@ -832,7 +831,7 @@
                 ctx.rotate(moveAngle);
             }
             
-            // رسم جسم الطائر بالألوان الحركية الجديدة المعتمدة على الإصابات
+            // رسم جسم الطائر الرئيسي باللون الديناميكي المستهدف والنشط حالياً
             ctx.fillStyle = currentBirdStyle.primary;
             ctx.beginPath(); 
             ctx.ellipse(0, 0, target.width/2, target.height/2, 0, 0, Math.PI*2); 
@@ -879,7 +878,7 @@
                 ctx.save();
                 let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 3, muzzleFlashX, muzzleFlashY, 55);
                 gradient.addColorStop(0, 'rgba(255, 255, 255, ' + flashIntensity + ')');
-                gradient.addColorStop(0.2, 'rgba(254, 240, 138, ' + (flashIntensity * 0.95) + ')');
+                gradient.addColorStop(0.2, 'rgba(244, 240, 138, ' + (flashIntensity * 0.95) + ')');
                 gradient.addColorStop(0.6, 'rgba(249, 115, 22, ' + (flashIntensity * 0.6) + ')');
                 gradient.addColorStop(1, 'rgba(220, 38, 38, 0)');
                 ctx.fillStyle = gradient;
