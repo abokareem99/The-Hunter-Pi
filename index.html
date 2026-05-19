@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE HUNTER Arcade - Cinematic Multi-Color Fixed Edition 🔥</title>
+    <title>THE HUNTER Arcade - Absolute Color Shift Edition 🔥</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -85,7 +85,7 @@
             margin-bottom: 8px; 
             font-weight: bold;
             border: 1px solid #334155;
-            font-size: 12px;
+            font-size: 11px;
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
             flex-wrap: wrap;
             gap: 5px;
@@ -115,7 +115,7 @@
             border: 1px solid #1e293b;
         }
 
-        /* زر الإطلاق الأيسر التكتيكي المتفق عليه */
+        /* زر الإطلاق الأيسر التكتيكي الممتاز */
         .btn-shoot {
             background-image: linear-gradient(135deg, #ef4444, #dc2626, #991b1b);
             color: white;
@@ -135,7 +135,7 @@
             background-image: linear-gradient(135deg, #991b1b, #451a03);
         }
 
-        /* عصا التوجيه اليمنى للتنشين المريح والذكي */
+        /* عصا التحكم اليمنى للتنشين المريح بالملي */
         .joystick-container {
             width: 95px;
             height: 95px;
@@ -229,11 +229,11 @@
             <div>Hits: <span id="hits-val" style="color: #eab308;">0</span> 🎯</div>
             <div>Score: <span id="score-val" style="color: #4ade80;">0</span></div>
             <div>Ammo: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
-            <div>Bird Color: <span id="color-name-display" style="font-weight: 900; text-shadow: 0 1px 4px rgba(0,0,0,0.6);">Classic Brown</span></div>
+            <div>Bird Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown & Yellow</span></div>
         </div>
 
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
-        <div><span class="audio-indicator">🔊 Fanfare Audio Synthesizer & Color Matrix Fixed</span></div>
+        <div><span class="audio-indicator">🔊 Fanfare Audio & Absolute Color Evolution Framework Active</span></div>
  
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Hit the bird 10 times to unlock new color tiers and get 50 FREE AMMO!</p>
         
@@ -277,28 +277,31 @@
 
     let score = 0;
     let ammo = 30;
-    let totalHits = 0; 
+    let totalHits = 0; // عداد دقيق وصارم لعدد الإصابات الفعلي في الجلسة المباشرة
     let playerPiUser = "";
     let playerWallet = ""; 
     let currentPiUserId = "";
     let isSdkInitialized = false;
     
-    // مصفوفة تدرج الألوان المعتمدة بشكل كامل وحصري
+    // 🛠️ مصفوفة تدرج الألوان المطلقة والخالية تماماً من التداخل أو الثبات الثنائي
     const birdColorTiers = [
-        { name: "Classic Brown", primary: "#543011", secondary: "#78461b", detail: "#3a1f05" },     // 0-9 إصابات
-        { name: "Forest Green", primary: "#15803d", secondary: "#22c55e", detail: "#14532d" },     // 10-19 إصابة
-        { name: "Neon Cyan", primary: "#0891b2", secondary: "#22d3ee", detail: "#164e63" },        // 20-29 إصابة
-        { name: "Royal Purple", primary: "#7e22ce", secondary: "#a855f7", detail: "#4c1d95" },     // 30-39 إصابة
+        // المستوى الأول (البني والأصفر المعتمد حالياً)
+        { name: "Classic Brown & Yellow", primary: "#543011", secondary: "#eab308", detail: "#3a1f05", beak: "#f97316" }, 
+        // المستوى الثاني (ينقلب تماماً للأخضر الغاباتي الساطع بدون أثر للأصفر)
+        { name: "Forest Emerald Green", primary: "#115e59", secondary: "#10b981", detail: "#064e3b", beak: "#f43f5e" },  
+        // المستوى الثالث (السيان الفسفوري النيون)
+        { name: "Neon Cyber Cyan", primary: "#0369a1", secondary: "#06b6d4", detail: "#0c4a6e", beak: "#fbbf24" },      
+        // المستوى الرابع (البنفسجي الإمبراطوري)
+        { name: "Royal Void Purple", primary: "#6b21a8", secondary: "#a855f7", detail: "#4c1d95", beak: "#22c55e" },    
         
-        // الـ 5 الألوان الأخيرة النادرة والصعبة جداً للوصول إليها
-        { name: "Cosmic Amber 🌟", primary: "#d97706", secondary: "#fbbf24", detail: "#78350f" },   // 40-49 إصابة
-        { name: "Magma Crimson 🔥", primary: "#b91c1c", secondary: "#f87171", detail: "#450a0a" },  // 50-59 إصابة
-        { name: "Prism Rainbow 🌈", primary: "#ec4899", secondary: "#38bdf8", detail: "#6366f1" },  // 60-69 إصابة
-        { name: "Cyber Shadow 🥷", primary: "#1e293b", secondary: "#64748b", detail: "#0f172a" },   // 70-79 إصابة
-        { name: "GODLIKE GOLD 👑", primary: "#f59e0b", secondary: "#fef08a", detail: "#78350f" }    // 80+ إصابة فما فوق
+        // 🔥 مستويات الشرف والخلود الخمسة النادرة 🔥
+        { name: "Cosmic Amber 🌟", primary: "#b45309", secondary: "#fbbf24", detail: "#78350f", beak: "#ef4444" },  
+        { name: "Magma Crimson 🔥", primary: "#991b1b", secondary: "#ef4444", detail: "#450a0a", beak: "#ffffff" },  
+        { name: "Prism Rainbow 🌈", primary: "#db2777", secondary: "#3b82f6", detail: "#4f46e5", beak: "#eab308" },  
+        { name: "Cyber Shadow 🥷", primary: "#1e293b", secondary: "#475569", detail: "#0f172a", beak: "#38bdf8" },  
+        { name: "GODLIKE GOLD 👑", primary: "#d97706", secondary: "#fef08a", detail: "#78350f", beak: "#f97316" }   
     ];
 
-    // جعل الكائن يشير مباشرة لأول عنصر لتفادي الجمود
     let currentBirdStyle = birdColorTiers[0];
 
     let target = { 
@@ -451,7 +454,7 @@
                 });
             }
         } catch(e){
-            console.error("DSP Engine Fail-Safe Override:", e);
+            console.error("DSP Context Safe-Guard:", e);
         }
     }
 
@@ -531,9 +534,15 @@
             if (data) { 
                 score = data.high_score || 0; 
                 document.getElementById('score-val').innerText = score;
-                totalHits = Math.floor(score / 10);
-                document.getElementById('hits-val').innerText = totalHits;
-                updateBirdColorTier(); // تحديث فوري للون عند جلب البيانات السابقة
+                
+                // حساب وضبط لون البداية بناء على سكور المحفوظات
+                let savedHits = Math.floor(score / 10);
+                let startTier = Math.floor(savedHits / 10);
+                if (startTier >= birdColorTiers.length) startTier = birdColorTiers.length - 1;
+                currentBirdStyle = birdColorTiers[startTier];
+                
+                document.getElementById('color-name-display').innerText = currentBirdStyle.name;
+                document.getElementById('color-name-display').style.color = currentBirdStyle.secondary;
             }
         } catch(e) {}
         
@@ -546,17 +555,15 @@
         playAdvancedSound('reload');
     }
 
-    // دالة صارمة وموثقة لتحديث مصفوفة ألوان الطائر وإظهار الاسم واللون بشكل فوري
+    // 🎯 دالة التحديث الديناميكي الشاملة لقص وإبادة اللون القديم
     function updateBirdColorTier() {
         let tierIndex = Math.floor(totalHits / 10);
         if (tierIndex >= birdColorTiers.length) {
             tierIndex = birdColorTiers.length - 1; 
         }
         
-        // التحديث الإجباري للكائن العام المستخدم في حلقة الـ Canvas
         currentBirdStyle = birdColorTiers[tierIndex];
         
-        // تحديث النص العلوي لواجهة العرض بلونه الجديد
         const colorDisplay = document.getElementById('color-name-display');
         colorDisplay.innerText = currentBirdStyle.name;
         colorDisplay.style.color = currentBirdStyle.secondary;
@@ -639,7 +646,7 @@
         const distance = Math.sqrt((aimX - target.x)**2 + (aimY - target.y)**2);
         if (distance <= target.radius + 18) {
             score += 10;
-            totalHits++; 
+            totalHits++; // زيادة عداد الإصابات في هذه الجلسة الحالية
             
             document.getElementById('score-val').innerText = score;
             document.getElementById('hits-val').innerText = totalHits;
@@ -647,22 +654,22 @@
             playAdvancedSound('hit');
             createFeatherCloud(target.x, target.y); 
             
-            // الميكانيكية الذهبية: عند بلوغ مضاعفات الـ 10، يتم التحديث الفوري والشحن الإجباري
-            if (totalHits % 10 === 0) {
+            // قفل حدوث التحول والمكافأة عند مضاعفات الـ 10
+            if (totalHits > 0 && totalHits % 10 === 0) {
                 ammo += 50; 
                 document.getElementById('ammo-val').innerText = ammo;
                 
-                updateBirdColorTier(); // تشغيل دالة التغيير اللوني الحاسم
+                updateBirdColorTier(); // الاستدعاء الحازم وفصل كود اللون الأصفر القديم
                 playAdvancedSound('fanfare_bonus'); 
                 
-                document.getElementById('game-status').innerText = `🎁 UNLOCKED! Bird Evolved to [${currentBirdStyle.name}] & +50 FREE AMMO! 🎉`;
+                document.getElementById('game-status').innerText = `🎁 EVOLUTION! 10 Hits Milestone Reached! Bird Transformed to [${currentBirdStyle.name}] & +50 FREE AMMO! 🎉`;
                 document.getElementById('game-status').style.color = "#a855f7";
                 
-                target.xSpeed += (target.xSpeed > 0 ? 0.7 : -0.7);
-                target.ySpeed += (target.ySpeed > 0 ? 0.7 : -0.7);
+                target.xSpeed += (target.xSpeed > 0 ? 0.6 : -0.6);
+                target.ySpeed += (target.ySpeed > 0 ? 0.6 : -0.6);
             } else {
-                updateBirdColorTier(); // التأكيد الإضافي لسلامة وثبات اللون الحالي مع كل قنصة
-                document.getElementById('game-status').innerText = `🎯 TARGET NEUTRALIZED! | ${10 - (totalHits % 10)} more hits until color evolve!`;
+                updateBirdColorTier(); // للتأكيد المستمر على دمج اللون الحالي
+                document.getElementById('game-status').innerText = `🎯 TARGET DOWN! | ${10 - (totalHits % 10)} more hits until next evolution tier!`;
                 document.getElementById('game-status').style.color = "#4ade80";
             }
             
@@ -819,7 +826,7 @@
                 }
             });
 
-            // 🛠️ الضمان الحركي الكامل: جلب واستدعاء الألوان الديناميكية الحالية بانتظام داخل حلقة الـ Canvas
+            // 🛠️ الضمان اللوني الكامل: هنا قمنا بإزالة وتطهير أي ألوان ثابتة قديمة
             ctx.save();
             ctx.translate(target.x, target.y);
             
@@ -831,12 +838,13 @@
                 ctx.rotate(moveAngle);
             }
             
-            // رسم جسم الطائر الرئيسي باللون الديناميكي المستهدف والنشط حالياً
+            // 1. جسم الطائر الرئيسي (يأخذ لونه كلياً من المصفوفة)
             ctx.fillStyle = currentBirdStyle.primary;
             ctx.beginPath(); 
             ctx.ellipse(0, 0, target.width/2, target.height/2, 0, 0, Math.PI*2); 
             ctx.fill();
             
+            // 2. أجنحة الطائر (تتغير بالكامل وتبعاً للمصفوفة بدون لون خارجي)
             let wingFlapOffset = Math.sin(target.flap) * (target.height / 1.3);
             ctx.fillStyle = currentBirdStyle.secondary;
             ctx.beginPath(); 
@@ -846,19 +854,24 @@
             ctx.ellipse(-2, + wingFlapOffset / 2, 9, target.height/2 + Math.abs(wingFlapOffset)/2, -0.2, 0, Math.PI*2); 
             ctx.fill();
 
+            // 3. الرأس وتفاصيل العين والمنقار المتغير الديناميكي
             ctx.fillStyle = currentBirdStyle.detail;
             ctx.beginPath();
             ctx.arc(target.width/2 - 2, -3, 9, 0, Math.PI*2); ctx.fill();
+            
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
             ctx.arc(target.width/2 + 1, -5, 2, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#eab308';
+            
+            // منقار الطائر المتغير
+            ctx.fillStyle = currentBirdStyle.beak;
             ctx.beginPath();
             ctx.moveTo(target.width/2 + 5, -6); 
             ctx.lineTo(target.width/2 + 17, -3); 
             ctx.lineTo(target.width/2 + 5, 2); 
             ctx.fill();
 
+            // 4. ريش ذيل الطائر
             ctx.fillStyle = currentBirdStyle.detail;
             ctx.beginPath();
             ctx.moveTo(-target.width/2, -4);
