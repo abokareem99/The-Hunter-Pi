@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Hunter - Advanced Reality Edition 🔥</title>
+    <title>THE HUNTER Arcade - Advanced Reality Edition 🔥</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,32 +18,39 @@
             padding: 5px;
             touch-action: none;
             user-select: none;
-            overflow: hidden;
+            overflow: hidden; 
         }
         .container {
-            max-width: 480px;
-            margin: 2px auto;
+            max-width: 500px;
+            margin: 5px auto;
             background: rgba(15, 23, 42, 0.95);
-            padding: 10px 12px;
-            border-radius: 16px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             border: 1px solid #334155;
             transition: transform 0.05s linear;
             box-sizing: border-box;
+            height: 98vh; 
+            display: flex;
+            flex-direction: column;
         }
         h1 { 
             color: #38bdf8;
-            margin: 2px 0; 
-            font-size: 22px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+            margin: 5px 0; 
+            font-size: 20px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.7);
         }
         .welcome-card {
             background: #0f172a;
             border-radius: 12px;
-            padding: 15px 10px; 
+            padding: 15px; 
             border: 2px solid #38bdf8;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             margin-top: 10px;
+            flex: 1; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         .hunter-avatar {
             width: 140px;
@@ -51,7 +58,7 @@
             margin: 0 auto 15px auto;
             border-radius: 10px;
             border: 3px solid #38bdf8;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
             background-image: url('https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-logo.png'); 
             background-size: cover;
             background-position: center;
@@ -60,21 +67,20 @@
             background-image: linear-gradient(135deg, #38bdf8, #0284c7);
             color: white;
             border: none;
-            padding: 12px 30px;
-            font-size: 20px;
+            padding: 12px 25px;
+            font-size: 16px;
             font-weight: bold;
             border-radius: 25px;
             cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
             display: inline-block;
             width: 80%;
-            letter-spacing: 1px;
         }
         .btn:hover { 
-            transform: scale(1.02);
+            transform: scale(1.03);
         }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         
         .stats-bar {
             display: flex;
@@ -82,43 +88,45 @@
             background: rgba(15, 23, 42, 0.85);
             padding: 8px;
             border-radius: 10px;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             font-weight: bold;
             border: 1px solid #334155;
             font-size: 11px;
         }
         #hunting-canvas {
-            border: 2.5px solid #38bdf8;
+            border: 3px solid #38bdf8;
             border-radius: 10px;
             cursor: crosshair; 
             max-width: 100%;
             touch-action: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-            background-color: #0b1329;
-            display: block;
-            margin: 0 auto;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+            flex: 1;
+            background-color: #0c1426; 
         }
         
         .controls-wrapper {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 6px;
+            margin-top: 5px;
             gap: 8px;
+            padding: 0 5px;
         }
         .btn-shoot {
             background-image: linear-gradient(135deg, #ef4444, #b91c1c);
             color: white;
             border: 2px solid #f87171;
             border-radius: 50%;
-            width: 72px;
-            height: 72px;
+            width: 70px;
+            height: 70px;
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
             transition: transform 0.1s ease;
             -webkit-tap-highlight-color: transparent;
+            /* نقل الزر إلى اليسار */
+            order: -1; 
         }
         .btn-shoot:active {
             transform: scale(0.9);
@@ -129,48 +137,39 @@
             background-image: linear-gradient(135deg, #eab308, #ca8a04); 
             color: #0f172a; 
             font-size: 13px; 
-            padding: 10px 10px; 
+            padding: 12px; 
             font-weight: 800;
             border-radius: 12px;
             border: none;
             cursor: pointer;
-            box-shadow: 0 4px 8px rgba(234, 179, 8, 0.3);
+            box-shadow: 0 4px 10px rgba(234, 179, 8, 0.3);
         }
 
         .leaderboard-section {
-            margin-top: 10px;
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid #334155;
+            margin-top: 5px;
         }
-        .leaderboard-section h3 {
-            margin: 4px 0;
-            font-size: 14px;
-            color: #38bdf8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+
         .leaderboard-table {
             width: 100%;
-            margin-top: 4px;
+            margin-top: 5px;
             border-collapse: collapse;
-            background: #0f172a;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #334155;
+            font-size: 12px;
         }
         .leaderboard-table th, .leaderboard-table td {
-            padding: 6px 8px;
+            padding: 8px;
             border-bottom: 1px solid #1e293b;
-            font-size: 11px;
         }
         .leaderboard-table th { background-color: #1e293b; color: #38bdf8; }
         
-        .audio-indicator {
-            font-size: 10px;
-            color: #4ade80;
-            margin-top: 2px;
-            display: inline-block;
-            background: rgba(74, 222, 128, 0.1);
-            padding: 1px 6px;
-            border-radius: 12px;
+        .status-messages {
+            font-size: 11px;
+            color: #fbbf24;
+            margin: 2px 0;
+            min-height: 15px;
         }
     </style>
 </head>
@@ -178,7 +177,7 @@
 
 <div class="container" id="game-container">
     <h1>🎮 THE HUNTER Arcade</h1>
-    <p style="margin: 0 0 4px 0; color: #94a3b8; font-size: 11px;">Realistic Mechanics: Tactical AK-47 & Dynamic Targets 💎</p>
+    <p style="margin-top: -3px; color: #94a3b8; font-size: 11px; margin-bottom: 3px;">Tactical Mechanics: Aimed AK-47 & Dynamic Targets 💎</p>
 
     <div id="auth-section">
         <div class="welcome-card">
@@ -189,7 +188,7 @@
         </div>
     </div>
 
-    <div id="game-section" class="hidden">
+    <div id="game-section" class="hidden" style="display: flex; flex-direction: column; flex: 1;">
         <div class="stats-bar">
             <div>Hunter: <span id="player-name" style="color: #38bdf8;">...</span></div>
             <div>Score: <span id="score-val" style="color: #4ade80;">0</span> 🎯</div>
@@ -197,10 +196,9 @@
             <div>Level: <span id="level-val" style="color: #a855f7;">1</span> ⚡</div>
         </div>
 
-        <canvas id="hunting-canvas" width="480" height="280"></canvas>
-        <div><span class="audio-indicator">🔊 3D Object Synthesis & Advanced Audio Engine Active</span></div>
+        <canvas id="hunting-canvas"></canvas>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 18px; font-size: 12px; margin: 4px 0;">Drag finger to aim. Tap red button to fire with high recoil simulation!</p>
+        <p class="status-messages" id="game-status">Drag your finger to aim. Tap the red button to fire with tactical feedback!</p>
         
         <div class="controls-wrapper">
             <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 Buy 30 Ammo (1 Pi)</button>
@@ -208,7 +206,7 @@
         </div>
 
         <div class="leaderboard-section">
-            <h3>🏆 Global Leaderboard</h3>
+            <h3 style="margin: 0 0 5px 0; color: #38bdf8; font-size: 14px;">🏆 GLOBAL LEADERBOARD</h3>
             <table class="leaderboard-table">
                 <thead>
                     <tr>
@@ -219,7 +217,7 @@
                 </thead>
                 <tbody id="leaderboard-body">
                     <tr>
-                        <td colspan="3" style="color: #94a3b8;">Click START to fetch scores...</td>
+                        <td colspan="3" style="color: #94a3b8;">Log in to fetch scores...</td>
                     </tr>
                 </tbody>
             </table>
@@ -228,17 +226,18 @@
 </div>
 
 <script>
-    // System Configurations & Network Handlers
+    // Database Infrastructure Configuration Definitions
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
-    const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=4";
-    const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=480&h=280&q=80"; 
+    // Asset Location URIs
+    const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
+    const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&q=80"; 
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // State Machine Architecture
+    // Reactive State Engine Attributes
     let score = 0;
     let ammo = 30;
     let gameLevel = 1;
@@ -247,45 +246,30 @@
     let currentPiUserId = ""; 
     let isSdkInitialized = false;
     
-    // Target Modeling Variables
+    // Dynamic Prey Simulation Attributes
     let target = { 
-        x: 100, y: 120, 
-        xSpeed: 2.6, ySpeed: 1.6, 
-        width: 42, height: 34, 
-        flap: 0, flapSpeed: 0.24, 
-        radius: 22,
-        glideCounter: 0,
-        windDrift: 0
+        x: 100, y: 150, 
+        xSpeed: 2.2, ySpeed: 1.5, 
+        width: 40, height: 35, 
+        flap: 0, flapSpeed: 0.15, 
+        radius: 20 
     };
     
-    // Particle Physics Arrays
     let particles = []; 
     let flashIntensity = 0;
-    let muzzleFlashX = 0;
-    let muzzleFlashY = 0;
     let screenShake = 0;
 
-    // Crosshair Vector Coordinates
+    // Tactical Target Vector Pointers
     let aimX = 240;
-    let aimY = 140;
+    let aimY = 160;
 
-    // Graphics Pipeline Declarations
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
     let gameInterval;
     let ak47Img = null; 
     let forestBgImg = null; 
 
-    // Enhanced 3D Perspective and Dimensions Matrices
-    let gunRecoilZ = 0;      
-    let gunRecoilY = 0;      
-    let gunRecoilAngle = 0;  
-    
-    // New 3D Isometric View Modifiers
-    let gunBaseScaleX = 110;  
-    let gunBaseScaleY = 240;  
-
-    // Generative Synth Synthesizer Module (Web Audio API)
+    // Advanced Synthesizer Audio Engine
     let audioCtx;
     function initAudio() {
         if (!audioCtx) {
@@ -293,95 +277,50 @@
         }
     }
 
-    function playAdvancedSound(type) {
+    function playSound(type) {
         if (!audioCtx) return;
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-
         try {
-            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
 
             if (type === 'shoot') {
-                const osc1 = audioCtx.createOscillator();
-                const gain1 = audioCtx.createGain();
-                osc1.type = 'sawtooth';
-                osc1.frequency.setValueAtTime(340, now);
-                osc1.frequency.exponentialRampToValueAtTime(5, now + 0.14);
-                gain1.gain.setValueAtTime(0.65, now);
-                gain1.gain.linearRampToValueAtTime(0.01, now + 0.14);
-                osc1.connect(gain1);
-                gain1.connect(audioCtx.destination);
-                osc1.start(now); osc1.stop(now + 0.14);
-
-                const bufferSize = audioCtx.sampleRate * 0.09;
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
-                const noise = audioCtx.createBufferSource();
-                noise.buffer = buffer;
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'bandpass';
-                filter.frequency.value = 1100;
-                const noiseGain = audioCtx.createGain();
-                noiseGain.gain.setValueAtTime(0.45, now);
-                noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
-                noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(audioCtx.destination);
-                noise.start(now); noise.stop(now + 0.09);
-
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             } else if (type === 'hit') {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(300, now);
-                osc.frequency.exponentialRampToValueAtTime(900, now + 0.16);
-                gain.gain.setValueAtTime(0.4, now);
-                gain.gain.linearRampToValueAtTime(0.001, now + 0.16);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(now); osc.stop(now + 0.16);
-
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
             } else if (type === 'empty') {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(650, now);
-                osc.frequency.setValueAtTime(140, now + 0.02);
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.linearRampToValueAtTime(0.001, now + 0.04);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(now); osc.stop(now + 0.04);
-
-            } else if (type === 'levelup') {
-                const notes = [261.63, 329.63, 392.00, 523.25];
-                notes.forEach((freq, idx) => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'square';
-                    osc.frequency.value = freq;
-                    gain.gain.setValueAtTime(0.15, now + (idx * 0.08));
-                    gain.gain.linearRampToValueAtTime(0.001, now + (idx * 0.08) + 0.12);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(now + (idx * 0.08)); osc.stop(now + (idx * 0.08) + 0.12);
-                });
-
-            } else if (type === 'reload') {
-                [0, 0.1].forEach((delay) => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(450, now + delay);
-                    osc.frequency.exponentialRampToValueAtTime(1600, now + delay + 0.04);
-                    gain.gain.setValueAtTime(0.25, now + delay);
-                    gain.gain.linearRampToValueAtTime(0.001, now + delay + 0.04);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(now + delay); osc.stop(now + delay + 0.04);
-                });
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.05);
             }
         } catch(e){}
     }
 
-    function preloadAssets() {
+    // Dynamic Viewport Matrix Calculation
+    function preloadAssetsAndSetupCanvas() {
         return new Promise((resolve) => {
             let loadedCount = 0;
             const totalAssets = 2;
+
+            // Responsive sizing to fulfill the viewport height completely
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = canvas.parentElement.offsetHeight * 0.7; 
+
+            aimX = canvas.width / 2;
+            aimY = canvas.height / 2;
 
             function checkLoad() {
                 loadedCount++;
@@ -402,24 +341,28 @@
         });
     }
 
+    // Core Identity Initialization Routines
     function initAndLoginWithPi() {
         initAudio();
-        const loginBtn = document.getElementById('btn-login');
-        loginBtn.innerText = "Loading Range Data... 🔄";
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         
-        preloadAssets().then(() => {
+        const loginBtn = document.getElementById('btn-login');
+        loginBtn.innerText = "Initializing Range... 🔄";
+        
+        preloadAssetsAndSetupCanvas().then(() => {
             try {
                 if (typeof Pi !== 'undefined' && window.Pi) {
                     if (!isSdkInitialized) {
                         window.Pi.init({ version: "2.0" });
                         isSdkInitialized = true;
                     }
+                    
                     setTimeout(() => {
                         window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
                         .then(function(auth) {
                             playerPiUser = auth.user.username;
                             currentPiUserId = auth.user.uid;
-                            playerWallet = auth.user.uid || "Pi_Network_User";
+                            playerWallet = auth.user.uid || "Pi_User";
                             handleLoginSuccess();
                         })
                         .catch((err) => {
@@ -436,8 +379,8 @@
     }
 
     function setupDevAccount() {
-        playerPiUser = "Abokareem999_D"; 
-        currentPiUserId = "DEV_UID_ABUKAREEM_OFFICIAL";
+        playerPiUser = "Abokareem999"; 
+        currentPiUserId = "DEV_UID_ABUKAREEM";
         playerWallet = "GCOHCVV66Y7UX3KB36V4B7NS5W"; 
         handleLoginSuccess();
     }
@@ -459,11 +402,10 @@
         } catch(e) {}
         
         updateSupabaseScore();
-        document.getElementById('auth-section').className = 'hidden';
-        document.getElementById('game-section').className = '';
+        document.getElementById('auth-section').classList.add('hidden');
+        document.getElementById('game-section').classList.remove('hidden');
         startGameLoop();
         loadLeaderboard();
-        playAdvancedSound('reload');
     }
 
     async function updateSupabaseScore() {
@@ -486,7 +428,7 @@
                 .from(TABLE_NAME)
                 .select('pi_username, high_score')
                 .order('high_score', { ascending: false })
-                .limit(5);
+                .limit(3);
                 
             const tbody = document.getElementById('leaderboard-body');
             tbody.innerHTML = "";
@@ -501,24 +443,10 @@
         } catch (err) {}
     }
 
-    function createFeatherCloud(x, y) {
-        for (let i = 0; i < 24; i++) {
-            particles.push({
-                x: x, y: y,
-                vx: (Math.random() - 0.5) * 6,
-                vy: (Math.random() - 0.8) * 5, 
-                radius: Math.random() * 3 + 1.2,
-                rotation: Math.random() * Math.PI * 2,
-                rotationSpeed: (Math.random() - 0.5) * 0.2,
-                alpha: 1,
-                color: `hsl(${Math.random() * 25 + 20}, ${Math.random() * 30 + 40}%, ${Math.random() * 20 + 25}%)` 
-            });
-        }
-    }
-
+    // Ballistics Fire Mechanics
     function executeShot() {
         if (ammo <= 0) {
-            playAdvancedSound('empty');
+            playSound('empty');
             document.getElementById('game-status').innerText = "❌ Out of Ammo! Buy more via Pi Wallet.";
             document.getElementById('game-status').style.color = "#f87171";
             return;
@@ -526,36 +454,35 @@
         
         ammo--; 
         document.getElementById('ammo-val').innerText = ammo;
-        playAdvancedSound('shoot');
+        playSound('shoot');
         
-        flashIntensity = 0.55; 
-        screenShake = 6;
-
-        gunRecoilZ = -60; 
-        gunRecoilY = -40;
-        gunRecoilAngle = (Math.random() - 0.5) * 0.22;
-
-        let gunBaseX = canvas.width / 2; 
-        let gunBaseY = canvas.height + 40;
-        let rot = Math.atan2(aimY - gunBaseY, aimX - gunBaseX);
-        muzzleFlashX = gunBaseX + Math.cos(rot) * 160;
-        muzzleFlashY = gunBaseY + Math.sin(rot) * 160;
+        flashIntensity = 0.4; 
+        screenShake = 6;     
 
         const distance = Math.sqrt((aimX - target.x)**2 + (aimY - target.y)**2);
         
-        if (distance <= target.radius + 15) {
+        if (distance <= target.radius + 10) {
             score += 10;
             document.getElementById('score-val').innerText = score;
-            playAdvancedSound('hit');
-            createFeatherCloud(target.x, target.y); 
+            playSound('hit');
+            
+            for (let i = 0; i < 15; i++) {
+                particles.push({
+                    x: target.x, y: target.y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() - 0.5) * 5,
+                    radius: Math.random() * 2 + 1,
+                    alpha: 1,
+                    color: '#845325' 
+                });
+            }
             
             let newLevel = Math.floor(score / 50) + 1;
             if (newLevel > gameLevel) {
                 gameLevel = newLevel;
                 document.getElementById('level-val').innerText = gameLevel;
-                playAdvancedSound('levelup');
-                target.xSpeed += (target.xSpeed > 0 ? 0.7 : -0.7);
-                target.ySpeed += (target.ySpeed > 0 ? 0.7 : -0.7);
+                target.xSpeed *= 1.2;
+                target.ySpeed *= 1.2;
             }
             
             document.getElementById('game-status').innerText = "🎯 Direct Hit! Target neutralized. +10 Points";
@@ -584,7 +511,6 @@
     
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        initAudio(); 
         if(e.touches.length > 0) {
             handlePointer(e.touches[0].clientX, e.touches[0].clientY);
         }
@@ -600,29 +526,22 @@
     fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
     fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
+    // Core Drawing Rendering Engine Iteration Matrix
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
-            
-            target.glideCounter += 0.05;
-            target.windDrift = Math.sin(target.glideCounter) * 0.4;
-            
-            target.x += target.xSpeed + target.windDrift; 
+            target.x += target.xSpeed; 
             target.y += target.ySpeed;
             target.flap += target.flapSpeed;
             
-            if (target.x < 15 || target.x > canvas.width - 15) target.xSpeed = -target.xSpeed;
-            if (target.y < 30 || target.y > canvas.height - 40) target.ySpeed = -target.ySpeed;
+            if (target.x < 10 || target.x > canvas.width - 10) target.xSpeed = -target.xSpeed;
+            if (target.y < 30 || target.y > canvas.height - 30) target.ySpeed = -target.ySpeed;
             
-            gunRecoilZ *= 0.83; 
-            gunRecoilY *= 0.80;
-            gunRecoilAngle *= 0.78;
-
             if (screenShake > 0) {
                 const dx = (Math.random() - 0.5) * screenShake;
                 const dy = (Math.random() - 0.5) * screenShake;
                 document.getElementById('game-container').style.transform = `translate(${dx}px, ${dy}px)`;
-                screenShake *= 0.84;
+                screenShake *= 0.85;
                 if (screenShake < 0.2) {
                     screenShake = 0;
                     document.getElementById('game-container').style.transform = 'none';
@@ -632,136 +551,95 @@
             if (forestBgImg) {
                 ctx.drawImage(forestBgImg, 0, 0, canvas.width, canvas.height);
             } else {
-                ctx.fillStyle = '#0f172a'; 
+                ctx.fillStyle = '#1e293b'; 
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
             particles.forEach((p, index) => {
-                p.x += p.vx; p.y += p.vy; p.vy += 0.16; 
-                p.rotation += p.rotationSpeed;
+                p.x += p.vx; p.y += p.vy; p.vy += 0.1; 
                 p.alpha -= 0.02;
-                if (p.alpha <= 0) { 
-                    particles.splice(index, 1); 
-                } else {
+                if (p.alpha <= 0) { particles.splice(index, 1); }
+                else {
                     ctx.save();
                     ctx.globalAlpha = p.alpha;
                     ctx.fillStyle = p.color;
-                    ctx.translate(p.x, p.y);
-                    ctx.rotate(p.rotation);
-                    ctx.beginPath(); 
-                    ctx.ellipse(0, 0, p.radius * 2, p.radius, 0, 0, Math.PI * 2); 
-                    ctx.fill();
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
                     ctx.restore();
                 }
             });
 
+            if (flashIntensity > 0) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${flashIntensity})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                flashIntensity -= 0.05;
+            }
+
+            // Target Vector Layer
             ctx.save();
             ctx.translate(target.x, target.y);
-            
             let moveAngle = Math.atan2(target.ySpeed, target.xSpeed);
-            if (target.xSpeed < 0) {
-                ctx.scale(1, -1); 
-                ctx.rotate(-moveAngle + Math.PI);
-            } else {
-                ctx.rotate(moveAngle);
-            }
+            if (target.xSpeed < 0) ctx.scale(-1, 1); 
+            ctx.rotate(moveAngle * (target.xSpeed < 0 ? -1 : 1));
             
-            ctx.fillStyle = '#543011';
-            ctx.beginPath(); 
-            ctx.ellipse(0, 0, target.width/2, target.height/2, 0, 0, Math.PI*2); 
-            ctx.fill();
+            ctx.fillStyle = '#653b15';
+            ctx.beginPath(); ctx.ellipse(0, 0, target.width/2, target.height/2, 0, 0, Math.PI*2); ctx.fill();
             
-            let wingFlapOffset = Math.sin(target.flap) * (target.height / 1.4);
-            ctx.fillStyle = '#78461b';
-            ctx.beginPath(); 
-            ctx.ellipse(-2, - wingFlapOffset / 2, 8, target.height/2 + Math.abs(wingFlapOffset)/2, 0.2, 0, Math.PI*2); 
-            ctx.fill();
-            ctx.beginPath(); 
-            ctx.ellipse(-2, + wingFlapOffset / 2, 8, target.height/2 + Math.abs(wingFlapOffset)/2, -0.2, 0, Math.PI*2); 
-            ctx.fill();
+            let wingFlapOffset = Math.sin(target.flap) * (target.height / 2);
+            ctx.fillStyle = '#845325';
+            ctx.beginPath(); ctx.ellipse(0, - wingFlapOffset / 2, 10, target.height/2 + wingFlapOffset / 2, 0, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, + wingFlapOffset / 2, 10, target.height/2 + wingFlapOffset / 2, 0, 0, Math.PI*2); ctx.fill();
             
-            ctx.fillStyle = '#3a1f05';
-            ctx.beginPath(); ctx.arc(target.width/2 - 2, -3, 9, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#ffffff'; 
-            ctx.beginPath(); ctx.arc(target.width/2 + 1, -5, 2, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#eab308'; 
-            ctx.beginPath(); 
-            ctx.moveTo(target.width/2 + 5, -6); 
-            ctx.lineTo(target.width/2 + 16, -3); 
-            ctx.lineTo(target.width/2 + 5, 1); 
-            ctx.fill();
-            
-            ctx.fillStyle = '#3a1f05';
-            ctx.beginPath();
-            ctx.moveTo(-target.width/2, -4);
-            ctx.lineTo(-target.width/2 - 12, -10);
-            ctx.lineTo(-target.width/2 - 10, 0);
-            ctx.lineTo(-target.width/2 - 12, 10);
-            ctx.lineTo(-target.width/2, 4);
-            ctx.fill();
+            ctx.fillStyle = '#442507';
+            ctx.beginPath(); ctx.arc(target.width/2, 0, 8, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#ca8a04';
+            ctx.beginPath(); ctx.moveTo(target.width/2 + 7, -3); ctx.lineTo(target.width/2 + 15, 0); ctx.lineTo(target.width/2 + 7, 3); ctx.fill();
             ctx.restore();
             
-            ctx.fillStyle = 'rgba(255,255,255,0.8)';
-            ctx.font = 'bold 10px Segoe UI, Tahoma';
-            ctx.fillText(`Target`, target.x - 14, target.y - target.height - 4);
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = 'bold 11px Tahoma';
+            ctx.fillText(`Target`, target.x - 18, target.y - target.height - 5);
 
-            if (flashIntensity > 0) {
+            // --- 3D Sight Center Alignment (Iron-Sight Perspective) ---
+            if (ak47Img) {
                 ctx.save();
-                let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 3, muzzleFlashX, muzzleFlashY, 45);
-                gradient.addColorStop(0, 'rgba(255, 255, 255, ' + flashIntensity + ')');
-                gradient.addColorStop(0.3, 'rgba(253, 224, 71, ' + (flashIntensity * 0.9) + ')');
-                gradient.addColorStop(0.7, 'rgba(239, 68, 68, ' + (flashIntensity * 0.4) + ')');
-                gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
-                ctx.fillStyle = gradient;
-                ctx.beginPath(); ctx.arc(muzzleFlashX, muzzleFlashY, 45, 0, Math.PI * 2); ctx.fill();
+                
+                let gunPivotX = canvas.width / 2;
+                let gunPivotY = canvas.height;
+                
+                let gunRotationAngle = Math.atan2(aimY - gunPivotY, aimX - gunPivotX) + Math.PI / 2;
+                
+                let gunScaleFactor = 0.8;
+                let gunWidth = ak47Img.width * gunScaleFactor;
+                let gunHeight = ak47Img.height * gunScaleFactor;
+
+                ctx.translate(gunPivotX, gunPivotY);
+                ctx.rotate(gunRotationAngle);
+                
+                ctx.drawImage(ak47Img, -gunWidth / 2, -gunHeight + 80, gunWidth, gunHeight); 
+                
                 ctx.restore();
-                flashIntensity -= 0.08;
             }
 
-            let gunBaseX = canvas.width / 2; 
-            let gunBaseY = canvas.height + 30; 
-
-            ctx.save();
-            ctx.translate(gunBaseX, gunBaseY + gunRecoilY);
-            
-            let gunRotation = Math.atan2(aimY - gunBaseY, aimX - gunBaseX) + Math.PI / 2 + gunRecoilAngle;
-            ctx.rotate(gunRotation);
-
-            let horizontalOffsetRatio = (aimX - canvas.width / 2) / (canvas.width / 2);
-            let skewAngleX = horizontalOffsetRatio * 0.16; 
-            ctx.transform(1, 0, skewAngleX, 1, 0, 0); 
-
-            let finalWidth = gunBaseScaleX + (gunRecoilZ * 0.25);
-            let finalHeight = gunBaseScaleY + gunRecoilZ;
-
-            if (ak47Img && ak47Img.complete && ak47Img.naturalWidth !== 0) {
-                ctx.drawImage(ak47Img, -finalWidth / 2, -finalHeight + 45, finalWidth, finalHeight);
-            } else {
-                ctx.fillStyle = '#5c2d17'; ctx.fillRect(-10, -50, 20, 60); 
-                ctx.fillStyle = '#1e293b'; ctx.fillRect(-7, -135, 14, 105); 
-                ctx.fillStyle = '#475569'; ctx.fillRect(-4, -195, 8, 60); 
-                ctx.fillStyle = '#ca8a04'; ctx.fillRect(-3, -205, 6, 10); 
-            }
-            ctx.restore();
-
+            // Crosshair Layer
             ctx.save();
             ctx.strokeStyle = '#f87171'; 
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1.8;
             ctx.translate(aimX, aimY);
-            ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(18, 0); ctx.moveTo(0, -18); ctx.lineTo(0, 18); ctx.stroke();
+            ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.moveTo(0, -16); ctx.lineTo(0, 16); ctx.stroke();
             ctx.fillStyle = '#ef4444';
-            ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(0, 0, 1.5, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
 
         }, 1000 / 60);
     }
 
     function resetTarget() {
-        target.x = Math.random() * (canvas.width - 80) + 40;
-        target.y = Math.random() * (canvas.height - 120) + 40; 
+        target.x = Math.random() * (canvas.width - 60) + 30;
+        target.y = Math.random() * (canvas.height / 2) + 40; 
     }
 
+    // Ledger Invoicing Processing Routines
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
             document.getElementById('game-status').innerText = "⚠️ Run inside Pi Browser app to initiate live payments.";
@@ -774,7 +652,7 @@
 
         const paymentData = {
             amount: 1.0, 
-            memo: "Refill AK-47 Ammo Magazine (30 Rounds) - The Hunter Arcade",
+            memo: "Refill tactical AK-47 Ammo Magazine (30 Rounds) - THE HUNTER Arcade",
             metadata: { item_code: "ak47_ammo_box_30", buyer: playerPiUser || "unknown_player" },
             uid: currentPiUserId || ""
         };
@@ -783,7 +661,7 @@
             onReadyForServerApproval: function(paymentId) { approvePaymentOnBackend(paymentId); },
             onReadyForServerCompletion: function(paymentId, txid) { completePaymentOnBackend(paymentId, txid); },
             onCancel: function(paymentId) {
-                document.getElementById('game-status').innerText = "❌ Payment cancelled by hunter user.";
+                document.getElementById('game-status').innerText = "❌ Payment cancelled by user.";
                 document.getElementById('game-status').style.color = "#f87171";
             },
             onError: function(error, payment) {
@@ -817,7 +695,6 @@
                 document.getElementById('ammo-val').innerText = ammo;
                 document.getElementById('game-status').innerText = "🪙 1 Pi received! Magazine successfully reloaded. 🔋";
                 document.getElementById('game-status').style.color = "#4ade80";
-                playAdvancedSound('reload'); 
                 updateSupabaseScore();
             }
         } catch (err) {}
