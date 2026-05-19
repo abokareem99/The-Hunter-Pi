@@ -100,7 +100,7 @@
             display: block;
         }
         
-        /* شريط التحكم التكتيكي المطور ليحتوي على زر التوجيه وزر الإطلاق بشكل منفصل وخارج الساحة */
+        /* شريط التحكم التكتيكي المطور خارج الساحة مع عكس المواقع بدقة حذرة */
         .controls-wrapper {
             display: flex;
             justify-content: space-between;
@@ -114,7 +114,27 @@
             border: 1px solid #1e293b;
         }
 
-        /* لوحة التوجيه اللمسية الافتراضية - اليسار */
+        /* زر الإطلاق التكتيكي العملاق - تم نقله إلى اليسار بالكامل */
+        .btn-shoot {
+            background-image: linear-gradient(135deg, #ef4444, #dc2626, #991b1b);
+            color: white;
+            border: 2px solid #fca5a5;
+            border-radius: 50%;
+            width: 95px;
+            height: 95px;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+            transition: transform 0.05s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-shoot:active {
+            transform: scale(0.85);
+            background-image: linear-gradient(135deg, #991b1b, #451a03);
+        }
+
+        /* لوحة التوجيه اللمسية الافتراضية - تم نقلها إلى اليمين بالكامل */
         .joystick-container {
             width: 95px;
             height: 95px;
@@ -138,26 +158,6 @@
             box-shadow: 0 3px 10px rgba(0,0,0,0.6);
             cursor: pointer;
             transition: transform 0.05s ease;
-        }
-
-        /* زر الإطلاق التكتيكي العملاق - اليمين */
-        .btn-shoot {
-            background-image: linear-gradient(135deg, #ef4444, #dc2626, #991b1b);
-            color: white;
-            border: 2px solid #fca5a5;
-            border-radius: 50%;
-            width: 95px;
-            height: 95px;
-            font-size: 18px;
-            font-weight: 900;
-            cursor: pointer;
-            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
-            transition: transform 0.05s ease;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn-shoot:active {
-            transform: scale(0.85);
-            background-image: linear-gradient(135deg, #991b1b, #451a03);
         }
 
         /* زر إعادة التعبئة المركزي لشحن الذخيرة بالـ Pi */
@@ -234,16 +234,16 @@
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
         <div><span class="audio-indicator">🔊 THX 3D Sound Engine & Advanced D-Pad Active</span></div>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Move Left Stick to aim, Tap right Red Button to fire!</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Tap Left Red Button to fire, Move Right Stick to aim!</p>
         
         <div class="controls-wrapper">
-            <div class="joystick-container" id="joy-container">
-                <div class="joystick-knob" id="joy-knob"></div>
-            </div>
+            <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
             
             <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO<br>(1 Pi)</button>
             
-            <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
+            <div class="joystick-container" id="joy-container">
+                <div class="joystick-knob" id="joy-knob"></div>
+            </div>
         </div>
 
         <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38bdf8; font-size: 16px;">🏆 GLOBAL LEADERBOARD</h3>
@@ -298,7 +298,6 @@
     let muzzleFlashY = 0;
     let screenShake = 0;
     
-    // موضع النيشان المبدئي في وسط الشاشة
     let aimX = 260;
     let aimY = 175;
 
@@ -308,7 +307,7 @@
     let joyStartY = 0;
     let joyMoveX = 0;
     let joyMoveY = 0;
-    const maxJoyDistance = 35; // أقصى مسافة لحركة العصا الداخلية داخل الدائرة
+    const maxJoyDistance = 35; 
 
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
@@ -520,7 +519,7 @@
         document.getElementById('auth-section').className = 'hidden';
         document.getElementById('game-section').className = '';
         startGameLoop();
-        setupJoystickListeners(); // تفعيل محرك وعصا التحكم الجديدة
+        setupJoystickListeners(); 
         loadLeaderboard();
         playAdvancedSound('reload');
     }
@@ -625,7 +624,7 @@
         }
     }
 
-    // هندسة وبناء نظام تتبع حركة عصا التحكم (Joystick Engine Logic) خارج الكانفاس
+    // هندسة ونظام حركة عصا التحكم (Joystick Engine Logic) المتواجدة الآن بالجهة اليمنى
     function setupJoystickListeners() {
         const joyContainer = document.getElementById('joy-container');
         const joyKnob = document.getElementById('joy-knob');
@@ -653,10 +652,8 @@
                 distance = maxJoyDistance;
             }
 
-            // تحديث تموضع مقبض العصا رسومياً وبصرياً أمام المستخدم
             joyKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
 
-            // تحويل نسب الإزاحة لقيم فيزيائية لتحريك النيشان (Aim Crosshair) بسلاسة داخل الساحة
             joyMoveX = deltaX / maxJoyDistance;
             joyMoveY = deltaY / maxJoyDistance;
         }
@@ -668,7 +665,6 @@
             joyMoveY = 0;
         }
 
-        // دعم كامل للمس الشاشات والفأرة للحسابات المكتبية والمحمولة معاً
         joyContainer.addEventListener('mousedown', handleJoyStart);
         window.addEventListener('mousemove', handleJoyMove);
         window.addEventListener('mouseup', handleJoyEnd);
@@ -678,7 +674,6 @@
         window.addEventListener('touchend', handleJoyEnd);
     }
 
-    // السماح أيضاً بالتحكم المباشر عبر الكانفاس لمن يحب اللمس السريع على الشاشة
     function handleCanvasPointer(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
         aimX = (clientX - rect.left) * (canvas.width / rect.width);
@@ -709,9 +704,8 @@
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
             
-            // محرك تحديث حركة النيشان بناءً على سحب زر التوجيه الخارجي
             if (joyActive) {
-                let aimSpeed = 5.2; // سرعة تحريك وحساسية المنظار التكتيكي
+                let aimSpeed = 5.2; 
                 aimX += joyMoveX * aimSpeed;
                 aimY += joyMoveY * aimSpeed;
 
