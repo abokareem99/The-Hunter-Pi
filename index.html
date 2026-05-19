@@ -202,8 +202,8 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
-    // إضافة طابع زمني متجدد v=2 لضمان كسر التخزين المؤقت وتحميل الصورة الجديدة الشفافة فور رفعها على GitHub
-    const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=2";
+    // إضافة طابع زمني متجدد لمنع كاش المتصفح القديم
+    const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
     const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=480&h=320&q=80"; 
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -490,6 +490,7 @@
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
+            // تحديث حركة الطائر باستمرار
             target.x += target.xSpeed; 
             target.y += target.ySpeed;
             target.flap += target.flapSpeed;
@@ -508,6 +509,7 @@
                 }
             }
 
+            // رسم الخلفية
             if (forestBgImg) {
                 ctx.drawImage(forestBgImg, 0, 0, canvas.width, canvas.height);
             } else {
@@ -515,6 +517,7 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
+            // رسم جزيئات الريش
             particles.forEach((p, index) => {
                 p.x += p.vx; p.y += p.vy; p.vy += 0.02; 
                 p.alpha -= 0.025;
@@ -534,6 +537,7 @@
                 flashIntensity -= 0.08;
             }
 
+            // رسم مجسم الطائر وحركته
             ctx.save();
             ctx.translate(target.x, target.y);
             let moveAngle = Math.atan2(target.ySpeed, target.xSpeed);
@@ -557,7 +561,7 @@
             ctx.font = 'bold 11px Tahoma';
             ctx.fillText(`🐦 طائر صيد`, target.x - 22, target.y - target.height - 8);
 
-            // إحداثيات ارتكاز السلاح في الركن السفلي
+            // إحداثيات السلاح في الركن السفلي
             let gunBaseX = canvas.width - 40; 
             let gunBaseY = canvas.height + 20; 
 
@@ -566,21 +570,24 @@
             let gunRotation = Math.atan2(aimY - gunBaseY, aimX - gunBaseX) + Math.PI / 2;
             ctx.rotate(gunRotation);
 
-            // --- 🎯 تم إلغاء تأثيرات الدمج القديمة المشوهة ورسم الصورة مباشرة للحصول على أعلى نقاوة هندسية ---
-            if (ak47Img) {
+            // رسم البندقية بنقاء هندسي
+            if (ak47Img && ak47Img.complete && ak47Img.naturalWidth !== 0) {
                 ctx.drawImage(ak47Img, -30, -120, 60, 160);
             } else {
-                ctx.fillStyle = '#78350f'; ctx.fillRect(-7, -20, 14, 30);
-                ctx.fillStyle = '#334155'; ctx.fillRect(-5, -55, 10, 40);
+                // رسم كلاشينكوف برميجي أنيق ومفرغ إذا لم تكتمل الصورة لمنع تشوه الشاشة بالبياض
+                ctx.fillStyle = '#78350f'; ctx.fillRect(-6, -30, 12, 40); 
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(-4, -90, 8, 70); 
+                ctx.fillStyle = '#475569'; ctx.fillRect(-2, -120, 4, 30); 
             }
             ctx.restore();
 
+            // رسم النيشان الأحمر المصلح
             ctx.save();
             ctx.strokeStyle = '#f87171'; 
             ctx.lineWidth = 1.8;
             ctx.translate(aimX, aimY);
             ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.moveTo(0, -16); ctx.lineTo(0, 16); stroke();
+            ctx.beginPath(); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.moveTo(0, -16); ctx.lineTo(0, 16); ctx.stroke();
             ctx.restore();
 
         }, 1000 / 60);
