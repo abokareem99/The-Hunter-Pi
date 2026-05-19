@@ -1,10 +1,17 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE HUNTER Arcade - Absolute Color Shift Edition 🔥</title>
+    <title>لعبة الصياد - النسخة الواقعية المتطورة 🔥</title>
     
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="The Hunter">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-logo.png">
+    
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRIRSBLVU5URVIgQXJjYWRlIiwKICAic2hvcnRfbmFtZSI6ICJUaGUgSHVudGVyIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwMjA2MTciLAogICJ0aGVtZV9jb2xvciI6ICIjMzhiZGY4IiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2Fib2thcmVlbTk5L3RoZS1odW50ZXItcGkvbWFpbi9odW50ZXItbG9nby5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSIKICAgIH0KICBdCn0=">
+
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
@@ -89,6 +96,7 @@
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
             flex-wrap: wrap;
             gap: 5px;
+            direction: ltr;
         }
         #hunting-canvas {
             border: 3px solid #38bdf8;
@@ -115,7 +123,7 @@
             border: 1px solid #1e293b;
         }
 
-        /* زر الإطلاق الأيسر التكتيكي الممتاز */
+        /* زر الإطلاق الأيسر التكتيكي المعتمد */
         .btn-shoot {
             background-image: linear-gradient(135deg, #ef4444, #dc2626, #991b1b);
             color: white;
@@ -135,7 +143,7 @@
             background-image: linear-gradient(135deg, #991b1b, #451a03);
         }
 
-        /* عصا التحكم اليمنى للتنشين المريح بالملي */
+        /* عصا التوجيه اليمنى */
         .joystick-container {
             width: 95px;
             height: 95px;
@@ -165,8 +173,8 @@
             flex: 1;
             background-image: linear-gradient(135deg, #eab308, #ca8a04); 
             color: #0f172a; 
-            font-size: 13px; 
-            padding: 14px 8px; 
+            font-size: 12px; 
+            padding: 14px 4px; 
             font-weight: 900;
             border-radius: 14px;
             border: none;
@@ -208,57 +216,114 @@
             border-radius: 20px;
             font-weight: bold;
         }
+
+        /* شاشة الحماية والتحويل لمتصفح باي */
+        #pi-browser-guard {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #090d16;
+            z-index: 999999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 25px;
+            box-sizing: border-box;
+        }
+        .guard-card {
+            background: #0f172a;
+            border: 2px solid #eab308;
+            padding: 30px 20px;
+            border-radius: 20px;
+            max-width: 420px;
+            box-shadow: 0 0 30px rgba(234,179,8,0.2);
+        }
+        .pi-logo-anim {
+            width: 80px; height: 80px;
+            margin-bottom: 15px;
+            animation: pulse 2s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 20px #eab308; border-radius: 50%; }
+            100% { transform: scale(1); opacity: 0.9; }
+        }
+        .pwa-instruction-btn {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px dashed #38bdf8;
+            padding: 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-top: 15px;
+            color: #38bdf8;
+        }
     </style>
 </head>
 <body>
 
+<div id="pi-browser-guard" class="hidden">
+    <div class="guard-card">
+        <img class="pi-logo-anim" src="https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-logo.png" alt="Pi Network">
+        <h2 style="color: #eab308; margin-top: 0;">عذرًا! نظام الأمان نشط 🔒</h2>
+        <p style="font-size: 14px; line-height: 1.6; color: #cbd5e1;">لتأمين رصيدك ومعالجة عمليات الدفع عبر البلوكشين وتغيير الألوان، يجب فتح هذه اللعبة حصريًا من داخل <strong>متصفح باي (Pi Browser)</strong>.</p>
+        
+        <button class="btn" style="margin-top: 10px; background-image: linear-gradient(135deg, #eab308, #ca8a04); color: #0f172a;" onclick="tryOpenInPiBrowser()">فتح في متصفح Pi تلقائياً 🚀</button>
+        
+        <p style="font-size: 11px; margin-top: 15px; color: #94a3b8;">إذا لم يعمل الزر تلقائياً، قم بنسخ رابط الموقع الحالي وافتحه يدويًا داخل خانة البحث في Pi Browser.</p>
+        
+        <div class="pwa-instruction-btn">
+            💡 لتثبيت اللعبة كأيقونة: اضغط على خيار المتصفح (ثلاث نقاط أو مشاركة) ثم اختر <strong>"إضافة إلى الشاشة الرئيسية"</strong> من داخل متصفح باي!
+        </div>
+    </div>
+</div>
+
 <div class="container" id="game-container">
-    <h1>🎮 THE HUNTER</h1>
+    <h1>🎮 لـعـبـة الـصـيـاد</h1>
 
     <div id="auth-section">
         <div class="welcome-card">
             <div class="hunter-avatar"></div>
-            <p>Welcome Abu Kareem!<br>Log in to deploy your custom cinematic AK-47 assault rifle 🔥</p>
-            <button class="btn" id="btn-login" onclick="initAndLoginWithPi()">FREE ACCESS & START HUNTING 🚀</button>
+            <p style="font-size:15px;">مرحباً بك يا غالي أبو كريم!<br>سجل الدخول فوراً لتفعيل بندقية الـ AK-47 السينمائية المخصصة 🔥</p>
+            <button class="btn" id="btn-login" onclick="initAndLoginWithPi()">دخول مجاني وبدء الصيد الآن 🚀</button>
         </div>
     </div>
 
     <div id="game-section" class="hidden">
         <div class="stats-bar">
-            <div>Hunter: <span id="player-name" style="color: #38bdf8;">...</span></div>
-            <div>Hits: <span id="hits-val" style="color: #eab308;">0</span> 🎯</div>
-            <div>Score: <span id="score-val" style="color: #4ade80;">0</span></div>
-            <div>Ammo: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
-            <div>Bird Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown & Yellow</span></div>
+            <div>الصياد: <span id="player-name" style="color: #38bdf8;">...</span></div>
+            <div>الإصابات: <span id="hits-val" style="color: #eab308;">0</span> 🎯</div>
+            <div>النقاط: <span id="score-val" style="color: #4ade80;">0</span></div>
+            <div>الذخيرة: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
+            <div>تطور الطائر: <span id="color-name-display" style="font-weight: 900;">Classic Brown & Yellow</span></div>
         </div>
 
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
-        <div><span class="audio-indicator">🔊 Fanfare Audio & Absolute Color Evolution Framework Active</span></div>
+        <div><span class="audio-indicator">🔊 نظام الموسيقى التصاعدية ومصفوفة الألوان النشطة حركياً جاهزة</span></div>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Hit the bird 10 times to unlock new color tiers and get 50 FREE AMMO!</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">اضرب الطائر 10 مرات متتالية لقلب لونه كلياً واحصل على 50 طلقة مجانية!</p>
         
         <div class="controls-wrapper">
-            <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
+            <button class="btn-shoot" id="fire-trigger">إطلاق 🔥</button>
             
-            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO<br>(1 Pi)</button>
+            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 شحن<br>30 طلقة<br>(1 Pi)</button>
             
             <div class="joystick-container" id="joy-container">
                 <div class="joystick-knob" id="joy-knob"></div>
             </div>
         </div>
 
-        <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38bdf8; font-size: 16px;">🏆 GLOBAL LEADERBOARD</h3>
+        <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38bdf8; font-size: 16px;">🏆 قائمة المتصدرين العالمية</h3>
         <table class="leaderboard-table">
             <thead>
                 <tr>
-                    <th>RANK</th>
-                    <th>HUNTER USERNAME</th>
-                    <th>HIGH SCORE 🎯</th>
+                    <th>الترتيب</th>
+                    <th>اسم المستخدم في باي</th>
+                    <th>أعلى سكور 🎯</th>
                 </tr>
             </thead>
             <tbody id="leaderboard-body">
                 <tr>
-                    <td colspan="3" style="color: #94a3b8;">Authenticating Pi Network Ledger...</td>
+                    <td colspan="3" style="color: #94a3b8;">جاري التحقق من دفتر بلوكشين Pi...</td>
                 </tr>
             </tbody>
         </table>
@@ -266,6 +331,28 @@
 </div>
 
 <script>
+    // فحص البيئة فوراً للتأكد أن الفتح يتم من داخل Pi Browser لحماية سلامة السيستم
+    function checkBrowserEnvironment() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        // التحقق من وجود كلمة pi في الـ useragent أو التحقق من الكائن البرمجي
+        const isPiBrowser = userAgent.includes("pinetwork") || userAgent.includes("pibrowser") || (window.Pi && typeof window.Pi.createPayment !== 'undefined');
+        
+        // إذا كنا في بيئة محلية للتطوير اسمح بالمرور، وإلا فافرض الحماية الصارمة خارج متصفح باي
+        if (!isPiBrowser && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+            document.getElementById('pi-browser-guard').classList.remove('hidden');
+            document.getElementById('game-container').classList.add('hidden');
+        }
+    }
+    
+    function tryOpenInPiBrowser() {
+        // محاولة إطلاق الرابط العميق لمتصفح باي لفتح الموقع تلقائياً
+        const currentUrl = window.location.href.replace(/^https?:\/\//, '');
+        window.location.href = "pi://" + currentUrl;
+    }
+
+    // استدعاء فحص البيئة فور تحميل المستند
+    window.addEventListener('DOMContentLoaded', checkBrowserEnvironment);
+
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
@@ -277,29 +364,23 @@
 
     let score = 0;
     let ammo = 30;
-    let totalHits = 0; // عداد دقيق وصارم لعدد الإصابات الفعلي في الجلسة المباشرة
+    let totalHits = 0; 
     let playerPiUser = "";
     let playerWallet = ""; 
     let currentPiUserId = "";
     let isSdkInitialized = false;
     
-    // 🛠️ مصفوفة تدرج الألوان المطلقة والخالية تماماً من التداخل أو الثبات الثنائي
     const birdColorTiers = [
-        // المستوى الأول (البني والأصفر المعتمد حالياً)
-        { name: "Classic Brown & Yellow", primary: "#543011", secondary: "#eab308", detail: "#3a1f05", beak: "#f97316" }, 
-        // المستوى الثاني (ينقلب تماماً للأخضر الغاباتي الساطع بدون أثر للأصفر)
-        { name: "Forest Emerald Green", primary: "#115e59", secondary: "#10b981", detail: "#064e3b", beak: "#f43f5e" },  
-        // المستوى الثالث (السيان الفسفوري النيون)
-        { name: "Neon Cyber Cyan", primary: "#0369a1", secondary: "#06b6d4", detail: "#0c4a6e", beak: "#fbbf24" },      
-        // المستوى الرابع (البنفسجي الإمبراطوري)
-        { name: "Royal Void Purple", primary: "#6b21a8", secondary: "#a855f7", detail: "#4c1d95", beak: "#22c55e" },    
+        { name: "البني والأصفر الكلاسيكي", primary: "#543011", secondary: "#eab308", detail: "#3a1f05", beak: "#f97316" }, 
+        { name: "الأخضر الزمردي الغاباتي 🌲", primary: "#115e59", secondary: "#10b981", detail: "#064e3b", beak: "#f43f5e" },  
+        { name: "السيان النيون السيبراني ⚡", primary: "#0369a1", secondary: "#06b6d4", detail: "#0c4a6e", beak: "#fbbf24" },      
+        { name: "البنفسجي الملكي الفاخر 🔮", primary: "#6b21a8", secondary: "#a855f7", detail: "#4c1d95", beak: "#22c55e" },    
         
-        // 🔥 مستويات الشرف والخلود الخمسة النادرة 🔥
-        { name: "Cosmic Amber 🌟", primary: "#b45309", secondary: "#fbbf24", detail: "#78350f", beak: "#ef4444" },  
-        { name: "Magma Crimson 🔥", primary: "#991b1b", secondary: "#ef4444", detail: "#450a0a", beak: "#ffffff" },  
-        { name: "Prism Rainbow 🌈", primary: "#db2777", secondary: "#3b82f6", detail: "#4f46e5", beak: "#eab308" },  
-        { name: "Cyber Shadow 🥷", primary: "#1e293b", secondary: "#475569", detail: "#0f172a", beak: "#38bdf8" },  
-        { name: "GODLIKE GOLD 👑", primary: "#d97706", secondary: "#fef08a", detail: "#78350f", beak: "#f97316" }   
+        { name: "الكهرمان الكوني الأسطوري 🌟", primary: "#b45309", secondary: "#fbbf24", detail: "#78350f", beak: "#ef4444" },  
+        { name: "اللافا المشتعلة الدموية 🔥", primary: "#991b1b", secondary: "#ef4444", detail: "#450a0a", beak: "#ffffff" },  
+        { name: "قوس قزح المنشوري النادر 🌈", primary: "#db2777", secondary: "#3b82f6", detail: "#4f46e5", beak: "#eab308" },  
+        { name: "ظل النينجا السيبراني 🥷", primary: "#1e293b", secondary: "#475569", detail: "#0f172a", beak: "#38bdf8" },  
+        { name: "الذهب الإلهي الخالص 👑", primary: "#d97706", secondary: "#fef08a", detail: "#78350f", beak: "#f97316" }   
     ];
 
     let currentBirdStyle = birdColorTiers[0];
@@ -454,7 +535,7 @@
                 });
             }
         } catch(e){
-            console.error("DSP Context Safe-Guard:", e);
+            console.error("DSP Shield Protection Error:", e);
         }
     }
 
@@ -485,7 +566,7 @@
     function initAndLoginWithPi() {
         initAudio();
         const loginBtn = document.getElementById('btn-login');
-        loginBtn.innerText = "Synchronizing Environments... 🔄";
+        loginBtn.innerText = "جاري الاتصال بـبلوكشين باي... 🔄";
         preloadAssets().then(() => {
             try {
                 if (typeof Pi !== 'undefined' && window.Pi) {
@@ -503,7 +584,7 @@
                             handleLoginSuccess();
                         })
                         .catch((err) => {
-                            console.error("Authentication fallback initiated:", err);
+                            console.error("Authentication fallback context:", err);
                             setupDevAccount();
                         });
                     }, 250);
@@ -535,7 +616,6 @@
                 score = data.high_score || 0; 
                 document.getElementById('score-val').innerText = score;
                 
-                // حساب وضبط لون البداية بناء على سكور المحفوظات
                 let savedHits = Math.floor(score / 10);
                 let startTier = Math.floor(savedHits / 10);
                 if (startTier >= birdColorTiers.length) startTier = birdColorTiers.length - 1;
@@ -555,7 +635,6 @@
         playAdvancedSound('reload');
     }
 
-    // 🎯 دالة التحديث الديناميكي الشاملة لقص وإبادة اللون القديم
     function updateBirdColorTier() {
         let tierIndex = Math.floor(totalHits / 10);
         if (tierIndex >= birdColorTiers.length) {
@@ -622,7 +701,7 @@
     function executeShot() {
         if (ammo <= 0) {
             playAdvancedSound('empty');
-            document.getElementById('game-status').innerText = "❌ OUT OF AMMO! Refill using your Pi Wallet.";
+            document.getElementById('game-status').innerText = "❌ نفذت الذخيرة! قم بإعادة الشحن باستخدام محفظة باي.";
             document.getElementById('game-status').style.color = "#f87171";
             return;
         }
@@ -646,7 +725,7 @@
         const distance = Math.sqrt((aimX - target.x)**2 + (aimY - target.y)**2);
         if (distance <= target.radius + 18) {
             score += 10;
-            totalHits++; // زيادة عداد الإصابات في هذه الجلسة الحالية
+            totalHits++; 
             
             document.getElementById('score-val').innerText = score;
             document.getElementById('hits-val').innerText = totalHits;
@@ -654,29 +733,28 @@
             playAdvancedSound('hit');
             createFeatherCloud(target.x, target.y); 
             
-            // قفل حدوث التحول والمكافأة عند مضاعفات الـ 10
             if (totalHits > 0 && totalHits % 10 === 0) {
                 ammo += 50; 
                 document.getElementById('ammo-val').innerText = ammo;
                 
-                updateBirdColorTier(); // الاستدعاء الحازم وفصل كود اللون الأصفر القديم
+                updateBirdColorTier(); 
                 playAdvancedSound('fanfare_bonus'); 
                 
-                document.getElementById('game-status').innerText = `🎁 EVOLUTION! 10 Hits Milestone Reached! Bird Transformed to [${currentBirdStyle.name}] & +50 FREE AMMO! 🎉`;
+                document.getElementById('game-status').innerText = `🎁 رائع جداً! تم تحقيق 10 إصابات، تطور الطائر إلى [${currentBirdStyle.name}] وتم منحك 50 طلقة مجانية! 🎉`;
                 document.getElementById('game-status').style.color = "#a855f7";
                 
                 target.xSpeed += (target.xSpeed > 0 ? 0.6 : -0.6);
                 target.ySpeed += (target.ySpeed > 0 ? 0.6 : -0.6);
             } else {
-                updateBirdColorTier(); // للتأكيد المستمر على دمج اللون الحالي
-                document.getElementById('game-status').innerText = `🎯 TARGET DOWN! | ${10 - (totalHits % 10)} more hits until next evolution tier!`;
+                updateBirdColorTier(); 
+                document.getElementById('game-status').innerText = `🎯 تم قنص الهدف بنجاح! متبقي ${10 - (totalHits % 10)} إصابات للمستوى القادم.`;
                 document.getElementById('game-status').style.color = "#4ade80";
             }
             
             updateSupabaseScore(); 
             resetTarget();
         } else {
-            document.getElementById('game-status').innerText = "💨 SHOT MISSED! Stabilize crosshair before firing.";
+            document.getElementById('game-status').innerText = "💨 طلقة طائشة! ثبت مؤشر التنشين جيداً قبل الإطلاق.";
             document.getElementById('game-status').style.color = "#fbbf24";
         }
     }
@@ -826,7 +904,6 @@
                 }
             });
 
-            // 🛠️ الضمان اللوني الكامل: هنا قمنا بإزالة وتطهير أي ألوان ثابتة قديمة
             ctx.save();
             ctx.translate(target.x, target.y);
             
@@ -838,13 +915,11 @@
                 ctx.rotate(moveAngle);
             }
             
-            // 1. جسم الطائر الرئيسي (يأخذ لونه كلياً من المصفوفة)
             ctx.fillStyle = currentBirdStyle.primary;
             ctx.beginPath(); 
             ctx.ellipse(0, 0, target.width/2, target.height/2, 0, 0, Math.PI*2); 
             ctx.fill();
             
-            // 2. أجنحة الطائر (تتغير بالكامل وتبعاً للمصفوفة بدون لون خارجي)
             let wingFlapOffset = Math.sin(target.flap) * (target.height / 1.3);
             ctx.fillStyle = currentBirdStyle.secondary;
             ctx.beginPath(); 
@@ -854,7 +929,6 @@
             ctx.ellipse(-2, + wingFlapOffset / 2, 9, target.height/2 + Math.abs(wingFlapOffset)/2, -0.2, 0, Math.PI*2); 
             ctx.fill();
 
-            // 3. الرأس وتفاصيل العين والمنقار المتغير الديناميكي
             ctx.fillStyle = currentBirdStyle.detail;
             ctx.beginPath();
             ctx.arc(target.width/2 - 2, -3, 9, 0, Math.PI*2); ctx.fill();
@@ -863,7 +937,6 @@
             ctx.beginPath();
             ctx.arc(target.width/2 + 1, -5, 2, 0, Math.PI*2); ctx.fill();
             
-            // منقار الطائر المتغير
             ctx.fillStyle = currentBirdStyle.beak;
             ctx.beginPath();
             ctx.moveTo(target.width/2 + 5, -6); 
@@ -871,7 +944,6 @@
             ctx.lineTo(target.width/2 + 5, 2); 
             ctx.fill();
 
-            // 4. ريش ذيل الطائر
             ctx.fillStyle = currentBirdStyle.detail;
             ctx.beginPath();
             ctx.moveTo(-target.width/2, -4);
@@ -944,17 +1016,17 @@
 
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
-            document.getElementById('game-status').innerText = "⚠️ Open this game inside Pi Browser to initiate real ledger purchases.";
+            document.getElementById('game-status').innerText = "⚠️ يرجى فتح اللعبة من داخل Pi Browser لتنفيذ عمليات الشحن الموثقة.";
             document.getElementById('game-status').style.color = "#f87171";
             return;
         }
 
-        document.getElementById('game-status').innerText = "⚡ Preparing secure handshake with Pi Blockchain Ledger...";
+        document.getElementById('game-status').innerText = "⚡ جاري تحضير الشحنة الآمنة مع بلوكشين باي...";
         document.getElementById('game-status').style.color = "#fbbf24";
 
         const paymentData = {
             amount: 1.0, 
-            memo: "Refill AK-47 Ammo Magazine (30 Rounds) - The Hunter Arcade",
+            memo: "شحن مخزن ذخيرة بندقية AK-47 (30 طلقة) - لعبة الصياد",
             metadata: { item_code: "ak47_ammo_box_30", buyer: playerPiUser || "unknown_player" },
             uid: currentPiUserId || ""
         };
@@ -963,11 +1035,11 @@
             onReadyForServerApproval: function(paymentId) { approvePaymentOnBackend(paymentId); },
             onReadyForServerCompletion: function(paymentId, txid) { completePaymentOnBackend(paymentId, txid); },
             onCancel: function(paymentId) {
-                document.getElementById('game-status').innerText = "❌ Payment aborted by the user.";
+                document.getElementById('game-status').innerText = "❌ تم إلغاء العملية من قِبل المستخدم.";
                 document.getElementById('game-status').style.color = "#f87171";
             },
             onError: function(error, payment) {
-                document.getElementById('game-status').innerText = "⚠️ Processing fault within Pi Wallet subsystem.";
+                document.getElementById('game-status').innerText = "⚠️ حدث خطأ أثناء معالجة الدفع في محفظة باي.";
                 document.getElementById('game-status').style.color = "#f87171";
             }
         };
@@ -995,7 +1067,7 @@
             if (result.success) {
                 ammo += 30;
                 document.getElementById('ammo-val').innerText = ammo;
-                document.getElementById('game-status').innerText = "🪙 1 Pi received successfully! Magazine reloaded. 🔋";
+                document.getElementById('game-status').innerText = "🪙 تم تأكيد استلام 1 Pi بنجاح وشحن الذخيرة! 🔋";
                 document.getElementById('game-status').style.color = "#4ade80";
                 playAdvancedSound('reload');
                 updateSupabaseScore();
