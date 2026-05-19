@@ -162,7 +162,7 @@
         
         /* Enhanced Expanded Hunting Viewport Container */
         .canvas-container {
-            flex: 1.4; /* زيادة مساحة شاشة الصيد بشكل ملحوظ وعمودي */
+            flex: 1.4; 
             position: relative;
             width: 100%;
             background-color: #020617;
@@ -194,7 +194,7 @@
             width: 100%;
         }
         
-        /* Right-Hand Side Rapid-Fire Button (زر الإطلاق يمين الشاشة للتحكم باليد اليمنى) */
+        /* Tactical Rapid-Fire Button - تم نقله للجهة الأخرى تماماً بناءً على طلبك */
         .btn-shoot {
             background-image: linear-gradient(135deg, #ef4444, #b91c1c);
             color: white;
@@ -208,7 +208,7 @@
             box-shadow: 0 5px 20px rgba(239, 68, 68, 0.6);
             transition: transform 0.05s ease, box-shadow 0.05s ease;
             -webkit-tap-highlight-color: transparent;
-            order: 2; /* إرجاع موقع الزر إلى اليمين */
+            order: 1; /* تغيير ترتيب العناصر ليعكس التموضع تماماً على الشاشة */
             letter-spacing: 0.5px;
             display: flex;
             align-items: center;
@@ -222,7 +222,7 @@
             background-image: linear-gradient(135deg, #dc2626, #991b1b);
         }
         
-        /* Ammo Purchase Action Button (يسار الشاشة) */
+        /* Ammo Purchase Action Button - تم نقله للجهة الأخرى */
         .btn-ammo {
             flex: 1;
             background-image: linear-gradient(135deg, #eab308, #ca8a04); 
@@ -236,7 +236,7 @@
             box-shadow: 0 4px 14px rgba(234, 179, 8, 0.35);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            order: 1; /* وضع زر شراء الذخيرة جهة اليسار */
+            order: 2; 
             -webkit-tap-highlight-color: transparent;
             transition: transform 0.1s, box-shadow 0.1s;
         }
@@ -316,11 +316,11 @@
             <canvas id="hunting-canvas"></canvas>
         </div>
  
-        <p class="status-messages" id="game-status">Drag finger on screen to aim crosshairs. Tap right FIRE button to strike!</p>
+        <p class="status-messages" id="game-status">Drag finger on screen to aim crosshairs. Tap FIRE button to strike!</p>
         
         <div class="controls-wrapper">
-            <button class="btn-ammo" id="btn-purchase-ammo" onclick="buyAmmoWithPi()">🪙 Buy 30 Ammo (1 Pi)</button>
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
+            <button class="btn-ammo" id="btn-purchase-ammo" onclick="buyAmmoWithPi()">🪙 Buy 30 Ammo (1 Pi)</button>
         </div>
 
         <div class="leaderboard-section">
@@ -349,7 +349,7 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnR1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
-    // Graphical Engine Memory Asset Registers - السلاح المحدث واليد الموجهة للأمام
+    // Graphical Engine Memory Asset Registers
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=6";
     const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&h=450&q=80"; 
 
@@ -704,10 +704,10 @@
             ctx.beginPath(); ctx.moveTo(23, -6); ctx.lineTo(31, -3); ctx.lineTo(22, 1); ctx.fill();
             ctx.restore();
 
-            // --- التوجيه التكتيكي للسلاح المحدث وميلان هندسي ذكي لليسار تظهر ملامحه بالكامل ---
+            // --- إصلاح الارتكاز: حساب زاوية دوران السلاح لتتحرك للأعلى والأسفل تزامناً مع لمس الشاشة بدقة ---
             ctx.save();
-            let gunPivotX = canvas.width * 0.52; 
-            let gunPivotY = canvas.height * 1.02;
+            let gunPivotX = canvas.width * 0.50; 
+            let gunPivotY = canvas.height * 1.05;
             
             if (ak47Loaded && ak47Img.complete) {
                 let gunScale = 0.42; 
@@ -716,14 +716,15 @@
 
                 ctx.translate(gunPivotX, gunPivotY);
                 
+                // حساب دقيق للزاوية وموازنة اتجاه الدوران لليمين والأعلى بدون انقلاب ميكانيكي
                 let dynamicAngle = Math.atan2(aimY - gunPivotY, aimX - gunPivotX);
-                ctx.rotate(dynamicAngle - 0.42);
+                ctx.rotate(dynamicAngle + Math.PI / 2); 
                 
-                ctx.drawImage(ak47Img, -gW * 0.18, -gH * 0.88, gW, gH); 
+                ctx.drawImage(ak47Img, -gW * 0.5, -gH * 0.9, gW, gH); 
             } else {
                 ctx.translate(gunPivotX, gunPivotY);
                 ctx.strokeStyle = '#475569'; ctx.lineWidth = 10;
-                ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(-25, -75); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(0, -85); ctx.stroke();
             }
             ctx.restore();
 
@@ -732,7 +733,7 @@
             ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2;
             ctx.translate(aimX, aimY);
             ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(-22, 0); ctx.lineTo(22, 0); ctx.moveTo(0, -22); ctx.lineTo(0, 22); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-22, 0); ctx.lineTo(22, 0); ctx.moveTo(0, -22); ctx.lineTo(0, 22); stroke();
             ctx.fillStyle = '#f87171'; ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
 
