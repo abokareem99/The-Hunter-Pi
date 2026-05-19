@@ -15,14 +15,14 @@
             color: #ffffff;
             text-align: center;
             margin: 0;
-            padding: 5px; /* تقليص الحواف لرفع اللعبة لأعلى */
+            padding: 5px; /* حواف مقلصة لرفع اللعبة لأعلى واجهة المستخدم */
             touch-action: none;
             user-select: none;
             overflow-x: hidden;
         }
         .container {
-            max-width: 540px; /* زيادة مساحة الحاوية الكلية */
-            margin: 2px auto;  /* رفع الحاوية لأقصى أعلى الشاشة */
+            max-width: 540px; 
+            margin: 2px auto;  
             background: rgba(15, 23, 42, 0.98);
             padding: 12px;
             border-radius: 24px;
@@ -82,7 +82,7 @@
             background: rgba(15, 23, 42, 0.9);
             padding: 10px;
             border-radius: 14px;
-            margin-bottom: 8px; /* تقليص المسافة للرفع */
+            margin-bottom: 8px; 
             font-weight: bold;
             border: 1px solid #334155;
             font-size: 13px;
@@ -100,21 +100,54 @@
             display: block;
         }
         
+        /* شريط التحكم التكتيكي المطور ليحتوي على زر التوجيه وزر الإطلاق بشكل منفصل وخارج الساحة */
         .controls-wrapper {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-top: 10px;
-            gap: 12px;
-            direction: ltr; /* الحفاظ على مواقع الأزرار بدقة */
+            gap: 10px;
+            direction: ltr; 
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 18px;
+            border: 1px solid #1e293b;
         }
+
+        /* لوحة التوجيه اللمسية الافتراضية - اليسار */
+        .joystick-container {
+            width: 95px;
+            height: 95px;
+            background: radial-gradient(circle, #1e293b 40%, #0f172a 100%);
+            border: 3px solid #38bdf8;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3), inset 0 2px 8px rgba(0,0,0,0.8);
+            touch-action: none;
+        }
+        .joystick-knob {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            border: 2px solid #38bdf8;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+            cursor: pointer;
+            transition: transform 0.05s ease;
+        }
+
+        /* زر الإطلاق التكتيكي العملاق - اليمين */
         .btn-shoot {
             background-image: linear-gradient(135deg, #ef4444, #dc2626, #991b1b);
             color: white;
             border: 2px solid #fca5a5;
             border-radius: 50%;
-            width: 90px;
-            height: 90px;
+            width: 95px;
+            height: 95px;
             font-size: 18px;
             font-weight: 900;
             cursor: pointer;
@@ -126,18 +159,24 @@
             transform: scale(0.85);
             background-image: linear-gradient(135deg, #991b1b, #451a03);
         }
+
+        /* زر إعادة التعبئة المركزي لشحن الذخيرة بالـ Pi */
         .btn-ammo {
             flex: 1;
             background-image: linear-gradient(135deg, #eab308, #ca8a04); 
             color: #0f172a; 
-            font-size: 15px; 
-            padding: 16px 15px; 
+            font-size: 13px; 
+            padding: 14px 8px; 
             font-weight: 900;
-            border-radius: 18px;
+            border-radius: 14px;
             border: none;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(234, 179, 8, 0.4);
-            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+            letter-spacing: 0.2px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .leaderboard-table {
@@ -175,6 +214,7 @@
 
 <div class="container" id="game-container">
     <h1>🎮 THE HUNTER</h1>
+
     <div id="auth-section">
         <div class="welcome-card">
             <div class="hunter-avatar"></div>
@@ -192,13 +232,18 @@
         </div>
 
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
-        <div><span class="audio-indicator">🔊 THX 3D Sound Engine & Cinematics Active</span></div>
+        <div><span class="audio-indicator">🔊 THX 3D Sound Engine & Advanced D-Pad Active</span></div>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Drag to aim the reticle, tap the red button to discharge weapon!</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Move Left Stick to aim, Tap right Red Button to fire!</p>
         
         <div class="controls-wrapper">
+            <div class="joystick-container" id="joy-container">
+                <div class="joystick-knob" id="joy-knob"></div>
+            </div>
+            
+            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO<br>(1 Pi)</button>
+            
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
-            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL 30 AMMO (1 Pi)</button>
         </div>
 
         <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38bdf8; font-size: 16px;">🏆 GLOBAL LEADERBOARD</h3>
@@ -220,12 +265,10 @@
 </div>
 
 <script>
-    // الحفاظ التام على روابط وثوابت الربط مع قاعدة البيانات بدون أي تغيير يذكر
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
-    // أصول الصور الرسمية الموثقة للمشروع لضمان عدم تعليق الرسم في الكانفاس
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
     const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"; 
 
@@ -239,7 +282,6 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
     
-    // إعدادات الطائر وسرعته المتغيرة مع المستويات
     let target = { 
         x: 120, y: 140, 
         xSpeed: 2.8, ySpeed: 2.0, 
@@ -250,14 +292,23 @@
         windDrift: 0
     };
 
-    // مصفوفة المؤثرات السينمائية (الريش، الدخان، الشظايا)
     let particles = []; 
     let flashIntensity = 0;
     let muzzleFlashX = 0;
     let muzzleFlashY = 0;
     let screenShake = 0;
+    
+    // موضع النيشان المبدئي في وسط الشاشة
     let aimX = 260;
     let aimY = 175;
+
+    // متغيرات التحكم بعصا التوجيه الخارجية (Joystick Virtual Physics)
+    let joyActive = false;
+    let joyStartX = 0;
+    let joyStartY = 0;
+    let joyMoveX = 0;
+    let joyMoveY = 0;
+    const maxJoyDistance = 35; // أقصى مسافة لحركة العصا الداخلية داخل الدائرة
 
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
@@ -265,7 +316,6 @@
     let ak47Img = null; 
     let forestBgImg = null; 
 
-    // فيزياء الحركة ثلاثية الأبعاد والمحاكاة التكتيكية للارتداد عند الإطلاق
     let gunRecoilZ = 0;
     let gunRecoilY = 0;
     let gunRecoilAngle = 0;
@@ -277,7 +327,6 @@
         }
     }
 
-    // السينما الصوتية المطورة بالكامل - محرك ترددات يحاكي صوت كلاشينكوف حقيقي مجسم
     function playAdvancedSound(type) {
         if (!audioCtx) return;
         if (audioCtx.state === 'suspended') {
@@ -287,14 +336,13 @@
         try {
             const now = audioCtx.currentTime;
             if (type === 'shoot') {
-                // الطبقة الأولى: دوي الانفجار المنخفض والعميق جداً (Sub-bass Shockwave)
                 const osc1 = audioCtx.createOscillator();
                 const gain1 = audioCtx.createGain();
                 osc1.type = 'sawtooth';
                 osc1.frequency.setValueAtTime(450, now);
                 osc1.frequency.exponentialRampToValueAtTime(5, now + 0.18);
                 
-                gain1.gain.setValueAtTime(0.8, now); // زيادة القوة الصوتية للإطلاق
+                gain1.gain.setValueAtTime(0.8, now); 
                 gain1.gain.linearRampToValueAtTime(0.001, now + 0.18);
                 
                 osc1.connect(gain1);
@@ -302,7 +350,6 @@
                 osc1.start(now);
                 osc1.stop(now + 0.18);
 
-                // الطبقة الثانية: صوت ميكانيكي حاد لخروج الغاز والمقذوف (Gas Expansion Noise)
                 const bufferSize = audioCtx.sampleRate * 0.12;
                 const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const data = buffer.getChannelData(0);
@@ -327,7 +374,6 @@
                 noise.stop(now + 0.1);
                 
             } else if (type === 'hit') {
-                // صوت ارتطام الرصاصة بالهدف مع صدى سينمائي مميز
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'triangle';
@@ -389,7 +435,6 @@
         }
     }
 
-    // تحميل مسبق للخلفيات والأصول للتأكد من عدم حدوث أي تكرار أو تقطع للرسومات
     function preloadAssets() {
         return new Promise((resolve) => {
             let loadedCount = 0;
@@ -414,7 +459,6 @@
         });
     }
 
-    // دالة الدخول الآمنة مع الـ Pi Network Ledger
     function initAndLoginWithPi() {
         initAudio();
         const loginBtn = document.getElementById('btn-login');
@@ -476,6 +520,7 @@
         document.getElementById('auth-section').className = 'hidden';
         document.getElementById('game-section').className = '';
         startGameLoop();
+        setupJoystickListeners(); // تفعيل محرك وعصا التحكم الجديدة
         loadLeaderboard();
         playAdvancedSound('reload');
     }
@@ -514,9 +559,7 @@
         } catch (err) {}
     }
 
-    // توليد شظايا الدخان والريش المتطاير سينمائياً عند تدمير الهدف
     function createFeatherCloud(x, y) {
-        // زيادة عدد جزيئات الشظايا لزيادة التأثير السينمائي لـ 35 جزيء
         for (let i = 0; i < 35; i++) {
             particles.push({
                 x: x, 
@@ -527,7 +570,7 @@
                 rotation: Math.random() * Math.PI * 2,
                 rotationSpeed: (Math.random() - 0.5) * 0.3,
                 alpha: 1,
-                color: Math.random() > 0.4 ? `hsl(${Math.random() * 20 + 15}, 45%, 30%)` : 'rgba(239, 68, 68, 0.8)' // مزيج بين لون الطائر واللون السينمائي الأحمر لإصابة حية
+                color: Math.random() > 0.4 ? `hsl(${Math.random() * 20 + 15}, 45%, 30%)` : 'rgba(239, 68, 68, 0.8)'
             });
         }
     }
@@ -543,17 +586,17 @@
         ammo--; 
         document.getElementById('ammo-val').innerText = ammo;
         playAdvancedSound('shoot');
-        flashIntensity = 0.8; // زيادة شدة توهج الفلاش
-        screenShake = 14;     // زيادة اهتزاز الشاشة الكلي لـ 14 لإعطاء إحساس السينما والأركيد الحقيقي
+        flashIntensity = 0.8; 
+        screenShake = 14;     
 
-        gunRecoilZ = -55;     // ارتداد أعمق للخلف
-        gunRecoilY = -38;     // ارتداد للأعلى
+        gunRecoilZ = -55;     
+        gunRecoilY = -38;     
         gunRecoilAngle = (Math.random() - 0.5) * 0.22;
         
         let gunBaseX = canvas.width - 40;
         let gunBaseY = canvas.height + 20;
         let rot = Math.atan2(aimY - gunBaseY, aimX - gunBaseX);
-        muzzleFlashX = gunBaseX + Math.cos(rot) * 150; // تعديل موضع الفلاش ليتناسب مع السلاح الكبير
+        muzzleFlashX = gunBaseX + Math.cos(rot) * 150; 
         muzzleFlashY = gunBaseY + Math.sin(rot) * 150;
         
         const distance = Math.sqrt((aimX - target.x)**2 + (aimY - target.y)**2);
@@ -582,7 +625,61 @@
         }
     }
 
-    function handlePointer(clientX, clientY) {
+    // هندسة وبناء نظام تتبع حركة عصا التحكم (Joystick Engine Logic) خارج الكانفاس
+    function setupJoystickListeners() {
+        const joyContainer = document.getElementById('joy-container');
+        const joyKnob = document.getElementById('joy-knob');
+
+        function handleJoyStart(e) {
+            initAudio();
+            joyActive = true;
+            const touch = e.touches ? e.touches[0] : e;
+            const rect = joyContainer.getBoundingClientRect();
+            joyStartX = rect.left + rect.width / 2;
+            joyStartY = rect.top + rect.height / 2;
+        }
+
+        function handleJoyMove(e) {
+            if (!joyActive) return;
+            const touch = e.touches ? e.touches[0] : e;
+            
+            let deltaX = touch.clientX - joyStartX;
+            let deltaY = touch.clientY - joyStartY;
+            let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (distance > maxJoyDistance) {
+                deltaX = (deltaX / distance) * maxJoyDistance;
+                deltaY = (deltaY / distance) * maxJoyDistance;
+                distance = maxJoyDistance;
+            }
+
+            // تحديث تموضع مقبض العصا رسومياً وبصرياً أمام المستخدم
+            joyKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+            // تحويل نسب الإزاحة لقيم فيزيائية لتحريك النيشان (Aim Crosshair) بسلاسة داخل الساحة
+            joyMoveX = deltaX / maxJoyDistance;
+            joyMoveY = deltaY / maxJoyDistance;
+        }
+
+        function handleJoyEnd() {
+            joyActive = false;
+            joyKnob.style.transform = 'translate(0px, 0px)';
+            joyMoveX = 0;
+            joyMoveY = 0;
+        }
+
+        // دعم كامل للمس الشاشات والفأرة للحسابات المكتبية والمحمولة معاً
+        joyContainer.addEventListener('mousedown', handleJoyStart);
+        window.addEventListener('mousemove', handleJoyMove);
+        window.addEventListener('mouseup', handleJoyEnd);
+
+        joyContainer.addEventListener('touchstart', handleJoyStart, { passive: true });
+        window.addEventListener('touchmove', handleJoyMove, { passive: false });
+        window.addEventListener('touchend', handleJoyEnd);
+    }
+
+    // السماح أيضاً بالتحكم المباشر عبر الكانفاس لمن يحب اللمس السريع على الشاشة
+    function handleCanvasPointer(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
         aimX = (clientX - rect.left) * (canvas.width / rect.width);
         aimY = (clientY - rect.top) * (canvas.height / rect.height);
@@ -593,21 +690,15 @@
         if (aimY > canvas.height) aimY = canvas.height;
     }
 
-    canvas.addEventListener('mousemove', (e) => { handlePointer(e.clientX, e.clientY); });
-    canvas.addEventListener('mousedown', (e) => { handlePointer(e.clientX, e.clientY); });
-    
+    canvas.addEventListener('mousemove', (e) => { handleCanvasPointer(e.clientX, e.clientY); });
+    canvas.addEventListener('mousedown', (e) => { handleCanvasPointer(e.clientX, e.clientY); });
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        initAudio(); 
-        if(e.touches.length > 0) {
-            handlePointer(e.touches[0].clientX, e.touches[0].clientY);
-        }
+        if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
     });
     canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
-        if(e.touches.length > 0) {
-            handlePointer(e.touches[0].clientX, e.touches[0].clientY);
-        }
+        if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
     });
     
     const fireTriggerBtn = document.getElementById('fire-trigger');
@@ -618,6 +709,18 @@
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
             
+            // محرك تحديث حركة النيشان بناءً على سحب زر التوجيه الخارجي
+            if (joyActive) {
+                let aimSpeed = 5.2; // سرعة تحريك وحساسية المنظار التكتيكي
+                aimX += joyMoveX * aimSpeed;
+                aimY += joyMoveY * aimSpeed;
+
+                if (aimX < 0) aimX = 0;
+                if (aimX > canvas.width) aimX = canvas.width;
+                if (aimY < 0) aimY = 0;
+                if (aimY > canvas.height) aimY = canvas.height;
+            }
+
             target.glideCounter += 0.05;
             target.windDrift = Math.sin(target.glideCounter) * 0.5;
           
@@ -643,7 +746,6 @@
                 }
             }
 
-            // مسح وتصفير الذاكرة الرسومية للإطار لتفادي الانقسام أو التكرار الخاطئ بالخلفية
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (forestBgImg) {
@@ -653,7 +755,6 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // تحديث ورسم تأثير الشظايا والريش والدم المتساقط بفعل الجاذبية
             particles.forEach((p, index) => {
                 p.x += p.vx; 
                 p.y += p.vy; 
@@ -675,7 +776,6 @@
                 }
             });
 
-            // رسم ورسم حركة جسم الطائر وأجنحته المتأرجحة في الفضاء
             ctx.save();
             ctx.translate(target.x, target.y);
             
@@ -729,7 +829,6 @@
             ctx.font = 'bold 11px Arial';
             ctx.fillText(`🐦 TARGET`, target.x - 24, target.y - target.height - 6);
 
-            // التأثير السينمائي المطور للوميض الناري عند خروج الرصاصة من الفوهة
             if (flashIntensity > 0) {
                 ctx.save();
                 let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 3, muzzleFlashX, muzzleFlashY, 55);
@@ -745,7 +844,6 @@
                 flashIntensity -= 0.06;
             }
 
-            // تموقع ورسم سلاح الكلاشينكوف بمقاسات تكتيكية مكبرة جداً (+40%) لإبراز هيبة السلاح
             let gunBaseX = canvas.width - 45;
             let gunBaseY = canvas.height + 25; 
 
@@ -755,7 +853,6 @@
             ctx.rotate(gunRotation);
 
             if (ak47Img && ak47Img.complete && ak47Img.naturalWidth !== 0) {
-                // تعديل الحجم إلى 90 عرض و 225 ارتفاع (تكبير هائل وممتاز لملء شاشة الأركيد)
                 let currentGunWidth = 90 + (gunRecoilZ * 0.2);
                 let currentGunHeight = 225 + gunRecoilZ;
                 ctx.drawImage(ak47Img, -currentGunWidth / 2, -currentGunHeight + 50, currentGunWidth, currentGunHeight);
@@ -768,7 +865,6 @@
             }
             ctx.restore();
 
-            // رسم منظار القنص والمصوبة الحرة المتطورة (Crosshair Reticle) باللون الأحمر النيون
             ctx.save();
             ctx.strokeStyle = '#f87171'; 
             ctx.lineWidth = 2.5;
@@ -788,7 +884,6 @@
         target.y = Math.random() * (canvas.height - 150) + 45; 
     }
 
-    // دالة إنشاء المبيعات وتأكيد الدفع عبر الـ Blockchain التابع لـ شبكة Pi بدون أي تعديل
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
             document.getElementById('game-status').innerText = "⚠️ Open this game inside Pi Browser to initiate real ledger purchases.";
