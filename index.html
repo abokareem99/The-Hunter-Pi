@@ -16,7 +16,7 @@
             color: #ffffff;
             text-align: center;
             margin: 0;
-            padding: 4px;
+            padding: 5px;
             touch-action: none;
             user-select: none;
             overflow: hidden; 
@@ -26,15 +26,15 @@
         /* Master Tactical Container Layout */
         .container {
             max-width: 500px;
-            margin: 2px auto;
+            margin: 5px auto;
             background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
-            padding: 8px;
+            padding: 10px;
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.9);
             border: 1px solid #1e293b;
             transition: transform 0.05s linear;
             box-sizing: border-box;
-            height: 99vh; 
+            height: 98vh; 
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -42,8 +42,8 @@
         
         h1 { 
             color: #38bdf8;
-            margin: 2px 0 0 0; 
-            font-size: 18px;
+            margin: 2px 0; 
+            font-size: 20px;
             letter-spacing: 1px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
@@ -74,7 +74,7 @@
             width: 130px;
             height: 130px;
             margin-bottom: 15px;
-            border-radius: 50%;
+            border-radius: 10px;
             border: 3px solid #38bdf8;
             box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
             background-image: url('https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-logo.png'); 
@@ -135,7 +135,7 @@
             max-width: 100%;
             touch-action: none;
             box-shadow: 0 4px 15px rgba(0,0,0,0.7);
-            flex: 1; /* استغلال كامل المساحة الرأسية الفائضة */
+            flex: 1; /* استغلال كامل المساحة الرأسية المتاحة */
             background-color: #020617; 
             margin-bottom: 4px;
         }
@@ -244,8 +244,8 @@
     <div id="auth-section">
         <div class="welcome-card">
             <div class="hunter-avatar"></div>
-            <h2 style="color: #38bdf8; font-size: 15px; margin: 0 0 5px 0;">Welcome, Abu Kareem!</h2>
-            <p style="font-size: 12px; line-height: 1.4; color: #94a3b8; margin: 0 0 15px 0;">Initialize the secure firing range to synchronize your score with Supabase and active Pi Wallets.</p>
+            <h2 style="color: #38bdf8; font-size: 16px; margin: 0 0 5px 0;">Welcome, Abu Kareem!</h2>
+            <p style="font-size: 13px; line-height: 1.4; color: #94a3b8; margin: 0 0 15px 0;">Authenticate now to lock and load your advanced tactical AK-47. Synchronize score records with Supabase and Pi consensus wallets.</p>
             <button class="btn" id="btn-login" onclick="initAndLoginWithPi()">START 🚀</button>
         </div>
     </div>
@@ -268,7 +268,7 @@
         </div>
 
         <div class="leaderboard-section">
-            <h3 style="margin: 0 0 4px 0; color: #38bdf8; font-size: 12px; text-align: left; font-weight: bold; letter-spacing: 0.5px;">🏆 GLOBAL LEADERBOARD</h3>
+            <h3 style="margin: 0 0 4px 0; color: #38bdf8; font-size: 13px; text-align: left; font-weight: bold; letter-spacing: 0.5px;">🏆 GLOBAL LEADERBOARD</h3>
             <table class="leaderboard-table">
                 <thead>
                     <tr>
@@ -279,7 +279,7 @@
                 </thead>
                 <tbody id="leaderboard-body">
                     <tr>
-                        <td colspan="3" style="color: #64748b;">Loading active records...</td>
+                        <td colspan="3" style="color: #64748b;">Fetch score records by starting range...</td>
                     </tr>
                 </tbody>
             </table>
@@ -290,12 +290,12 @@
 <script>
     // Infrastructure Token & Data Cluster Endpoints
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnR1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
     // Asset Map Resources
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
-    const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&q=80"; 
+    const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=480&h=320&q=80"; 
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -310,11 +310,11 @@
     
     // Target Trajectory Vectors
     let target = { 
-        x: 100, y: 120, 
-        xSpeed: 2.5, ySpeed: 1.2, 
-        width: 44, height: 38, 
-        flap: 0, flapSpeed: 0.2, 
-        radius: 22 
+        x: 100, y: 150, 
+        xSpeed: 2.2, ySpeed: 1.5, 
+        width: 40, height: 35, 
+        flap: 0, flapSpeed: 0.15, 
+        radius: 20 
     };
     
     let particles = []; 
@@ -322,8 +322,8 @@
     let screenShake = 0;
 
     // Crosshair Coordinate System
-    let aimX = 150;
-    let aimY = 150;
+    let aimX = 240;
+    let aimY = 160;
 
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
@@ -353,39 +353,36 @@
 
             if (type === 'shoot') {
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(420, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.12);
-                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             } else if (type === 'hit') {
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(550, audioCtx.currentTime + 0.18);
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.2);
                 gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.18);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
             } else if (type === 'empty') {
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.06);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.06);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.05);
             }
         } catch(e){}
     }
 
     // Canvas Allocation & Asynchronous Image Hooking
-    function setupCanvasDimensions() {
-        // Force exact pixel resolution matching computed bounding space
-        canvas.width = canvas.parentElement.clientWidth || 360;
-        canvas.height = Math.floor(canvas.parentElement.clientHeight * 0.55) || 280; 
+    function setupCanvasAndPreloads() {
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = canvas.parentElement.offsetHeight * 0.7; // استغلال 70% من ارتفاع الحاوية
 
         aimX = canvas.width / 2;
         aimY = canvas.height / 2;
-    }
 
-    function triggerImagePreloads() {
         // دمج الصور بطريقة مرنة ومقاومة للفشل لضمان عدم توقف الكانفاس مطلقاً
         ak47Img.src = AK47_IMAGE_URL;
         ak47Img.crossOrigin = "anonymous";
@@ -406,8 +403,7 @@
         const loginBtn = document.getElementById('btn-login');
         loginBtn.innerText = "AUTHENTICATING... 🔄";
         
-        setupCanvasDimensions();
-        triggerImagePreloads();
+        setupCanvasAndPreloads();
         
         // تشغيل اللعبة فوراً دون انتظار استجابة السيرفرات الطويلة لمنع تجمد الكانفاس الأسود
         setTimeout(() => {
@@ -434,7 +430,7 @@
             } catch (e) {
                 setupDevAccount();
             }
-        }, 400);
+        }, 300);
     }
 
     function setupDevAccount() {
@@ -464,8 +460,6 @@
         document.getElementById('auth-section').classList.add('hidden');
         document.getElementById('game-section').classList.remove('hidden');
         
-        // إعادة الحساب للتأكد من المقاييس الصحيحة بعد التعديل الديناميكي للمساحة
-        setTimeout(setupCanvasDimensions, 50);
         startGameLoop();
         loadLeaderboard();
     }
@@ -530,15 +524,15 @@
             document.getElementById('score-val').innerText = score;
             playSound('hit');
             
-            // Generate feather debris burst
-            for (let i = 0; i < 12; i++) {
+            // Generate debris burst
+            for (let i = 0; i < 15; i++) {
                 particles.push({
                     x: target.x, y: target.y,
-                    vx: (Math.random() - 0.5) * 6,
-                    vy: (Math.random() - 0.5) * 6,
-                    radius: Math.random() * 2.5 + 1,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() - 0.5) * 5,
+                    radius: Math.random() * 2 + 1,
                     alpha: 1,
-                    color: '#78350f' 
+                    color: '#845325' 
                 });
             }
             
@@ -546,8 +540,8 @@
             if (newLevel > gameLevel) {
                 gameLevel = newLevel;
                 document.getElementById('level-val').innerText = gameLevel;
-                target.xSpeed *= 1.15;
-                target.ySpeed *= 1.15;
+                target.xSpeed *= 1.2;
+                target.ySpeed *= 1.2;
             }
             
             document.getElementById('game-status').innerText = "🎯 Tactical Elimination Verified! +10 Points.";
@@ -566,7 +560,6 @@
         aimX = clientX - borderBox.left;
         aimY = clientY - borderBox.top;
         
-        // Strict boundary confinement
         if (aimX < 0) aimX = 0;
         if (aimX > canvas.width) aimX = canvas.width;
         if (aimY < 0) aimY = 0;
@@ -579,21 +572,19 @@
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if(e.touches.length > 0) processCoordinates(e.touches[0].clientX, e.touches[0].clientY);
-    }, {passive: false});
-    
+    });
     canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
         if(e.touches.length > 0) processCoordinates(e.touches[0].clientX, e.touches[0].clientY);
-    }, {passive: false});
+    });
 
     const triggerActionElement = document.getElementById('fire-trigger');
     triggerActionElement.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
-    triggerActionElement.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); }, {passive: false});
+    triggerActionElement.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
     // Mainline Rendering Engine & Frame Buffer Loop
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
-        
         gameInterval = setInterval(() => {
             // Mechanics Engine Calculations
             target.x += target.xSpeed; 
@@ -625,13 +616,6 @@
                 matrixGrd.addColorStop(1, '#022c22');
                 ctx.fillStyle = matrixGrd;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // خطوط شبكية خلفية لإعطاء طابع رادار صيد متقدم
-                ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)';
-                ctx.lineWidth = 1;
-                for(let i = 0; i < canvas.width; i += 40) {
-                    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
-                }
             }
 
             // Debris Vector Handling
@@ -650,7 +634,7 @@
 
             // Flash Muzzle Feedback Execution
             if (flashIntensity > 0) {
-                ctx.fillStyle = `rgba(255, 244, 214, ${flashIntensity})`;
+                ctx.fillStyle = `rgba(255, 255, 255, ${flashIntensity})`;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 flashIntensity -= 0.06;
             }
@@ -662,37 +646,33 @@
             if (target.xSpeed < 0) ctx.scale(-1, 1); 
             ctx.rotate(bearingAngle * (target.xSpeed < 0 ? -1 : 1));
             
-            // Base Body
-            ctx.fillStyle = '#78350f';
+            ctx.fillStyle = '#653b15';
             ctx.beginPath(); ctx.ellipse(0, 0, target.width/2, target.height/2, 0, 0, Math.PI*2); ctx.fill();
             
-            // Animated Wings
             let flappingOscillator = Math.sin(target.flap) * (target.height / 2);
-            ctx.fillStyle = '#92400e';
-            ctx.beginPath(); ctx.ellipse(-2, - flappingOscillator / 2, 8, target.height/2 + flappingOscillator / 2, 0, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.ellipse(-2, + flappingOscillator / 2, 8, target.height/2 + flappingOscillator / 2, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#845325';
+            ctx.beginPath(); ctx.ellipse(0, - flappingOscillator / 2, 10, target.height/2 + flappingOscillator / 2, 0, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, + flappingOscillator / 2, 10, target.height/2 + flappingOscillator / 2, 0, 0, Math.PI*2); ctx.fill();
             
-            // Fowl Head & Beak Layer
-            ctx.fillStyle = '#451a03';
-            ctx.beginPath(); ctx.arc(target.width/2 - 2, -2, 7, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#fbbf24';
-            ctx.beginPath(); ctx.moveTo(target.width/2 + 3, -4); ctx.lineTo(target.width/2 + 12, -1); ctx.lineTo(target.width/2 + 3, 2); ctx.fill();
+            ctx.fillStyle = '#442507';
+            ctx.beginPath(); ctx.arc(target.width/2, 0, 8, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#ca8a04';
+            ctx.beginPath(); ctx.moveTo(target.width/2 + 7, -3); ctx.lineTo(target.width/2 + 15, 0); ctx.lineTo(target.width/2 + 7, 3); ctx.fill();
             ctx.restore();
             
-            // Target Label
             ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.font = 'bold 10px Segoe UI, sans-serif';
-            ctx.fillText(`TARGET`, target.x - 18, target.y - target.height + 12);
+            ctx.font = 'bold 11px Tahoma';
+            ctx.fillText(`TARGET`, target.x - 18, target.y - target.height - 5);
 
             // --- Advanced Iron-Sight Perspective Core Modification ---
             ctx.save();
             let basePivotPointX = canvas.width / 2;
-            let basePivotPointY = canvas.height + 30; // إزاحة ذكية لأسفل الإطار
+            let basePivotPointY = canvas.height;
             
             let rotationalBearing = Math.atan2(aimY - basePivotPointY, aimX - basePivotPointX) + Math.PI / 2;
             
             if (ak47Loaded && ak47Img.complete) {
-                let scalingRatio = 0.75;
+                let scalingRatio = 0.8;
                 let calculatedW = ak47Img.width * scalingRatio;
                 let calculatedH = ak47Img.height * scalingRatio;
 
@@ -700,17 +680,17 @@
                 ctx.rotate(rotationalBearing);
                 
                 // التنشين من الأعلى مباشرة ليعطي منظور التصويب النيشان الحقيقي
-                ctx.drawImage(ak47Img, -calculatedW / 2, -calculatedH + 110, calculatedW, calculatedH); 
+                ctx.drawImage(ak47Img, -calculatedW / 2, -calculatedH + 100, calculatedW, calculatedH); 
             } else {
                 // سلاح تكتيكي مرسوم احتياطياً في حال فشل تحميل الصورة تماماً لمنع الشاشة السوداء
                 ctx.translate(basePivotPointX, basePivotPointY);
                 ctx.rotate(rotationalBearing);
                 ctx.strokeStyle = '#475569';
-                ctx.lineWidth = 14;
-                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -90); ctx.stroke(); // ماسورة البندقية
+                ctx.lineWidth = 12;
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -80); ctx.stroke(); // ماسورة البندقية
                 ctx.strokeStyle = '#ef4444';
                 ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.moveTo(0, -90); ctx.lineTo(0, -96); ctx.stroke(); // خط النيشان الأمامي الأحمر
+                ctx.beginPath(); ctx.moveTo(0, -80); ctx.lineTo(0, -86); ctx.stroke(); // خط النيشان الأمامي الأحمر
             }
             ctx.restore();
 
@@ -720,7 +700,7 @@
             ctx.lineWidth = 2;
             ctx.translate(aimX, aimY);
             ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(18, 0); ctx.moveTo(0, -18); ctx.lineTo(0, 16); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(18, 0); ctx.moveTo(0, -18); ctx.lineTo(0, 18); ctx.stroke();
             ctx.fillStyle = '#f87171';
             ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
@@ -730,7 +710,7 @@
 
     function resetTarget() {
         target.x = Math.random() * (canvas.width - 80) + 40;
-        target.y = Math.random() * (canvas.height / 3) + 30; 
+        target.y = Math.random() * (canvas.height / 2) + 30; 
     }
 
     // Pi Network Asset Procurement Transaction Invoicing
