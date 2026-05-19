@@ -355,7 +355,7 @@
         // التحقق مما إذا كانت اللعبة تعمل كـ Web App مستقل مثبت على الشاشة (Standalone Icon)
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-        // إذا فتحت من الأيقونة أو من داخل متصفح باي أو السيرفر المحلي، نتركها تعمل وتتخطى الحجب فوراً لإنجاز هدفنا
+        // إذا فتحت من الأيقونة المثبتة بنجاح أو من داخل متصفح باي أو السيرفر المحلي، نتركها تعمل وتتخطى الحجب فوراً لإنجاز هدفنا
         if (!isPiBrowser && !isLocalhost && !isStandalone) {
             document.getElementById("pi-browser-guard").classList.remove("hidden");
             document.getElementById("game-container").classList.add("hidden");
