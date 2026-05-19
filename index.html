@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>لعبة الصياد - النسخة الواقعية المتطورة 🔥</title>
+    <title>THE HUNTER Arcade - Absolute Color Shift Edition 🔥</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,76 +15,82 @@
             color: #ffffff;
             text-align: center;
             margin: 0;
-            padding: 10px;
+            padding: 5px; 
             touch-action: none;
             user-select: none;
             overflow-x: hidden;
         }
         .container {
-            max-width: 500px;
-            margin: 10px auto;
-            background: rgba(15, 23, 42, 0.95);
-            padding: 15px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            border: 1px solid #334155;
-            transition: transform 0.05s linear;
+            max-width: 540px; 
+            margin: 2px auto;  
+            background: rgba(15, 23, 42, 0.98);
+            padding: 12px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.9);
+            border: 1px solid #475569;
+            transition: transform 0.04s cubic-bezier(0.1, 0.8, 0.3, 1);
             position: relative;
         }
         h1 { 
             color: #38bdf8;
-            margin-bottom: 5px; 
-            font-size: 24px;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.7);
+            margin: 0 0 4px 0; 
+            font-size: 26px;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.8);
+            font-weight: 900;
+            letter-spacing: 0.5px;
         }
         .welcome-card {
-            background: #0f172a;
-            border-radius: 15px;
-            padding: 25px 15px; 
+            background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+            border-radius: 20px;
+            padding: 30px 15px; 
             border: 2px solid #38bdf8;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            margin-top: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+            margin-top: 10px;
         }
         .hunter-avatar {
-            width: 180px;
-            height: 180px;
+            width: 170px;
+            height: 170px;
             margin: 0 auto 20px auto;
-            border-radius: 12px;
+            border-radius: 20px;
             border: 3px solid #38bdf8;
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
             background-image: url('https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-logo.png'); 
             background-size: cover;
             background-position: center;
         }
         .btn {
-            background-image: linear-gradient(135deg, #38bdf8, #0284c7);
+            background-image: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
             color: white;
             border: none;
-            padding: 14px 35px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 30px;
+            padding: 15px 40px;
+            font-size: 19px;
+            font-weight: 800;
+            border-radius: 50px;
             cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+            transition: all 0.2s ease;
+            box-shadow: 0 5px 18px rgba(56, 189, 248, 0.4);
             display: inline-block;
             width: 85%;
+            letter-spacing: 0.5px;
         }
-        .btn:hover { 
-            transform: scale(1.03);
+        .btn:active { 
+            transform: scale(0.97);
+            box-shadow: 0 2px 8px rgba(56, 189, 248, 0.2);
         }
         .hidden { display: none !important; }
         
         .stats-bar {
             display: flex;
             justify-content: space-around;
-            background: rgba(15, 23, 42, 0.8);
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            font-weight: bold;
-            border: 1px solid #334155;
-            font-size: 12px;
+            align-items: center;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 10px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            font-weight: 800;
+            border: 1px solid #475569;
+            font-size: 13px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
         }
         #canvas-container {
             position: relative;
@@ -92,9 +98,10 @@
             max-width: 480px;
             margin: 0 auto;
             overflow: hidden;
-            border-radius: 12px;
+            border-radius: 16px;
             border: 3px solid #38bdf8;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+            background-color: #020617;
         }
         #hunting-canvas {
             display: block;
@@ -102,71 +109,85 @@
             height: auto;
             cursor: crosshair; 
             touch-action: none;
-            background-color: #0b1329;
         }
         
         .controls-wrapper {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 15px;
-            gap: 10px;
+            margin-top: 12px;
+            gap: 12px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
         }
         .btn-shoot {
-            background-image: linear-gradient(135deg, #ef4444, #b91c1c);
+            background-image: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
             color: white;
             border: 2px solid #f87171;
             border-radius: 50%;
-            width: 85px;
-            height: 85px;
-            font-size: 16px;
-            font-weight: bold;
+            width: 90px;
+            height: 90px;
+            font-size: 18px;
+            font-weight: 900;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
-            transition: transform 0.1s ease;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+            transition: transform 0.05s ease;
             -webkit-tap-highlight-color: transparent;
         }
         .btn-shoot:active {
-            transform: scale(0.9);
-            background-image: linear-gradient(135deg, #b91c1c, #7f1d1d);
+            transform: scale(0.88);
+            background-image: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
         }
         .btn-ammo {
             flex: 1;
-            background-image: linear-gradient(135deg, #eab308, #ca8a04); 
-            color: #0f172a; 
-            font-size: 14px; 
-            padding: 14px 15px; 
-            font-weight: 800;
-            border-radius: 15px;
-            border: none;
+            background-image: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); 
+            color: #020617; 
+            font-size: 15px; 
+            padding: 16px 15px; 
+            font-weight: 900;
+            border-radius: 18px;
+            border: 1px solid #fde047;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(234, 179, 8, 0.3);
+            box-shadow: 0 5px 15px rgba(234, 179, 8, 0.4);
+            letter-spacing: 0.3px;
+            transition: transform 0.1s ease;
+        }
+        .btn-ammo:active {
+            transform: scale(0.97);
         }
 
         .leaderboard-table {
             width: 100%;
-            margin-top: 20px;
+            margin-top: 15px;
             border-collapse: collapse;
             background: #0f172a;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
             border: 1px solid #334155;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         .leaderboard-table th, .leaderboard-table td {
             padding: 12px;
             border-bottom: 1px solid #1e293b;
-            font-size: 13px;
+            font-size: 14px;
         }
-        .leaderboard-table th { background-color: #1e293b; color: #38bdf8; }
+        .leaderboard-table th { 
+            background-color: #1e293b; 
+            color: #38bdf8; 
+            font-weight: 800;
+        }
         
         .audio-indicator {
-            font-size: 11px;
+            font-size: 12px;
             color: #4ade80;
-            margin-top: 5px;
+            margin-top: 4px;
             display: inline-block;
-            background: rgba(74, 222, 128, 0.1);
-            padding: 2px 8px;
+            background: rgba(74, 222, 128, 0.15);
+            padding: 3px 10px;
             border-radius: 20px;
+            font-weight: 600;
+            border: 1px solid rgba(74, 222, 128, 0.2);
         }
 
         /* حاوية جدار نظام الأمان الصارم الاحترافي */
@@ -254,66 +275,70 @@
 <div id="pi-browser-guard" class="hidden">
     <div class="guard-card">
         <div class="guard-avatar"></div>
-        <div class="guard-title">🔒 عذرًا! نظام الأمان نشط</div>
+        <div class="guard-title">🔒 Security Shield Active</div>
         <div class="guard-text">
-            لتأمين رصيدك ومعالجة عمليات الدفع عبر البلوكشين وتغيير الألوان، يجب فتح هذه اللعبة حصريًا من داخل متصفح باي <strong>(Pi Browser)</strong>.
+            To unlock the dynamic color spectrums, claim high scores, and secure peer-to-peer Pi utility transactions, please access this game from the official <strong>Pi Browser</strong>.
         </div>
-        <button class="btn-guard-redirect" onclick="tryOpenInPiBrowser()">فتح في متصفح Pi تلقائيًا 🚀</button>
+        <button class="btn-guard-redirect" onclick="tryOpenInPiBrowser()">Open in Pi Browser 🚀</button>
         
-        <p style="color: #94a3b8; font-size: 12px; margin-top: 15px;">
-            إذا لم يعمل الزر تلقائيًا، قم بنسخ رابط الموقع الحالي وافتحه يدويًا داخل خانة البحث في Pi Browser.
+        <p style="color: #94a3b8; font-size: 12px; margin-top: 15px; direction: rtl;">
+            إذا لم يفتح الزر المتصفح تلقائياً، قم بنسخ رابط الموقع وافتحه يدوياً داخل Pi Browser.
         </p>
         
         <div class="guard-footer">
-            💡 <strong>لتثبيت اللعبة كأيقونة:</strong> اضغط على خيار المتصفح (ثلاث نقاط أو مشاركة) ثم اختر <strong>"إضافة إلى الشاشة الرئيسية"</strong> من داخل متصفح باي!
+            💡 <strong>لتثبيت اللعبة كأيقونة:</strong> اضغط على زر الخيارات الفوق في متصفح باي (أو مشاركة) ثم اختر <strong>"إضافة إلى الشاشة الرئيسية" (Add to Home Screen)</strong> لتلعبها فوراً من بروتوكول باي!
         </div>
     </div>
 </div>
 
 <div class="container" id="game-container">
-    <h1>🎮 لعبة الصياد (The Hunter)</h1>
-    <p style="margin-top: 0; color: #94a3b8; font-size: 13px;">نسخة واقعية: كلاشينكوف وأهداف حقيقية 💎</p>
+    <h1>🎯 THE HUNTER Arcade</h1>
+    <p style="margin: 0 0 10px 0; color: #94a3b8; font-size: 14px; font-weight: 600;">Ultimate AK-47 & High-Fidelity Physics Edition 💎</p>
 
     <div id="auth-section">
         <div class="welcome-card">
             <div class="hunter-avatar"></div>
-            <p>مرحباً بك في ميدان الصيد الحقيقي يا أبو كريم!<br>سجل دخولك الآن لتجهيز كلاشينكوف المطور 🔥</p>
-            <button class="btn" id="btn-login" onclick="initAndLoginWithPi()">دخول مجاني وبدء الصيد 🚀</button>
+            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px; color: #cbd5e1; font-weight: 600;">
+                Welcome Hunter! Prepare your tactical AK-47 weapon.<br>Authenticate with your Pi Account to join the Global Leaderboard.
+            </p>
+            <button class="btn" id="btn-login" onclick="initAndLoginWithPi()">Free Authentication & Enter 🚀</button>
         </div>
     </div>
 
     <div id="game-section" class="hidden">
         <div class="stats-bar">
-            <div>الصياد: <span id="player-name" style="color: #38bdf8;">...</span></div>
-            <div>النقاط: <span id="score-val" style="color: #4ade80;">0</span> 🎯</div>
-            <div>الذخيرة: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
-            <div>المستوى: <span id="level-val" style="color: #a855f7;">1</span> ⚡</div>
+            <div>Hunter: <span id="player-name" style="color: #38bdf8;">...</span></div>
+            <div>Score: <span id="score-val" style="color: #4ade80;">0</span></div>
+            <div>Ammo: <span id="ammo-val" style="color: #f87171;">30</span></div>
+            <div>Level: <span id="level-val" style="color: #a855f7;">1</span></div>
         </div>
 
         <div id="canvas-container">
             <canvas id="hunting-canvas" width="480" height="320"></canvas>
         </div>
-        <div><span class="audio-indicator">🔊 نظام هندسة الصوت المتقدم نشط</span></div>
+        <div><span class="audio-indicator">🔊 High-Fidelity Synthetic Audio Engine Active</span></div>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px;">مرر إصبعك لتوجيه السلاح، واضغط على الزر الأحمر للإطلاق الواقعي!</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 22px; font-size: 14px; margin: 10px 0;">
+            Drag on canvas to calibrate reticle. Tap red trigger to engage fire!
+        </p>
         
         <div class="controls-wrapper">
-            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 شحن 30 ذخيرة (1 Pi)</button>
-            <button class="btn-shoot" id="fire-trigger">إطلاق 💥</button>
+            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 Reload 30 Ammo (1 Pi)</button>
+            <button class="btn-shoot" id="fire-trigger">FIRE 💥</button>
         </div>
 
-        <h3 style="margin-top: 25px; color: #38bdf8;">🏆 لوحة الصدارة العالمية</h3>
+        <h3 style="margin: 20px 0 8px 0; color: #38bdf8; font-weight: 800; font-size: 18px;">🏆 Global Top Hunters</h3>
         <table class="leaderboard-table">
             <thead>
                 <tr>
-                    <th>الترتيب</th>
-                    <th>الصياد</th>
-                    <th>أعلى سكور 🎯</th>
+                    <th>Rank</th>
+                    <th>Username</th>
+                    <th>Top Score 🎯</th>
                 </tr>
             </thead>
             <tbody id="leaderboard-body">
                 <tr>
-                    <td colspan="3" style="color: #94a3b8;">اضغط دخول مجاني لعرض الصدارة...</td>
+                    <td colspan="3" style="color: #94a3b8; font-weight: 600;">Authenticating core metrics...</td>
                 </tr>
             </tbody>
         </table>
@@ -321,47 +346,45 @@
 </div>
 
 <script>
-    // الحماية المتقدمة وفحص البيئة عند التشغيل المباشر للأيقونة
+    // الحماية المتقدمة وفحص البيئة للتأكد من التحميل المباشر أو العمل كأيقونة
     function checkEnvironmentGuard() {
         const userAgent = navigator.userAgent.toLowerCase();
         const isPiBrowser = userAgent.includes("pinetwork") || userAgent.includes("pibrowser");
         const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        
+        // التحقق مما إذا كانت اللعبة تعمل كـ Web App مستقل مثبت على الشاشة (Standalone Icon)
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-        // إذا كان المستخدم يفتح الرابط من متصفح خارجي وليس من البيئة المحلية أو متصفح باي، تظهر شاشة القفل فوراً
-        if (!isPiBrowser && !isLocalhost) {
+        // إذا فتحت من الأيقونة أو من داخل متصفح باي أو السيرفر المحلي، نتركها تعمل وتتخطى الحجب فوراً لإنجاز هدفنا
+        if (!isPiBrowser && !isLocalhost && !isStandalone) {
             document.getElementById("pi-browser-guard").classList.remove("hidden");
             document.getElementById("game-container").classList.add("hidden");
         }
     }
 
-    // تشغيل نظام التحويل بالروابط العميقة عند ضغط الزر الأصفر
     function tryOpenInPiBrowser() {
         const currentUrl = window.location.href;
-        // تنظيف الرابط وتحويل البروتوكول لشبكة باي العميقة لإجبار نظام التشغيل على التوجيه
         const piProtocolUrl = currentUrl.replace(/^https?:\/\//, "pi://");
         window.location.href = piProtocolUrl;
         
-        // كخيار بديل في حال لم يستجب الهاتف في بعض إصدارات أندرويد القديمة
         setTimeout(() => {
-            window.open("https://minepi.com/blockexplorer", "_blank");
-        }, 1500);
+            window.open("https://minepi.com", "_blank");
+        }, 1200);
     }
 
-    // استدعاء الفحص التلقائي بمجرد بدء قراءة المستند
+    // استدعاء نظام الفحص الاستباقي لحماية الواجهة والأيقونة
     checkEnvironmentGuard();
 
-    // إعدادات وبيانات الاتصال بقاعدة بيانات الميدان
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
-    // روابط صور الميدان الرسمية الخاصة بك لمنع التداخل والقطع الأبيض
+    // أصول الصور النظيفة بدون خلفيات بيضاء لمنع التداخل المشوه
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
     const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=480&h=320&q=80"; 
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // متغيرات اللعبة الأساسية وحالة الاتصال
     let score = 0;
     let ammo = 30;
     let gameLevel = 1;
@@ -370,13 +393,12 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
     
-    // إعدادات بناء الطائر وحركته الفيزيائية الواقعية
     let target = { 
-        x: 100, y: 150, 
-        xSpeed: 2.5, ySpeed: 1.8, 
-        width: 42, height: 34, 
-        flap: 0, flapSpeed: 0.22, 
-        radius: 22,
+        x: 100, y: 120, 
+        xSpeed: 2.8, ySpeed: 1.6, 
+        width: 44, height: 36, 
+        flap: 0, flapSpeed: 0.25, 
+        radius: 20,
         glideCounter: 0,
         windDrift: 0
     };
@@ -393,12 +415,10 @@
     let ak47Img = null; 
     let forestBgImg = null; 
 
-    // متغيرات حساب زاوية الارتداد للكلاشينكوف عند الإطلاق
     let gunRecoilZ = 0;
     let gunRecoilY = 0;
     let gunRecoilAngle = 0;
 
-    // مهندس الصوت المتقدم عبر التوليد الرياضي الحي بدون ملفات خارجية تعطل التحميل
     let audioCtx;
     function initAudio() {
         if (!audioCtx) {
@@ -418,18 +438,18 @@
                 const osc1 = audioCtx.createOscillator();
                 const gain1 = audioCtx.createGain();
                 osc1.type = 'sawtooth';
-                osc1.frequency.setValueAtTime(320, now);
-                osc1.frequency.exponentialRampToValueAtTime(8, now + 0.12);
+                osc1.frequency.setValueAtTime(340, now);
+                osc1.frequency.exponentialRampToValueAtTime(10, now + 0.14);
                 
-                gain1.gain.setValueAtTime(0.6, now);
-                gain1.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                gain1.gain.setValueAtTime(0.7, now);
+                gain1.gain.linearRampToValueAtTime(0.01, now + 0.14);
                 
                 osc1.connect(gain1);
                 gain1.connect(audioCtx.destination);
                 osc1.start(now);
-                osc1.stop(now + 0.12);
+                osc1.stop(now + 0.14);
 
-                const bufferSize = audioCtx.sampleRate * 0.08;
+                const bufferSize = audioCtx.sampleRate * 0.09;
                 const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const data = buffer.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) {
@@ -440,45 +460,45 @@
                 
                 const filter = audioCtx.createBiquadFilter();
                 filter.type = 'bandpass';
-                filter.frequency.value = 1000;
+                filter.frequency.value = 950;
 
                 const noiseGain = audioCtx.createGain();
-                noiseGain.gain.setValueAtTime(0.4, now);
-                noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                noiseGain.gain.setValueAtTime(0.45, now);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
 
                 noise.connect(filter);
                 filter.connect(noiseGain);
                 noiseGain.connect(audioCtx.destination);
                 noise.start(now);
-                noise.stop(now + 0.08);
+                noise.stop(now + 0.09);
             } else if (type === 'hit') {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(280, now);
-                osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(900, now + 0.16);
                 
-                gain.gain.setValueAtTime(0.35, now);
-                gain.gain.linearRampToValueAtTime(0.001, now + 0.18);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.2);
                 
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start(now);
-                osc.stop(now + 0.18);
+                osc.stop(now + 0.2);
             } else if (type === 'empty') {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(600, now);
-                osc.frequency.setValueAtTime(120, now + 0.02);
+                osc.frequency.setValueAtTime(650, now);
+                osc.frequency.setValueAtTime(150, now + 0.03);
                 
-                gain.gain.setValueAtTime(0.25, now);
-                gain.gain.linearRampToValueAtTime(0.001, now + 0.04);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.05);
                 
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start(now);
-                osc.stop(now + 0.04);
+                osc.stop(now + 0.05);
             } else if (type === 'levelup') {
                 const notes = [261.63, 329.63, 392.00, 523.25];
                 notes.forEach((freq, index) => {
@@ -486,34 +506,33 @@
                     const gain = audioCtx.createGain();
                     osc.type = 'square';
                     osc.frequency.value = freq;
-                    gain.gain.setValueAtTime(0.15, now + (index * 0.08));
-                    gain.gain.linearRampToValueAtTime(0.001, now + (index * 0.08) + 0.12);
+                    gain.gain.setValueAtTime(0.18, now + (index * 0.07));
+                    gain.gain.linearRampToValueAtTime(0.001, now + (index * 0.07) + 0.14);
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
-                    osc.start(now + (index * 0.08));
-                    osc.stop(now + (index * 0.08) + 0.12);
+                    osc.start(now + (index * 0.07));
+                    osc.stop(now + (index * 0.07) + 0.14);
                 });
             } else if (type === 'reload') {
-                [0, 0.12].forEach((delay) => {
+                [0, 0.13].forEach((delay) => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(400, now + delay);
-                    osc.frequency.exponentialRampToValueAtTime(1500, now + delay + 0.05);
-                    gain.gain.setValueAtTime(0.2, now + delay);
-                    gain.gain.linearRampToValueAtTime(0.001, now + delay + 0.05);
+                    osc.frequency.setValueAtTime(450, now + delay);
+                    osc.frequency.exponentialRampToValueAtTime(1600, now + delay + 0.06);
+                    gain.gain.setValueAtTime(0.25, now + delay);
+                    gain.gain.linearRampToValueAtTime(0.001, now + delay + 0.06);
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
                     osc.start(now + delay);
-                    osc.stop(now + delay + 0.05);
+                    osc.stop(now + delay + 0.06);
                 });
             }
         } catch(e){
-            console.log("خطأ محرك الصوت الحركي الأساسي:", e);
+            console.log("Audio runtime suppression:", e);
         }
     }
 
-    // التحميل المسبق النظيف لعناصر الرسوم لتجنب الوميض المزعج
     function preloadAssets() {
         return new Promise((resolve) => {
             let loadedCount = 0;
@@ -538,11 +557,10 @@
         });
     }
 
-    // دالة تهيئة تسجيل الدخول وفحص بيئة باي لضمان حماية المدفوعات والألوان
     function initAndLoginWithPi() {
         initAudio();
         const loginBtn = document.getElementById('btn-login');
-        loginBtn.innerText = "جاري تحضير ميدان الصيد والأصوات... 🔄";
+        loginBtn.innerText = "Synchronizing Game Assets... 🔄";
         preloadAssets().then(() => {
             try {
                 if (typeof Pi !== 'undefined' && window.Pi) {
@@ -551,19 +569,17 @@
                         isSdkInitialized = true;
                     }
                     
-                    setTimeout(() => {
-                        window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
-                        .then(function(auth) {
-                            playerPiUser = auth.user.username;
-                            currentPiUserId = auth.user.uid;
-                            playerWallet = auth.user.uid || "Pi_Network_User";
-                            handleLoginSuccess();
-                        })
-                        .catch((err) => {
-                            console.error("خطأ الـ SDK الموثق:", err);
-                            setupDevAccount();
-                        });
-                    }, 250);
+                    window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
+                    .then(function(auth) {
+                        playerPiUser = auth.user.username;
+                        currentPiUserId = auth.user.uid;
+                        playerWallet = auth.user.uid || "Pi_Network_User";
+                        handleLoginSuccess();
+                    })
+                    .catch((err) => {
+                        console.error("SDK authentication bypassed:", err);
+                        setupDevAccount();
+                    });
                 } else {
                     setupDevAccount();
                 }
@@ -573,7 +589,6 @@
         });
     }
 
-    // حساب تجريبي محلي يعمل تلقائياً لتسهيل التطوير البرمجي من داخل مكتبك الخاص
     function setupDevAccount() {
         playerPiUser = "Abokareem999_D";
         currentPiUserId = "DEV_UID_ABUKAREEM_OFFICIAL";
@@ -581,7 +596,6 @@
         handleLoginSuccess();
     }
 
-    // معالجة الانتقال السلس بعد تسجيل الدخول وجلب نقاط الصياد من الميدان
     async function handleLoginSuccess() {
         document.getElementById('player-name').innerText = playerPiUser;
         try {
@@ -606,7 +620,6 @@
         playAdvancedSound('reload');
     }
 
-    // تحديث وحفظ بيانات سكور اللاعب الحالية في جداول Supabase
     async function updateSupabaseScore() {
         if (!playerPiUser) return;
         try {
@@ -621,7 +634,6 @@
         } catch (err) {}
     }
 
-    // جلب وترتيب لوحة الصدارة العالمية لأفضل 5 صيادين في اللعبة
     async function loadLeaderboard() {
         try {
             let { data } = await _supabaseClient
@@ -634,7 +646,7 @@
             if (data && data.length > 0) {
                 data.forEach((row, index) => {
                     const tr = document.createElement('tr');
-                    if (row.pi_username === playerPiUser) tr.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
+                    if (row.pi_username === playerPiUser) tr.style.backgroundColor = "rgba(56, 189, 248, 0.25)";
                     tr.innerHTML = `<td>${index + 1}</td><td>${row.pi_username}</td><td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>`;
                     tbody.appendChild(tr);
                 });
@@ -642,7 +654,6 @@
         } catch (err) {}
     }
 
-    // توليد سحابة الريش المتناثرة بألوان متناسقة ومتحركة عند إصابة الهدف
     function createFeatherCloud(x, y) {
         for (let i = 0; i < 24; i++) {
             particles.push({
@@ -659,11 +670,10 @@
         }
     }
 
-    // كود معالجة ضغط الزر وإطلاق النار وحساب مسافة النيشان والارتداد الفعلي
     function executeShot() {
         if (ammo <= 0) {
             playAdvancedSound('empty');
-            document.getElementById('game-status').innerText = "❌ نفدت الذخيرة! اشحن الآن باستخدام Pi.";
+            document.getElementById('game-status').innerText = "❌ Empty clip! Recharge ammo via Pi wallet.";
             document.getElementById('game-status').style.color = "#f87171";
             return;
         }
@@ -671,21 +681,20 @@
         ammo--; 
         document.getElementById('ammo-val').innerText = ammo;
         playAdvancedSound('shoot');
-        flashIntensity = 0.5;
-        screenShake = 7;
+        flashIntensity = 0.55;
+        screenShake = 8;
 
-        // حساب ارتداد زوايا وموقع السلاح حركياً إلى الخلف والأعلى لواقعية الكلاشينكوف
-        gunRecoilZ = -35;
-        gunRecoilY = -25;
-        gunRecoilAngle = (Math.random() - 0.5) * 0.15;
+        gunRecoilZ = -40;
+        gunRecoilY = -28;
+        gunRecoilAngle = (Math.random() - 0.5) * 0.18;
         let gunBaseX = canvas.width - 40;
         let gunBaseY = canvas.height + 20;
         let rot = Math.atan2(aimY - gunBaseY, aimX - gunBaseX);
-        muzzleFlashX = gunBaseX + Math.cos(rot) * 110;
-        muzzleFlashY = gunBaseY + Math.sin(rot) * 110;
+        muzzleFlashX = gunBaseX + Math.cos(rot) * 115;
+        muzzleFlashY = gunBaseY + Math.sin(rot) * 115;
 
         const distance = Math.sqrt((aimX - target.x)**2 + (aimY - target.y)**2);
-        if (distance <= target.radius + 15) {
+        if (distance <= target.radius + 18) {
             score += 10;
             document.getElementById('score-val').innerText = score;
             playAdvancedSound('hit');
@@ -700,17 +709,16 @@
                 target.ySpeed += (target.ySpeed > 0 ? 0.7 : -0.7);
             }
             
-            document.getElementById('game-status').innerText = "🎯 صيد موفق ومباشر! +10 نقاط";
+            document.getElementById('game-status').innerText = "🎯 Direct hit! Target confirmed neutralized. +10 Score";
             document.getElementById('game-status').style.color = "#4ade80";
             updateSupabaseScore(); 
             resetTarget();
         } else {
-            document.getElementById('game-status').innerText = "💨 طلقة طائشة في الهواء! ركز النيشان الأحمر أولاً.";
+            document.getElementById('game-status').innerText = "💨 Missed shot! Re-calibrate your tactical reticle.";
             document.getElementById('game-status').style.color = "#fbbf24";
         }
     }
 
-    // معادلة مصلحة وموزونة لمنع انحراف حركة الإصبع والنيشان على شاشات الموبايل المطاطية المختلفة
     function handlePointer(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
@@ -725,7 +733,6 @@
         if (aimY > canvas.height) aimY = canvas.height;
     }
 
-    // مستمعات الأحداث وحركة اللمس على الكانفاس لتوجيه السلاح
     canvas.addEventListener('mousemove', (e) => { handlePointer(e.clientX, e.clientY); });
     canvas.addEventListener('mousedown', (e) => { handlePointer(e.clientX, e.clientY); });
     
@@ -747,13 +754,12 @@
     fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
     fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
-    // حلقة تشغيل ورسم إطارات اللعبة بالكامل 60 إطار في الثانية وبدون تداخل صور
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
             
             target.glideCounter += 0.05;
-            target.windDrift = Math.sin(target.glideCounter) * 0.4;
+            target.windDrift = Math.sin(target.glideCounter) * 0.45;
           
             target.x += target.xSpeed + target.windDrift; 
             target.y += target.ySpeed;
@@ -777,7 +783,6 @@
                 }
             }
 
-            // تنظيف الكانفاس بالكامل أولاً لمنع مشكلة تكرار صور السلاح وقصها العشوائي
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (forestBgImg) {
                 ctx.drawImage(forestBgImg, 0, 0, canvas.width, canvas.height);
@@ -786,7 +791,6 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // رسم حركة جزيئات الريش المتطاير
             particles.forEach((p, index) => {
                 p.x += p.vx; 
                 p.y += p.vy; 
@@ -808,7 +812,6 @@
                 }
             });
 
-            // رسم بنية الطائر والمحاذاة الحركية للأجنحة والمنقار بشكل متناسق
             ctx.save();
             ctx.translate(target.x, target.y);
             
@@ -860,9 +863,8 @@
 
             ctx.fillStyle = 'rgba(255,255,255,0.85)';
             ctx.font = 'bold 11px Tahoma';
-            ctx.fillText(`🐦 هدف متحرك`, target.x - 28, target.y - target.height - 5);
+            ctx.fillText(`Target`, target.x - 16, target.y - target.height - 5);
 
-            // رسم وهج وفلاش فوهة السلاح عند خروج الطلقة الواقعية
             if (flashIntensity > 0) {
                 ctx.save();
                 let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 2, muzzleFlashX, muzzleFlashY, 35);
@@ -878,7 +880,6 @@
                 flashIntensity -= 0.07;
             }
 
-            // رسم وتركيب سلاح الكلاشينكوف المطور وحساب زوايا التنشين بدون أي خلفية بيضاء مشوهة
             let gunBaseX = canvas.width - 40;
             let gunBaseY = canvas.height + 20; 
 
@@ -900,7 +901,6 @@
             }
             ctx.restore();
 
-            // رسم النيشان التكتيكي الأحمر المتحرك مع الإصبع واللمس
             ctx.save();
             ctx.strokeStyle = '#f87171'; 
             ctx.lineWidth = 2;
@@ -915,26 +915,24 @@
         }, 1000 / 60);
     }
 
-    // إعادة توليد موقع الهدف عشوائياً بعد كل إصابة ناجحة
     function resetTarget() {
         target.x = Math.random() * (canvas.width - 80) + 40;
         target.y = Math.random() * (canvas.height - 140) + 40; 
     }
 
-    // استدعاء واجهة الدفع من داخل محفظة متصفح باي لشراء حقيبة طلقات جديدة
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
-            document.getElementById('game-status').innerText = "⚠️ يجب فتح اللعبة من داخل تطبيق Pi Browser لتشغيل الدفع الحقيقي.";
+            document.getElementById('game-status').innerText = "⚠️ Open via Pi Browser to complete secure checkout.";
             document.getElementById('game-status').style.color = "#f87171";
             return;
         }
 
-        document.getElementById('game-status').innerText = "⚡ جاري تجهيز فاتورة الدفع في محفظة Pi لشحن الذخيرة...";
+        document.getElementById('game-status').innerText = "⚡ Constructing secure blockchain receipt...";
         document.getElementById('game-status').style.color = "#fbbf24";
 
         const paymentData = {
             amount: 1.0, 
-            memo: "شحن حقيبة ذخيرة كلاشينكوف (30 طلقة) - لعبة الصياد",
+            memo: "Purchase 30 Tactical AK-47 Munitions - THE HUNTER Arcade",
             metadata: { item_code: "ak47_ammo_box_30", buyer: playerPiUser || "unknown_player" },
             uid: currentPiUserId || ""
         };
@@ -943,18 +941,17 @@
             onReadyForServerApproval: function(paymentId) { approvePaymentOnBackend(paymentId); },
             onReadyForServerCompletion: function(paymentId, txid) { completePaymentOnBackend(paymentId, txid); },
             onCancel: function(paymentId) {
-                document.getElementById('game-status').innerText = "❌ تم إلغاء عملية الدفع من قبل المستخدم.";
+                document.getElementById('game-status').innerText = "❌ Blockchain transaction canceled by buyer.";
                 document.getElementById('game-status').style.color = "#f87171";
             },
             onError: function(error, payment) {
-                document.getElementById('game-status').innerText = "⚠️ خطأ في معالجة محفظة Pi.";
+                document.getElementById('game-status').innerText = "⚠️ Critical Pi Wallet response failure.";
                 document.getElementById('game-status').style.color = "#f87171";
             }
         };
         Pi.createPayment(paymentData, callbacks);
     }
 
-    // تأكيد الطلب المبدئي مع سيرفر الواجهة الخلفية
     async function approvePaymentOnBackend(paymentId) {
         try {
             await fetch('/api/approve', {
@@ -965,7 +962,6 @@
         } catch (err) { console.error(err); }
     }
 
-    // إتمام استلام الـ 1 Pi على البلوكشين وتحديث حقيبة اللاعب بشكل آمن وموثق مع صوت الشحن
     async function completePaymentOnBackend(paymentId, txid) {
         try {
             const response = await fetch('/api/complete', {
@@ -977,7 +973,7 @@
             if (result.success) {
                 ammo += 30;
                 document.getElementById('ammo-val').innerText = ammo;
-                document.getElementById('game-status').innerText = "🪙 تم تأكيد استلام 1 Pi بنجاح وشحن الذخيرة! 🔋";
+                document.getElementById('game-status').innerText = "🪙 1 Pi received successfully! Magazine reloaded. 🔋";
                 document.getElementById('game-status').style.color = "#4ade80";
                 playAdvancedSound('reload');
                 updateSupabaseScore();
@@ -985,7 +981,6 @@
         } catch (err) { console.error(err); }
     }
     
-    // فحص العمليات المعلقة التي لم تكتمل بسبب إغلاق المتصفح أو انقطاع الشبكة المفاجئ
     async function onIncompletePaymentFound(payment) {
         if (payment && payment.identifier) {
             try {
