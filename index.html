@@ -3,80 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE HUNTER Arcade - Advanced Reality Edition 🔥</title>
+    <title>THE HUNTER Arcade - Stable Tactical Edition 🔥</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        /* Base Reset & Mobile Optimization */
+        /* Base Reset & Mobile Viewport Locking */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #020617; 
             color: #ffffff;
             text-align: center;
             margin: 0;
-            padding: 5px;
+            padding: 0;
             touch-action: none;
             user-select: none;
             overflow: hidden; 
             box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
-        /* Master Tactical Container Layout */
+        /* Master Tactical Container - Fixed Aspect Ratio Responsive Grid */
         .container {
+            width: 100vw;
+            height: 100vh;
             max-width: 500px;
-            margin: 5px auto;
+            max-height: 950px;
             background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
-            padding: 10px;
-            border-radius: 12px;
+            padding: 12px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.9);
             border: 1px solid #1e293b;
-            transition: transform 0.05s linear;
             box-sizing: border-box;
-            height: 98vh; 
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start;
+            position: relative;
         }
         
+        .header-block {
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+
         h1 { 
             color: #38bdf8;
-            margin: 2px 0; 
-            font-size: 20px;
+            margin: 0; 
+            font-size: 22px;
             letter-spacing: 1px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            font-weight: 800;
         }
         
         .sub-header-text {
-            margin: 0 0 4px 0; 
+            margin: 4px 0 0 0; 
             color: #64748b; 
-            font-size: 10px; 
+            font-size: 11px; 
             text-transform: uppercase;
-            font-weight: 600;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
-        /* Welcome Authentication Viewport */
+        /* Fixed & Fully Aligned Welcome Authentication Screen */
+        .welcome-card-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
         .welcome-card {
-            background: rgba(15, 23, 42, 0.8);
-            border-radius: 12px;
-            padding: 20px; 
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 16px;
+            padding: 25px 20px; 
             border: 2px solid #38bdf8;
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
-            margin: auto 0;
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.25);
+            width: 100%;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .hunter-avatar-frame {
+            position: relative;
+            margin-bottom: 20px;
         }
         
         .hunter-avatar {
-            width: 130px;
-            height: 130px;
-            margin-bottom: 15px;
-            border-radius: 10px;
-            border: 3px solid #38bdf8;
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 4px solid #38bdf8;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.6);
             background-image: url('https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-logo.png'); 
             background-size: cover;
             background-position: center;
@@ -87,92 +118,105 @@
             background-image: linear-gradient(135deg, #38bdf8, #0284c7);
             color: white;
             border: none;
-            padding: 14px 30px;
+            padding: 15px 35px;
             font-size: 16px;
-            font-weight: bold;
-            border-radius: 25px;
+            font-weight: 800;
+            border-radius: 30px;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
-            width: 80%;
+            box-shadow: 0 4px 18px rgba(56, 189, 248, 0.45);
+            width: 85%;
             max-width: 280px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            -webkit-tap-highlight-color: transparent;
         }
         
-        .btn:hover { 
-            transform: scale(1.02);
-            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.6);
+        .btn:active { 
+            transform: scale(0.96);
+            box-shadow: 0 2px 10px rgba(56, 189, 248, 0.3);
         }
         
         .hidden { display: none !important; }
         
-        /* Tactical Telemetry Telecommunication Interface Bar */
+        /* Tactical Telemetry Hub Display */
         .stats-bar {
             display: flex;
             justify-content: space-between;
             background: #0b1329;
-            padding: 6px 10px;
+            padding: 8px 12px;
             border-radius: 8px;
-            margin-bottom: 4px;
-            font-weight: bold;
+            margin-bottom: 8px;
+            font-weight: 700;
             border: 1px solid #1e293b;
-            font-size: 11px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            font-size: 12px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+            flex-shrink: 0;
         }
         
         .stat-item {
             display: flex;
             align-items: center;
-            gap: 3px;
+            gap: 4px;
         }
         
-        /* Maximized Hunting Screen Canvas Layout */
-        #hunting-canvas {
+        /* Dynamic Game Viewport Canvas Container */
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            background-color: #020617;
             border: 2px solid #38bdf8;
-            border-radius: 8px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        #hunting-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             cursor: crosshair; 
-            max-width: 100%;
-            touch-action: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.7);
-            flex: 1; /* استغلال كامل المساحة الرأسية المتاحة */
-            background-color: #020617; 
-            margin-bottom: 4px;
+            display: block;
         }
         
-        /* Modern Tactical Control Matrix */
+        /* Modern Control Matrix Placement */
         .controls-wrapper {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 4px;
-            gap: 8px;
+            margin-bottom: 8px;
+            gap: 10px;
+            flex-shrink: 0;
         }
         
-        /* Left-Hand Side Tactical Strike Button Layout */
+        /* Left-Hand Side Rapid-Fire Mechanical Switch Layout */
         .btn-shoot {
             background-image: linear-gradient(135deg, #ef4444, #b91c1c);
             color: white;
             border: 2px solid #f87171;
             border-radius: 50%;
-            width: 72px;
-            height: 72px;
-            font-size: 14px;
+            width: 76px;
+            height: 76px;
+            font-size: 15px;
             font-weight: 900;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.6);
+            box-shadow: 0 5px 18px rgba(239, 68, 68, 0.6);
             transition: transform 0.05s ease, box-shadow 0.05s ease;
             -webkit-tap-highlight-color: transparent;
-            order: -1; /* نقل الإطلاق لليسار تماماً */
+            order: -1; 
             letter-spacing: 0.5px;
             display: flex;
             align-items: center;
             justify-content: center;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 3px rgba(0,0,0,0.6);
         }
         
         .btn-shoot:active {
-            transform: scale(0.92);
+            transform: scale(0.90);
             box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
             background-image: linear-gradient(135deg, #dc2626, #991b1b);
         }
@@ -181,38 +225,50 @@
             flex: 1;
             background-image: linear-gradient(135deg, #eab308, #ca8a04); 
             color: #020617; 
-            font-size: 13px; 
-            padding: 14px; 
+            font-size: 14px; 
+            padding: 16px; 
             font-weight: 800;
-            border-radius: 10px;
+            border-radius: 12px;
             border: 1px solid #facc15;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+            box-shadow: 0 4px 14px rgba(234, 179, 8, 0.35);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            transition: transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.1s, box-shadow 0.1s;
         }
         
         .btn-ammo:active {
-            transform: scale(0.98);
+            transform: scale(0.97);
         }
 
-        /* Global Leaderboard Visualization Matrix */
+        .status-messages {
+            font-size: 12px;
+            color: #fbbf24;
+            margin: 0 0 8px 0;
+            min-height: 16px;
+            font-weight: 600;
+            flex-shrink: 0;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* Distributed Global Leaderboard Grid */
         .leaderboard-section {
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 8px;
-            padding: 6px;
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 10px;
+            padding: 8px;
             border: 1px solid #1e293b;
+            flex-shrink: 0;
         }
 
         .leaderboard-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 11px;
+            font-size: 12px;
         }
         
         .leaderboard-table th, .leaderboard-table td {
-            padding: 5px 8px;
+            padding: 6px 10px;
             text-align: center;
             border-bottom: 1px solid #0f172a;
         }
@@ -220,45 +276,42 @@
         .leaderboard-table th { 
             background-color: #0f172a; 
             color: #38bdf8; 
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
-        }
-        
-        .status-messages {
             font-size: 11px;
-            color: #fbbf24;
-            margin: 2px 0;
-            min-height: 14px;
-            font-weight: 500;
         }
     </style>
 </head>
 <body>
 
 <div class="container" id="game-container">
-    <div>
+    <div class="header-block">
         <h1>🎮 THE HUNTER Arcade</h1>
         <p class="sub-header-text">Tactical Mechanics: Aimed AK-47 & Dynamic Targets 💎</p>
     </div>
 
-    <div id="auth-section">
+    <div id="auth-section" class="welcome-card-wrapper">
         <div class="welcome-card">
-            <div class="hunter-avatar"></div>
-            <h2 style="color: #38bdf8; font-size: 16px; margin: 0 0 5px 0;">Welcome, Abu Kareem!</h2>
-            <p style="font-size: 13px; line-height: 1.4; color: #94a3b8; margin: 0 0 15px 0;">Authenticate now to lock and load your advanced tactical AK-47. Synchronize score records with Supabase and Pi consensus wallets.</p>
-            <button class="btn" id="btn-login" onclick="initAndLoginWithPi()">START 🚀</button>
+            <div class="hunter-avatar-frame">
+                <div class="hunter-avatar"></div>
+            </div>
+            <h2 style="color: #38bdf8; font-size: 18px; margin: 0 0 8px 0; font-weight:800;">Welcome, Abu Kareem!</h2>
+            <p style="font-size: 13px; line-height: 1.5; color: #94a3b8; margin: 0 0 20px 0; padding: 0 10px;">Authenticate now to lock and load your advanced tactical AK-47. Synchronize score records with Supabase and Pi consensus wallets.</p>
+            <button class="btn" id="btn-login" onclick="initAndLoginWithPi()">START RANGE 🚀</button>
         </div>
     </div>
 
-    <div id="game-section" class="hidden" style="display: flex; flex-direction: column; flex: 1;">
+    <div id="game-section" class="hidden" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
         <div class="stats-bar">
-            <div class="stat-item">User: <span id="player-name" style="color: #38bdf8;">...</span></div>
+            <div class="stat-item">Hunter: <span id="player-name" style="color: #38bdf8;">...</span></div>
             <div class="stat-item">Score: <span id="score-val" style="color: #4ade80;">0</span></div>
             <div class="stat-item">Ammo: <span id="ammo-val" style="color: #f87171;">30</span></div>
             <div class="stat-item">Level: <span id="level-val" style="color: #a855f7;">1</span></div>
         </div>
 
-        <canvas id="hunting-canvas"></canvas>
+        <div class="canvas-container">
+            <canvas id="hunting-canvas"></canvas>
+        </div>
  
         <p class="status-messages" id="game-status">Drag finger on screen to aim crosshairs. Tap left FIRE button to strike!</p>
         
@@ -268,7 +321,7 @@
         </div>
 
         <div class="leaderboard-section">
-            <h3 style="margin: 0 0 4px 0; color: #38bdf8; font-size: 13px; text-align: left; font-weight: bold; letter-spacing: 0.5px;">🏆 GLOBAL LEADERBOARD</h3>
+            <h3 style="margin: 0 0 6px 0; color: #38bdf8; font-size: 13px; text-align: left; font-weight: 800; letter-spacing: 0.5px;">🏆 GLOBAL LEADERBOARD</h3>
             <table class="leaderboard-table">
                 <thead>
                     <tr>
@@ -279,7 +332,7 @@
                 </thead>
                 <tbody id="leaderboard-body">
                     <tr>
-                        <td colspan="3" style="color: #64748b;">Fetch score records by starting range...</td>
+                        <td colspan="3" style="color: #64748b; padding: 10px 0;">Fetch score records by starting range...</td>
                     </tr>
                 </tbody>
             </table>
@@ -294,8 +347,8 @@
     const TABLE_NAME = "hunter_game_scores"; 
 
     // Asset Map Resources
-    const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
-    const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=480&h=320&q=80"; 
+    const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=4";
+    const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&h=450&q=80"; 
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -308,22 +361,22 @@
     let currentPiUserId = ""; 
     let isSdkInitialized = false;
     
-    // Target Trajectory Vectors
+    // Target Trajectory Vectors (Fowl Bird Construction Configuration)
     let target = { 
-        x: 100, y: 150, 
-        xSpeed: 2.2, ySpeed: 1.5, 
-        width: 40, height: 35, 
-        flap: 0, flapSpeed: 0.15, 
-        radius: 20 
+        x: 100, y: 120, 
+        xSpeed: 2.5, ySpeed: 1.2, 
+        baseWidth: 46, baseHeight: 38,
+        flapAngle: 0, flapSpeed: 0.22, 
+        radius: 22 
     };
     
     let particles = []; 
     let flashIntensity = 0;
     let screenShake = 0;
 
-    // Crosshair Coordinate System
-    let aimX = 240;
-    let aimY = 160;
+    // Crosshair Coordination Positions
+    let aimX = 200;
+    let aimY = 200;
 
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
@@ -353,59 +406,66 @@
 
             if (type === 'shoot') {
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(15, audioCtx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.12);
             } else if (type === 'hit') {
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.2);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(550, audioCtx.currentTime + 0.22);
+                gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.22);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.22);
             } else if (type === 'empty') {
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.06);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.06);
             }
         } catch(e){}
     }
 
-    // Canvas Allocation & Asynchronous Image Hooking
+    // Dynamic Responsive Scaling Frame Layout
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        if(score === 0) {
+            aimX = canvas.width / 2;
+            aimY = canvas.height / 2;
+        }
+    }
+
     function setupCanvasAndPreloads() {
-        canvas.width = canvas.parentElement.offsetWidth;
-        canvas.height = canvas.parentElement.offsetHeight * 0.7; // استغلال 70% من ارتفاع الحاوية
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
-        aimX = canvas.width / 2;
-        aimY = canvas.height / 2;
-
-        // دمج الصور بطريقة مرنة ومقاومة للفشل لضمان عدم توقف الكانفاس مطلقاً
+        // Preload Image Assets safely with failover fallback mechanisms
         ak47Img.src = AK47_IMAGE_URL;
         ak47Img.crossOrigin = "anonymous";
         ak47Img.onload = () => { ak47Loaded = true; };
-        ak47Img.onerror = () => { console.warn("AK47 Image failed to load. Using fallback graphics rendering."); };
+        ak47Img.onerror = () => { console.warn("AK47 Engine Graphics Link Broken. Fallback activated."); };
 
         forestBgImg.src = BG_FOREST_URL;
         forestBgImg.crossOrigin = "anonymous";
         forestBgImg.onload = () => { backgroundLoaded = true; };
-        forestBgImg.onerror = () => { console.warn("Background Image failed to load. Using tactical solid rendering."); };
+        forestBgImg.onerror = () => { console.warn("Forest Environment Assets Missing. Solid Grid Fallback active."); };
     }
 
-    // Gate Entry Handler Routine
+    // Authorization Layer Access Routine
     function initAndLoginWithPi() {
         initAudio();
         if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         
         const loginBtn = document.getElementById('btn-login');
-        loginBtn.innerText = "AUTHENTICATING... 🔄";
+        loginBtn.innerText = "LOADING RANGE... 🔄";
         
         setupCanvasAndPreloads();
         
-        // تشغيل اللعبة فوراً دون انتظار استجابة السيرفرات الطويلة لمنع تجمد الكانفاس الأسود
+        // Immediate UI rendering fallback to prevent blackouts
         setTimeout(() => {
             try {
                 if (typeof Pi !== 'undefined' && window.Pi) {
@@ -421,16 +481,10 @@
                         playerWallet = auth.user.uid || "Pi_User";
                         handleLoginSuccess();
                     })
-                    .catch((err) => {
-                        setupDevAccount();
-                    });
-                } else {
-                    setupDevAccount();
-                }
-            } catch (e) {
-                setupDevAccount();
-            }
-        }, 300);
+                    .catch((err) => { setupDevAccount(); });
+                } else { setupDevAccount(); }
+            } catch (e) { setupDevAccount(); }
+        }, 400);
     }
 
     function setupDevAccount() {
@@ -460,6 +514,8 @@
         document.getElementById('auth-section').classList.add('hidden');
         document.getElementById('game-section').classList.remove('hidden');
         
+        // Force synchronous calculation after screen swapping
+        resizeCanvas();
         startGameLoop();
         loadLeaderboard();
     }
@@ -499,7 +555,7 @@
         } catch (err) {}
     }
 
-    // Fire Strike Computations
+    // Combat Trigger Computations
     function executeShot() {
         if (ammo <= 0) {
             playSound('empty');
@@ -512,27 +568,27 @@
         document.getElementById('ammo-val').innerText = ammo;
         playSound('shoot');
         
-        flashIntensity = 0.35; 
-        screenShake = 5;     
+        flashIntensity = 0.4; 
+        screenShake = 6;     
 
         const dx = aimX - target.x;
         const dy = aimY - target.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance <= target.radius + 12) {
+        if (distance <= target.radius + 15) {
             score += 10;
             document.getElementById('score-val').innerText = score;
             playSound('hit');
             
-            // Generate debris burst
-            for (let i = 0; i < 15; i++) {
+            // Spawn authentic feather/debris vectors
+            for (let i = 0; i < 18; i++) {
                 particles.push({
                     x: target.x, y: target.y,
-                    vx: (Math.random() - 0.5) * 5,
-                    vy: (Math.random() - 0.5) * 5,
-                    radius: Math.random() * 2 + 1,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    radius: Math.random() * 2.5 + 1,
                     alpha: 1,
-                    color: '#845325' 
+                    color: '#a16207' 
                 });
             }
             
@@ -540,8 +596,8 @@
             if (newLevel > gameLevel) {
                 gameLevel = newLevel;
                 document.getElementById('level-val').innerText = gameLevel;
-                target.xSpeed *= 1.2;
-                target.ySpeed *= 1.2;
+                target.xSpeed *= 1.15;
+                target.ySpeed *= 1.15;
             }
             
             document.getElementById('game-status').innerText = "🎯 Tactical Elimination Verified! +10 Points.";
@@ -554,7 +610,7 @@
         }
     }
 
-    // Input Coordinate Translation Layer
+    // Input Coordinate Mapping Array
     function processCoordinates(clientX, clientY) {
         const borderBox = canvas.getBoundingClientRect();
         aimX = clientX - borderBox.left;
@@ -582,46 +638,55 @@
     triggerActionElement.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
     triggerActionElement.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
-    // Mainline Rendering Engine & Frame Buffer Loop
+    // Mainline Rendering Engine Buffer Matrix
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
-            // Mechanics Engine Calculations
+            // Target Mechanics Math Vector
             target.x += target.xSpeed; 
             target.y += target.ySpeed;
-            target.flap += target.flapSpeed;
+            target.flapAngle += target.flapSpeed;
             
-            if (target.x < 15 || target.x > canvas.width - 15) target.xSpeed = -target.xSpeed;
-            if (target.y < 20 || target.y > canvas.height - 40) target.ySpeed = -target.ySpeed;
+            if (target.x < 20 || target.x > canvas.width - 20) target.xSpeed = -target.xSpeed;
+            if (target.y < 30 || target.y > canvas.height - 120) target.ySpeed = -target.ySpeed;
             
-            // Execution Matrix Screen Shaking Logic
+            // Screen Shake Structural Vibration Formula
             if (screenShake > 0) {
                 const shiftX = (Math.random() - 0.5) * screenShake;
                 const shiftY = (Math.random() - 0.5) * screenShake;
                 document.getElementById('game-container').style.transform = `translate(${shiftX}px, ${shiftY}px)`;
-                screenShake *= 0.82;
-                if (screenShake < 0.3) {
+                screenShake *= 0.80;
+                if (screenShake < 0.2) {
                     screenShake = 0;
                     document.getElementById('game-container').style.transform = 'none';
                 }
             }
 
-            // Draw Background Pipeline
+            // Environmental Frame Assembly
             if (backgroundLoaded && forestBgImg.complete) {
                 ctx.drawImage(forestBgImg, 0, 0, canvas.width, canvas.height);
             } else {
-                // تكتيكي بديل بلون غابة داكنة في حال تعطل سيرفر الصور الخارجي لمنع الشاشة السوداء
                 let matrixGrd = ctx.createLinearGradient(0, 0, 0, canvas.height);
-                matrixGrd.addColorStop(0, '#064e3b');
-                matrixGrd.addColorStop(1, '#022c22');
+                matrixGrd.addColorStop(0, '#0f172a');
+                matrixGrd.addColorStop(1, '#020617');
                 ctx.fillStyle = matrixGrd;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw a tactical grid matrix to signify fallback processing
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+                ctx.lineWidth = 1;
+                for(let g = 0; g < canvas.width; g += 30) {
+                    ctx.beginPath(); ctx.moveTo(g, 0); ctx.lineTo(g, canvas.height); ctx.stroke();
+                }
+                for(let g = 0; g < canvas.height; g += 30) {
+                    ctx.beginPath(); ctx.moveTo(0, g); ctx.lineTo(canvas.width, g); ctx.stroke();
+                }
             }
 
-            // Debris Vector Handling
+            // Render Debris Particles
             particles.forEach((p, idx) => {
-                p.x += p.vx; p.y += p.vy; p.vy += 0.12; 
-                p.alpha -= 0.025;
+                p.x += p.vx; p.y += p.vy; p.vy += 0.15; 
+                p.alpha -= 0.03;
                 if (p.alpha <= 0) { particles.splice(idx, 1); }
                 else {
                     ctx.save();
@@ -632,85 +697,126 @@
                 }
             });
 
-            // Flash Muzzle Feedback Execution
+            // Flash Muzzle Effect Execution
             if (flashIntensity > 0) {
                 ctx.fillStyle = `rgba(255, 255, 255, ${flashIntensity})`;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                flashIntensity -= 0.06;
+                flashIntensity -= 0.07;
             }
 
-            // Draw Fowl Target Node
+            // --- Familiar Dynamic Fowl Bird (الطائر المألوف) ---
             ctx.save();
             ctx.translate(target.x, target.y);
-            let bearingAngle = Math.atan2(target.ySpeed, target.xSpeed);
+            
+            // Adjust scaling horizontal direction orientation 
             if (target.xSpeed < 0) ctx.scale(-1, 1); 
-            ctx.rotate(bearingAngle * (target.xSpeed < 0 ? -1 : 1));
             
-            ctx.fillStyle = '#653b15';
-            ctx.beginPath(); ctx.ellipse(0, 0, target.width/2, target.height/2, 0, 0, Math.PI*2); ctx.fill();
+            // 1. Wings (الأجنحة المتحركة المألوفة)
+            let wingOscillation = Math.sin(target.flapAngle) * 16;
+            ctx.fillStyle = '#78350f'; // Darker Brown Wing color
+            ctx.beginPath();
+            ctx.ellipse(-4, -6 + (wingOscillation/2), 8, 16 + wingOscillation, Math.PI/6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 2. Main Fowl Body (جسم الطائر المألوف والبيضاوي المتناسق)
+            ctx.fillStyle = '#92400e'; 
+            ctx.beginPath(); 
+            ctx.ellipse(0, 0, 20, 14, 0, 0, Math.PI * 2); 
+            ctx.fill();
             
-            let flappingOscillator = Math.sin(target.flap) * (target.height / 2);
-            ctx.fillStyle = '#845325';
-            ctx.beginPath(); ctx.ellipse(0, - flappingOscillator / 2, 10, target.height/2 + flappingOscillator / 2, 0, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.ellipse(0, + flappingOscillator / 2, 10, target.height/2 + flappingOscillator / 2, 0, 0, Math.PI*2); ctx.fill();
+            // 3. Tail Feathers (الذيل)
+            ctx.fillStyle = '#78350f';
+            ctx.beginPath();
+            ctx.moveTo(-18, -2);
+            ctx.lineTo(-26, -8);
+            ctx.lineTo(-24, 8);
+            ctx.lineTo(-18, 2);
+            ctx.fill();
+
+            // 4. Head Assembly (الرأس والعين والمنقار المألوف)
+            ctx.fillStyle = '#b45309';
+            ctx.beginPath();
+            ctx.arc(16, -4, 8, 0, Math.PI * 2);
+            ctx.fill();
             
-            ctx.fillStyle = '#442507';
-            ctx.beginPath(); ctx.arc(target.width/2, 0, 8, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#ca8a04';
-            ctx.beginPath(); ctx.moveTo(target.width/2 + 7, -3); ctx.lineTo(target.width/2 + 15, 0); ctx.lineTo(target.width/2 + 7, 3); ctx.fill();
+            // Eye (العين)
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.arc(18, -6, 2.5, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#000000';
+            ctx.beginPath(); ctx.arc(18.5, -6, 1.2, 0, Math.PI * 2); ctx.fill();
+            
+            // Beak (المنقار المألوف باللون الأصفر)
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath(); 
+            ctx.moveTo(23, -6); 
+            ctx.lineTo(31, -3); 
+            ctx.lineTo(22, 1); 
+            ctx.fill();
+            
             ctx.restore();
             
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.font = 'bold 11px Tahoma';
-            ctx.fillText(`TARGET`, target.x - 18, target.y - target.height - 5);
+            // Target Telemetry Tag Label
+            ctx.fillStyle = 'rgba(255,255,255,0.75)';
+            ctx.font = '900 10px Segoe UI, Arial';
+            ctx.fillText(`TARGET`, target.x - 18, target.y - 24);
 
-            // --- Advanced Iron-Sight Perspective Core Modification ---
+            // --- Advanced Iron-Sight Perspective Custom Matrix Modification (التنشين من الأعلى) ---
             ctx.save();
-            let basePivotPointX = canvas.width / 2;
-            let basePivotPointY = canvas.height;
+            // قاعدة ارتكاز السلاح ثابتة أسفل منتصف شاشة الكانفاس الحالية تماماً للتصويب النيشان
+            let gunPivotX = canvas.width / 2;
+            let gunPivotY = canvas.height;
             
-            let rotationalBearing = Math.atan2(aimY - basePivotPointY, aimX - basePivotPointX) + Math.PI / 2;
+            // حساب زاوية الالتفاف الدقيقة باتجاه إصبع المستخدم
+            let gunAngle = Math.atan2(aimY - gunPivotY, aimX - gunPivotX) + Math.PI / 2;
             
             if (ak47Loaded && ak47Img.complete) {
-                let scalingRatio = 0.8;
-                let calculatedW = ak47Img.width * scalingRatio;
-                let calculatedH = ak47Img.height * scalingRatio;
+                // تكبير وتوسيع النطاق لإخفاء الخزنة الجانبية وإبراز مقدمة فوهة البندقية بالتصويب الرأسي
+                let gunScale = 1.1; 
+                let gW = ak47Img.width * gunScale;
+                let gH = ak47Img.height * gunScale;
 
-                ctx.translate(basePivotPointX, basePivotPointY);
-                ctx.rotate(rotationalBearing);
+                ctx.translate(gunPivotX, gunPivotY);
+                ctx.rotate(gunAngle);
                 
-                // التنشين من الأعلى مباشرة ليعطي منظور التصويب النيشان الحقيقي
-                ctx.drawImage(ak47Img, -calculatedW / 2, -calculatedH + 100, calculatedW, calculatedH); 
+                // سحب الصورة رأسياً لأسفل وتوسيط المحور الأفقي لتعطي مظهر التنشين الاحترافي (Top-down Forward Perspective)
+                ctx.drawImage(ak47Img, -gW / 2, -gH + 110, gW, gH); 
             } else {
-                // سلاح تكتيكي مرسوم احتياطياً في حال فشل تحميل الصورة تماماً لمنع الشاشة السوداء
-                ctx.translate(basePivotPointX, basePivotPointY);
-                ctx.rotate(rotationalBearing);
-                ctx.strokeStyle = '#475569';
-                ctx.lineWidth = 12;
-                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -80); ctx.stroke(); // ماسورة البندقية
-                ctx.strokeStyle = '#ef4444';
-                ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.moveTo(0, -80); ctx.lineTo(0, -86); ctx.stroke(); // خط النيشان الأمامي الأحمر
+                // تصميم بندقية تكتيكية بديلة مرسومة برمجياً بشكل عمودي من الأسفل لمنع الشاشة السوداء
+                ctx.translate(gunPivotX, gunPivotY);
+                ctx.rotate(gunAngle);
+                
+                // جسم البندقية الخلفي والماسورة
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 14;
+                ctx.beginPath(); ctx.moveTo(0, 20); ctx.lineTo(0, -90); ctx.stroke();
+                
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 8;
+                ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(0, -85); ctx.stroke();
+                
+                // نقطة النيشان الفسفورية الأمامية لفوهة السلاح
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath(); ctx.arc(0, -92, 3, 0, Math.PI * 2); ctx.fill();
             }
             ctx.restore();
 
-            // Overlay Targeting Scope System Crosshairs
+            // Overlay Custom Scope Holographic Targeting Reticle Crosshairs
             ctx.save();
             ctx.strokeStyle = '#ef4444'; 
             ctx.lineWidth = 2;
             ctx.translate(aimX, aimY);
-            ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(18, 0); ctx.moveTo(0, -18); ctx.lineTo(0, 18); ctx.stroke();
+            ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-20, 0); ctx.lineTo(20, 0); ctx.moveTo(0, -20); ctx.lineTo(0, 20); ctx.stroke();
             ctx.fillStyle = '#f87171';
-            ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
 
         }, 1000 / 60);
     }
 
     function resetTarget() {
-        target.x = Math.random() * (canvas.width - 80) + 40;
-        target.y = Math.random() * (canvas.height / 2) + 30; 
+        target.x = Math.random() * (canvas.width - 100) + 50;
+        target.y = Math.random() * (canvas.height / 3) + 40; 
     }
 
     // Pi Network Asset Procurement Transaction Invoicing
