@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE HUNTER Arcade - Stable Tactical Edition 🔥</title>
+    <title>THE HUNTER Arcade - Perfect Weapon Alignment 🔥</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -295,7 +295,7 @@
             <div class="hunter-avatar-frame">
                 <div class="hunter-avatar"></div>
             </div>
-            <h2 style="color: #38bdf8; font-size: 18px; margin: 0 0 8px 0; font-weight:800;">Welcome, Abu Kareem!</h2>
+            <h2 style="color: #38bdf8; font-size: 18px; margin: 0 0 8px 0; font-weight:800;">Welcome, Abu Karim!</h2>
             <p style="font-size: 13px; line-height: 1.5; color: #94a3b8; margin: 0 0 20px 0; padding: 0 10px;">Authenticate now to lock and load your advanced tactical AK-47. Synchronize score records with Supabase and Pi consensus wallets.</p>
             <button class="btn" id="btn-login" onclick="initAndLoginWithPi()">START RANGE 🚀</button>
         </div>
@@ -679,7 +679,7 @@
                     ctx.beginPath(); ctx.moveTo(g, 0); ctx.lineTo(g, canvas.height); ctx.stroke();
                 }
                 for(let g = 0; g < canvas.height; g += 30) {
-                    ctx.beginPath(); ctx.moveTo(0, g); ctx.lineTo(canvas.width, g); ctx.stroke();
+                    ctx.beginPath(); moveTo(0, g); ctx.lineTo(canvas.width, g); ctx.stroke();
                 }
             }
 
@@ -704,99 +704,76 @@
                 flashIntensity -= 0.07;
             }
 
-            // --- Familiar Dynamic Fowl Bird (الطائر المألوف) ---
+            // --- Familiar Dynamic Fowl Bird ---
             ctx.save();
             ctx.translate(target.x, target.y);
-            
-            // Adjust scaling horizontal direction orientation 
             if (target.xSpeed < 0) ctx.scale(-1, 1); 
             
-            // 1. Wings (الأجنحة المتحركة المألوفة)
             let wingOscillation = Math.sin(target.flapAngle) * 16;
-            ctx.fillStyle = '#78350f'; // Darker Brown Wing color
+            ctx.fillStyle = '#78350f'; 
             ctx.beginPath();
             ctx.ellipse(-4, -6 + (wingOscillation/2), 8, 16 + wingOscillation, Math.PI/6, 0, Math.PI * 2);
             ctx.fill();
 
-            // 2. Main Fowl Body (جسم الطائر المألوف والبيضاوي المتناسق)
             ctx.fillStyle = '#92400e'; 
             ctx.beginPath(); 
             ctx.ellipse(0, 0, 20, 14, 0, 0, Math.PI * 2); 
             ctx.fill();
             
-            // 3. Tail Feathers (الذيل)
             ctx.fillStyle = '#78350f';
             ctx.beginPath();
-            ctx.moveTo(-18, -2);
-            ctx.lineTo(-26, -8);
-            ctx.lineTo(-24, 8);
-            ctx.lineTo(-18, 2);
+            ctx.moveTo(-18, -2); ctx.lineTo(-26, -8); ctx.lineTo(-24, 8); ctx.lineTo(-18, 2);
             ctx.fill();
 
-            // 4. Head Assembly (الرأس والعين والمنقار المألوف)
             ctx.fillStyle = '#b45309';
-            ctx.beginPath();
-            ctx.arc(16, -4, 8, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(16, -4, 8, 0, Math.PI * 2); ctx.fill();
             
-            // Eye (العين)
             ctx.fillStyle = '#ffffff';
             ctx.beginPath(); ctx.arc(18, -6, 2.5, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#000000';
             ctx.beginPath(); ctx.arc(18.5, -6, 1.2, 0, Math.PI * 2); ctx.fill();
             
-            // Beak (المنقار المألوف باللون الأصفر)
             ctx.fillStyle = '#f59e0b';
-            ctx.beginPath(); 
-            ctx.moveTo(23, -6); 
-            ctx.lineTo(31, -3); 
-            ctx.lineTo(22, 1); 
-            ctx.fill();
-            
+            ctx.beginPath(); ctx.moveTo(23, -6); ctx.lineTo(31, -3); ctx.lineTo(22, 1); ctx.fill();
             ctx.restore();
             
-            // Target Telemetry Tag Label
             ctx.fillStyle = 'rgba(255,255,255,0.75)';
             ctx.font = '900 10px Segoe UI, Arial';
             ctx.fillText(`TARGET`, target.x - 18, target.y - 24);
 
-            // --- Advanced Iron-Sight Perspective Custom Matrix Modification (التنشين من الأعلى) ---
+            // --- 🛠️ المطور أبا كريم: تعديل مصفوفة الكلاشينكوف (التدوير والسحب للأسفل) ---
             ctx.save();
-            // قاعدة ارتكاز السلاح ثابتة أسفل منتصف شاشة الكانفاس الحالية تماماً للتصويب النيشان
             let gunPivotX = canvas.width / 2;
             let gunPivotY = canvas.height;
             
-            // حساب زاوية الالتفاف الدقيقة باتجاه إصبع المستخدم
-            let gunAngle = Math.atan2(aimY - gunPivotY, aimX - gunPivotX) + Math.PI / 2;
+            // حساب الزاوية الديناميكية للتصويب
+            let baseAngle = Math.atan2(aimY - gunPivotY, aimX - gunPivotX);
             
             if (ak47Loaded && ak47Img.complete) {
-                // تكبير وتوسيع النطاق لإخفاء الخزنة الجانبية وإبراز مقدمة فوهة البندقية بالتصويب الرأسي
-                let gunScale = 1.1; 
+                // 1. تصغير المقياس ليكون متناسقاً تماماً ولا يملأ الشاشة (0.42 بدلاً من 1.1)
+                let gunScale = 0.42; 
                 let gW = ak47Img.width * gunScale;
                 let gH = ak47Img.height * gunScale;
 
                 ctx.translate(gunPivotX, gunPivotY);
-                ctx.rotate(gunAngle);
                 
-                // سحب الصورة رأسياً لأسفل وتوسيط المحور الأفقي لتعطي مظهر التنشين الاحترافي (Top-down Forward Perspective)
-                ctx.drawImage(ak47Img, -gW / 2, -gH + 110, gW, gH); 
+                // 2. تدوير الصورة بمقدار إضافي لتصبح الخزنة والمقبض للأسفل تماماً وخارج الإطار
+                // تم تعديل الإزاحة بمقدار (Math.PI / 2) لتصحيح زاوية الصورة الأصلية المستقيمة لأعلى
+                ctx.rotate(baseAngle + Math.PI / 2);
+                
+                // 3. سحب مركز الصورة لأسفل (gH * 0.12) لإخفاء الأجزاء السفلية وإبراز فوهة السلاح فقط
+                ctx.drawImage(ak47Img, -gW / 2, -gH + (gH * 0.12), gW, gH); 
             } else {
-                // تصميم بندقية تكتيكية بديلة مرسومة برمجياً بشكل عمودي من الأسفل لمنع الشاشة السوداء
+                // التصميم البديل في حال عدم تحميل الصورة
                 ctx.translate(gunPivotX, gunPivotY);
-                ctx.rotate(gunAngle);
+                ctx.rotate(baseAngle + Math.PI / 2);
                 
-                // جسم البندقية الخلفي والماسورة
                 ctx.strokeStyle = '#334155';
-                ctx.lineWidth = 14;
-                ctx.beginPath(); ctx.moveTo(0, 20); ctx.lineTo(0, -90); ctx.stroke();
+                ctx.lineWidth = 10;
+                ctx.beginPath(); ctx.moveTo(0, 20); ctx.lineTo(0, -70); ctx.stroke();
                 
-                ctx.strokeStyle = '#1e293b';
-                ctx.lineWidth = 8;
-                ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(0, -85); ctx.stroke();
-                
-                // نقطة النيشان الفسفورية الأمامية لفوهة السلاح
                 ctx.fillStyle = '#ef4444';
-                ctx.beginPath(); ctx.arc(0, -92, 3, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(0, -72, 2.5, 0, Math.PI * 2); ctx.fill();
             }
             ctx.restore();
 
