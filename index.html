@@ -11,7 +11,7 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #020617; /* لون غامق جداً لخلفية الغابة */
+            background-color: #020617; 
             color: #ffffff;
             text-align: center;
             margin: 0;
@@ -85,17 +85,12 @@
             font-size: 12px;
         }
         #hunting-canvas {
-            /* تصميم خلفية ضبابية للغابة مناسبة للصورة المرفقة */
-            background-color: #1e293b; 
-            background-image: radial-gradient(rgba(56, 189, 248, 0.1) 1px, transparent 1px);
-            background-size: 40px 40px;
-            background-position: -19px -19px;
             border: 3px solid #38bdf8;
             border-radius: 12px;
             cursor: crosshair; 
             max-width: 100%;
             touch-action: none;
-            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.6);
         }
         .leaderboard-table {
             width: 100%;
@@ -138,7 +133,7 @@
 
         <canvas id="hunting-canvas" width="480" height="320"></canvas>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px;">حرك إصبعك في أي مكان للتوجيه، واضغط للإطلاق السلس!</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px;">حرك إصبعك لتوجيه الكلاشينكوف، واضغط للإطلاق الحقيقي!</p>
         
         <button class="btn" style="background-image: linear-gradient(135deg, #eab308, #ca8a04); color: #0f172a; font-size: 14px; padding: 10px 25px; width:auto; font-weight: 800;" onclick="buyAmmoWithPi()">🪙 شحن 30 ذخيرة (1 Pi)</button>
 
@@ -165,8 +160,9 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
-    // جلب الصورة مباشرة من رابط مستودع جيت هاب الخاص بك لحل مشكلة التأخير
+    // الروابط المحدثة للأصول المباشرة للعبة
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=1";
+    const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=480&h=320&q=80"; // صورة غابة حقيقية متناسقة الأبعاد
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -178,20 +174,18 @@
     let currentPiUserId = ""; 
     let isSdkInitialized = false;
     
-    // هدف صيد طائر واقعي ومتحرك
     let target = { 
         x: 100, y: 150, 
         xSpeed: 2.5, ySpeed: 1.8, 
-        width: 38, height: 32, // أبعاد الطائر
-        flap: 0, flapSpeed: 0.18, // حركة الأجنحة
-        radius: 20 // نصف قطر التصويب المقبول
+        width: 38, height: 32, 
+        flap: 0, flapSpeed: 0.18, 
+        radius: 20 
     };
     
     let particles = [];
     let flashIntensity = 0;
     let screenShake = 0;
 
-    // إعدادات التصويب السلس
     let aimX = 240;
     let aimY = 160;
     let weaponRecoil = 0;
@@ -200,7 +194,8 @@
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
     let gameInterval;
-    let ak47Img = null; // سيتم تحميل الصورة هنا
+    let ak47Img = null; 
+    let forestBgImg = null; // مجسم صورة الغابة
 
     let audioCtx;
     function initAudio() {
@@ -218,7 +213,6 @@
             gain.connect(audioCtx.destination);
 
             if (type === 'shoot') {
-                // صوت إطلاق نار كلاشينكوف قوي ومتقطع
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(450, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.08);
@@ -226,7 +220,6 @@
                 gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.08);
             } else if (type === 'hit') {
-                // صوت إصابة هدف صيد حقيقي
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(180, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(650, audioCtx.currentTime + 0.2);
@@ -243,18 +236,28 @@
         } catch(e){}
     }
 
-    // تحميل صورة الكلاشينكوف
+    // تحميل صورة الخلفية الطبيعية والسلاح معاً قبل بدء اللعبة
     function preloadAssets() {
         return new Promise((resolve) => {
+            let loadedCount = 0;
+            const totalAssets = 2;
+
+            function checkLoad() {
+                loadedCount++;
+                if (loadedCount === totalAssets) resolve(true);
+            }
+
             ak47Img = new Image();
             ak47Img.src = AK47_IMAGE_URL;
-            ak47Img.crossOrigin = "anonymous"; // تفعيل السماح بالقراءة الخارجية للملف
-            ak47Img.onload = () => resolve(true);
-            ak47Img.onerror = () => {
-                console.error("فشل تحميل صورة الكلاشينكوف الواقعية من الرابط.");
-                ak47Img = null; // سيتم رسم بندقية بسيطة بدلاً منها
-                resolve(false);
-            };
+            ak47Img.crossOrigin = "anonymous";
+            ak47Img.onload = checkLoad;
+            ak47Img.onerror = () => { ak47Img = null; checkLoad(); };
+
+            forestBgImg = new Image();
+            forestBgImg.src = BG_FOREST_URL;
+            forestBgImg.crossOrigin = "anonymous";
+            forestBgImg.onload = checkLoad;
+            forestBgImg.onerror = () => { forestBgImg = null; checkLoad(); };
         });
     }
 
@@ -263,9 +266,8 @@
         if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         
         const loginBtn = document.getElementById('btn-login');
-        loginBtn.innerText = "جاري الاتصال بالنظام الرسمي... 🔄";
+        loginBtn.innerText = "جاري تهيئة طبيعة الغابة والاتصال... 🔄";
         
-        // تحميل الأصول وبدء الدخول
         preloadAssets().then(() => {
             try {
                 if (typeof Pi !== 'undefined' && window.Pi) {
@@ -361,7 +363,6 @@
         } catch (err) {}
     }
 
-    // تأثير صيد واقعي: سحابة غبار وريش بني
     function createFeatherCloud(x, y) {
         for (let i = 0; i < 20; i++) {
             particles.push({
@@ -387,19 +388,18 @@
         document.getElementById('ammo-val').innerText = ammo;
         playSound('shoot');
         
-        flashIntensity = 0.5; // وميض أقوى للإطلاق الواقعي
+        flashIntensity = 0.4; 
         screenShake = 6;
-        weaponRecoil = 15; // ارتداد كلاشينكوف قوي
-        isFiringEffect = 3; // مدة تأثير وميض فوهة البندقية
+        weaponRecoil = 15; 
+        isFiringEffect = 3; 
         
-        // حساب المسافة بين النيشان ومركز الطائر
         const distance = Math.sqrt((aimX - target.x)**2 + (aimY - target.y)**2);
         
         if (distance <= target.radius + 10) {
             score += 10;
             document.getElementById('score-val').innerText = score;
             playSound('hit');
-            createFeatherCloud(target.x, target.y); // سحابة ريش واقعية
+            createFeatherCloud(target.x, target.y); 
             
             let newLevel = Math.floor(score / 50) + 1;
             if (newLevel > gameLevel) {
@@ -414,12 +414,11 @@
             updateSupabaseScore(); 
             resetTarget();
         } else {
-            document.getElementById('game-status').innerText = "💨 طلقة طائشة! حرك النيشان الأحمر فوق الطائر مباشرة.";
+            document.getElementById('game-status').innerText = "💨 طلقة طائشة! وجه فوهة الكلاشينكوف بدقة.";
             document.getElementById('game-status').style.color = "#fbbf24";
         }
     }
 
-    // دالة احترافية لحساب مكان اللمس/الفأرة داخل الـ Canvas بدقة وسلاسة
     function handlePointer(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
         aimX = clientX - rect.left;
@@ -431,16 +430,9 @@
         if (aimY > canvas.height) aimY = canvas.height;
     }
 
-    // أحداث الفأرة (الكمبيوتر)
-    canvas.addEventListener('mousemove', (e) => {
-        handlePointer(e.clientX, e.clientY);
-    });
-    canvas.addEventListener('mousedown', (e) => {
-        handlePointer(e.clientX, e.clientY);
-        executeShot();
-    });
+    canvas.addEventListener('mousemove', (e) => { handlePointer(e.clientX, e.clientY); });
+    canvas.addEventListener('mousedown', (e) => { handlePointer(e.clientX, e.clientY); executeShot(); });
     
-    // أحداث اللمس الاحترافية والسلسة للهاتف
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if(e.touches.length > 0) {
@@ -460,15 +452,11 @@
         gameInterval = setInterval(() => {
             target.x += target.xSpeed; 
             target.y += target.ySpeed;
-            
-            // حركة الأجنحة
             target.flap += target.flapSpeed;
             
-            // الارتداد عن الحدود
             if (target.x < 10 || target.x > canvas.width - 10) target.xSpeed = -target.xSpeed;
             if (target.y < 30 || target.y > canvas.height - 30) target.ySpeed = -target.ySpeed;
             
-            // اهتزاز الشاشة
             if (screenShake > 0) {
                 const dx = (Math.random() - 0.5) * screenShake;
                 const dy = (Math.random() - 0.5) * screenShake;
@@ -480,19 +468,17 @@
                 }
             }
 
-            // --- رسم خلفية الغابة الضبابية (ديكور بسيط) ---
-            ctx.fillStyle = '#0f172a'; // لون غامق جداً لخلفية الغابة
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // ديكور غابة ضبابية خفيفة
-            ctx.fillStyle = 'rgba(56, 189, 248, 0.04)';
-            ctx.fillRect(0, 20, canvas.width, canvas.height / 2);
-            ctx.fillStyle = 'rgba(30, 41, 59, 0.6)';
-            ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+            // --- 🌲 رسم خلفية الغابة الطبيعية الحقيقية 🌲 ---
+            if (forestBgImg) {
+                ctx.drawImage(forestBgImg, 0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = '#1e293b'; 
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
 
-            // --- تأثير سحابة الغبار والريش البني ---
+            // تأثير الريش والجزيئات
             particles.forEach((p, index) => {
-                p.x += p.vx; p.y += p.vy; p.vy += 0.02; // سقوط بطيء جداً للريش
+                p.x += p.vx; p.y += p.vy; p.vy += 0.02; 
                 p.alpha -= 0.025;
                 if (p.alpha <= 0) { particles.splice(index, 1); }
                 else {
@@ -511,88 +497,67 @@
                 flashIntensity -= 0.08;
             }
 
-            // --- رسم الهدف (طائر صيد واقعي واضح المعالم) ---
+            // --- رسم الطائر المتحرك فوق الطبيعة ---
             ctx.save();
             ctx.translate(target.x, target.y);
-            
-            // حساب زاوية الميلان بناءً على اتجاه الحركة
             let moveAngle = Math.atan2(target.ySpeed, target.xSpeed);
             ctx.rotate(moveAngle);
             
-            // رسم جسم الطائر (بني داكن)
-            ctx.fillStyle = '#442b10';
-            ctx.beginPath();
-            ctx.ellipse(0, 0, target.width/2, target.height/2, 0, 0, Math.PI*2);
-            ctx.fill();
+            ctx.fillStyle = '#653b15';
+            ctx.beginPath(); ctx.ellipse(0, 0, target.width/2, target.height/2, 0, 0, Math.PI*2); ctx.fill();
             
-            // رسم الأجنحة الخافقة
             let wingFlapOffset = Math.sin(target.flap) * (target.height / 2);
-            ctx.fillStyle = '#553c20';
-            ctx.beginPath(); ctx.ellipse(0, - wingFlapOffset / 2, 10, target.height/2 + wingFlapOffset / 2, 0, 0, Math.PI*2); ctx.fill(); // جناح علوي
-            ctx.beginPath(); ctx.ellipse(0, + wingFlapOffset / 2, 10, target.height/2 + wingFlapOffset / 2, 0, 0, Math.PI*2); ctx.fill(); // جناح سفلي
+            ctx.fillStyle = '#845325';
+            ctx.beginPath(); ctx.ellipse(0, - wingFlapOffset / 2, 10, target.height/2 + wingFlapOffset / 2, 0, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, + wingFlapOffset / 2, 10, target.height/2 + wingFlapOffset / 2, 0, 0, Math.PI*2); ctx.fill();
             
-            // رسم الرأس
-            ctx.fillStyle = '#331b08';
+            ctx.fillStyle = '#442507';
             ctx.beginPath(); ctx.arc(target.width/2, 0, 8, 0, Math.PI*2); ctx.fill();
-            
-            // رسم المنقار
-            ctx.fillStyle = '#b45309';
+            ctx.fillStyle = '#ca8a04';
             ctx.beginPath(); ctx.moveTo(target.width/2 + 7, -3); ctx.lineTo(target.width/2 + 15, 0); ctx.lineTo(target.width/2 + 7, 3); ctx.fill();
-            
             ctx.restore();
             
-            // عنوان الهدف
-            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
             ctx.font = 'bold 11px Tahoma';
             ctx.fillText(`🐦 طائر صيد`, target.x - 22, target.y - target.height - 8);
 
-            // --- رسم الكلاشينكوف Realistic (AK-47) الواقعي من الصورة ---
-            let gunBaseX = canvas.width - 30; // يمين الشاشة
-            let gunBaseY = canvas.height + 20; // ثابت في الأسفل
+            // --- رسم الكلاشينكوف مع ارتداد وميض النيران ---
+            let gunBaseX = canvas.width - 40; 
+            let gunBaseY = canvas.height + 20; 
             
-            if (weaponRecoil > 0) weaponRecoil *= 0.85; // عودة الارتداد
+            if (weaponRecoil > 0) weaponRecoil *= 0.85; 
 
             ctx.save();
             ctx.translate(gunBaseX, gunBaseY + weaponRecoil);
-            
-            // التفات الكلاشينكوف الواقعي لمكان النيشان
             let gunRotation = Math.atan2(aimY - gunBaseY, aimX - gunBaseX) + Math.PI / 2;
             ctx.rotate(gunRotation);
 
-            // --- تأثير وميض النيران الواقعي عند فوهة البندقية ---
             if (isFiringEffect > 0) {
                 isFiringEffect--;
-                ctx.fillStyle = 'rgba(249, 115, 22, 0.9)'; // برتقالي قوي
+                ctx.fillStyle = 'rgba(249, 115, 22, 0.9)'; 
                 ctx.beginPath(); ctx.moveTo(-8, -120); ctx.lineTo(0, -150); ctx.lineTo(8, -120); ctx.fill();
-                ctx.fillStyle = 'rgba(253, 224, 71, 0.8)'; // أصفر داكن
+                ctx.fillStyle = 'rgba(253, 224, 71, 0.8)'; 
                 ctx.beginPath(); ctx.moveTo(-6, -125); ctx.lineTo(0, -145); ctx.lineTo(6, -125); ctx.fill();
             }
 
             if (ak47Img) {
-                // رسم صورة الكلاشينكوف الواقعية من الصورة الجديد ak47.png
-                ctx.drawImage(ak47Img, -30, -120, 60, 160); // رسم الصورة بحجم متناسق
+                // دمج ذكي لتقليل أثر الخلفية البيضاء حتى ترفع صورة مفرغة بالكامل
+                ctx.globalCompositeOperation = "source-atop";
+                ctx.drawImage(ak47Img, -30, -120, 60, 160);
+                ctx.globalCompositeOperation = "source-over"; // إعادة الوضع الطبيعي لرسم باقي العناصر
             } else {
-                // رسم كلاشينكوف كود (AK-47) بسيط كاحتياط
-                ctx.fillStyle = '#78350f'; ctx.fillRect(-7, -20, 14, 30); ctx.fillRect(-6, 5, 12, 25); // خشب
-                ctx.fillStyle = '#334155'; ctx.fillRect(-5, -55, 10, 40); ctx.fillStyle = '#1e293b'; ctx.fillRect(-2, -85, 4, 30); // حديد
+                ctx.fillStyle = '#78350f'; ctx.fillRect(-7, -20, 14, 30);
+                ctx.fillStyle = '#334155'; ctx.fillRect(-5, -55, 10, 40);
             }
-
             ctx.restore();
 
-            // --- مؤشر التصويب (Crosshair) الواقعي والحاد الاحترافي ---
+            // --- مؤشر التصويب الأحمر الاحترافي ---
             ctx.save();
-            ctx.strokeStyle = '#ef4444'; // نيشان أحمر
-            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = '#f87171'; 
+            ctx.lineWidth = 1.8;
             ctx.translate(aimX, aimY);
-            
-            ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(-15, 0); ctx.lineTo(15, 0); ctx.moveTo(0, -15); ctx.lineTo(0, 15); ctx.stroke();
-            
-            ctx.fillStyle = '#ef4444';
-            ctx.beginPath(); ctx.arc(0, -15, 2, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(0, +15, 2, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(-15, 0, 2, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(+15, 0, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.moveTo(0, -16); ctx.lineTo(0, 16); ctx.stroke();
             ctx.restore();
 
         }, 1000 / 60);
@@ -603,7 +568,7 @@
         target.y = Math.random() * (canvas.height - 130) + 40; 
     }
 
-    // --- أكواد الدفع والمزامنة الأصلية بدون أي تعديل نهائياً ---
+    // --- أكواد الدفع والمزامنة الأصلية الموثقة لشبكة Pi وبدون أي تعديل ---
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
             document.getElementById('game-status').innerText = "⚠️ يجب فتح اللعبة من داخل تطبيق Pi Browser لتشغيل الدفع الحقيقي.";
