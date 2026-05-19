@@ -18,6 +18,7 @@
             padding: 10px;
             touch-action: none;
             user-select: none;
+            overflow-x: hidden;
         }
         .container {
             max-width: 500px;
@@ -91,6 +92,7 @@
             max-width: 100%;
             touch-action: none;
             box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+            background-color: #0b1329;
         }
         
         .controls-wrapper {
@@ -146,6 +148,17 @@
             font-size: 13px;
         }
         .leaderboard-table th { background-color: #1e293b; color: #38bdf8; }
+        
+        /* مؤشر دلالي لوجود معالجة صوتية مدمجة */
+        .audio-indicator {
+            font-size: 11px;
+            color: #4ade80;
+            margin-top: 5px;
+            display: inline-block;
+            background: rgba(74, 222, 128, 0.1);
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
     </style>
 </head>
 <body>
@@ -171,6 +184,7 @@
         </div>
 
         <canvas id="hunting-canvas" width="480" height="320"></canvas>
+        <div><span class="audio-indicator">🔊 نظام هندسة الصوت المتقدم نشط</span></div>
  
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px;">مرر إصبعك لتوجيه السلاح، واضغط على الزر الأحمر للإطلاق الواقعي!</p>
         
@@ -198,16 +212,17 @@
 </div>
 
 <script>
+    // الإعدادات العامة وقنوات الربط لقواعد البيانات والـ SDK
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
-    // إضافة طابع زمني متجدد لمنع كاش المتصفح القديم
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
     const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=480&h=320&q=80"; 
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // متغيرات حالة اللعبة الداخلية المحدثة
     let score = 0;
     let ammo = 30;
     let gameLevel = 1;
@@ -216,27 +231,41 @@
     let currentPiUserId = ""; 
     let isSdkInitialized = false;
     
+    // كائن الهدف الفردي (محاكاة الطائر المتقدمة)
     let target = { 
         x: 100, y: 150, 
         xSpeed: 2.5, ySpeed: 1.8, 
-        width: 38, height: 32, 
-        flap: 0, flapSpeed: 0.18, 
-        radius: 20 
+        width: 42, height: 34, 
+        flap: 0, flapSpeed: 0.22, 
+        radius: 22,
+        glideCounter: 0,
+        windDrift: 0
     };
     
+    // أنظمة الجسيمات البصرية والمؤثرات الخاصة
     let particles = []; 
     let flashIntensity = 0;
+    let muzzleFlashX = 0;
+    let muzzleFlashY = 0;
     let screenShake = 0;
 
+    // إحداثيات توجيه السلاح والنيشان
     let aimX = 240;
     let aimY = 160;
 
+    // عناصر الرسم الهندسية
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
     let gameInterval;
     let ak47Img = null; 
     let forestBgImg = null; 
 
+    // متغيرات محاكاة الارتداد ثلاثي الأبعاد للسلاح (3D Recoil Simulation Variables)
+    let gunRecoilZ = 0;      // تراجع السلاح على محور العمق الافتراضي
+    let gunRecoilY = 0;      // الارتداد الرأسي الأعلى
+    let gunRecoilAngle = 0;  // الالتواء الزاوي المفاجئ للسلاح عند الإنفجار
+
+    // بيئة الصوت التوليدية المطورة بالكامل (Web Audio API Synthesizer Engine)
     let audioCtx;
     function initAudio() {
         if (!audioCtx) {
@@ -244,38 +273,130 @@
         }
     }
 
-    function playSound(type) {
+    // محرك هندسة الصوت التوليدي بدون ملفات خارجية لضمان عملها فوراً وبدون تأخير زمن استجابة الـ Audio
+    function playAdvancedSound(type) {
         if (!audioCtx) return;
+        
+        // فحص حالة السياق وإعادة تنشيطه إذا تم تعليقه بواسطة قيود المتصفح الأمنية
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
         try {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
 
             if (type === 'shoot') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(480, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.09);
-                gain.gain.setValueAtTime(0.45, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.09);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.09);
+                // تجميع طبقات صوتية لمحاكاة صوت بندقية هجومية AK-47 حقيقية
+                
+                // الطبقة الأولى: الإنفجار الأساسي (Low-frequency explosion)
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.type = 'sawtooth';
+                osc1.frequency.setValueAtTime(320, now);
+                osc1.frequency.exponentialRampToValueAtTime(8, now + 0.12);
+                
+                gain1.gain.setValueAtTime(0.6, now);
+                gain1.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.12);
+
+                // الطبقة الثانية: ضوضاء الاحتكاك والغاز (White noise metallic snap)
+                const bufferSize = audioCtx.sampleRate * 0.08; // مدة قصيرة جداً
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1000;
+
+                const noiseGain = audioCtx.createGain();
+                noiseGain.gain.setValueAtTime(0.4, now);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+                noise.connect(filter);
+                filter.connect(noiseGain);
+                noiseGain.connect(audioCtx.destination);
+                noise.start(now);
+                noise.stop(now + 0.08);
+
             } else if (type === 'hit') {
+                // صوت اصطدام حاد وميكانيكي متبوع بنغمة قصيرة للنجاح
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(650, audioCtx.currentTime + 0.2);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                osc.frequency.setValueAtTime(280, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+                
+                gain.gain.setValueAtTime(0.35, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.18);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.18);
+
             } else if (type === 'empty') {
+                // نقرة ميكانيكية جافة تدل على فراغ المخزن لزيادة الواقعية
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.setValueAtTime(120, now + 0.02);
+                
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.04);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.04);
+
+            } else if (type === 'levelup') {
+                // معزوفة صعود رقمية حماسية ترفع معنويات اللاعب الصياد
+                const notes = [261.63, 329.63, 392.00, 523.25]; // نغمات متصاعدة
+                notes.forEach((freq, index) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.15, now + (index * 0.08));
+                    gain.gain.linearRampToValueAtTime(0.001, now + (index * 0.08) + 0.12);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + (index * 0.08));
+                    osc.stop(now + (index * 0.08) + 0.12);
+                });
+
+            } else if (type === 'reload') {
+                // صوت تعبئة ذخيرة ميكانيكي من طبقتين (تك... تك)
+                [0, 0.12].forEach((delay) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(400, now + delay);
+                    osc.frequency.exponentialRampToValueAtTime(1500, now + delay + 0.05);
+                    gain.gain.setValueAtTime(0.2, now + delay);
+                    gain.gain.linearRampToValueAtTime(0.001, now + delay + 0.05);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + delay);
+                    osc.stop(now + delay + 0.05);
+                });
             }
-        } catch(e){}
+        } catch(e){
+            console.log("خطأ محرك الصوت الحركي الأساسي:", e);
+        }
     }
 
+    // جلب أصول وخلفيات اللعبة الرسومية قبل بدء التشغيل الفعلي لمنع التشنجات الرسومية
     function preloadAssets() {
         return new Promise((resolve) => {
             let loadedCount = 0;
@@ -300,12 +421,12 @@
         });
     }
 
+    // معالجة مصادقة Pi Network والدخول الرسمي
     function initAndLoginWithPi() {
         initAudio();
-        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         
         const loginBtn = document.getElementById('btn-login');
-        loginBtn.innerText = "جاري تحضير ميدان الصيد... 🔄";
+        loginBtn.innerText = "جاري تحضير ميدان الصيد والأصوات... 🔄";
         
         preloadAssets().then(() => {
             try {
@@ -337,6 +458,7 @@
         });
     }
 
+    // حساب تجريبي محلي للعمل المباشر بدون متصفح Pi للتطوير الفوري
     function setupDevAccount() {
         playerPiUser = "Abokareem999_D"; 
         currentPiUserId = "DEV_UID_ABUKAREEM_OFFICIAL";
@@ -344,6 +466,7 @@
         handleLoginSuccess();
     }
 
+    // إتمام تهيئة واجهة اللعبة بعد استجابة قواعد البيانات والمصادقة
     async function handleLoginSuccess() {
         document.getElementById('player-name').innerText = playerPiUser;
         try {
@@ -365,8 +488,10 @@
         document.getElementById('game-section').className = '';
         startGameLoop();
         loadLeaderboard();
+        playAdvancedSound('reload');
     }
 
+    // رفع وتحديث نقاط الصياد في نظام السيرفر والترتيب العالمي لـ Supabase
     async function updateSupabaseScore() {
         if (!playerPiUser) return;
         try {
@@ -381,6 +506,7 @@
         } catch (err) {}
     }
 
+    // جلب أعلى نتائج اللاعبين لبناء لوحة الصدارة الحية
     async function loadLeaderboard() {
         try {
             let { data } = await _supabaseClient
@@ -402,22 +528,27 @@
         } catch (err) {}
     }
 
+    // محرك الجسيمات المتقدم لتوليد سحابة الريش والمؤثرات الفيزيائية العشوائية المتساقطة
     function createFeatherCloud(x, y) {
-        for (let i = 0; i < 20; i++) {
+        // توليد سحابة ريش طبيعية بنية ورمادية اللون تتأثر بالجاذبية
+        for (let i = 0; i < 24; i++) {
             particles.push({
                 x: x, y: y,
-                vx: (Math.random() - 0.5) * 4,
-                vy: (Math.random() - 0.5) * 4,
-                radius: Math.random() * 2 + 0.8,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.8) * 5, // اندفاع للأعلى أولاً ثم هبوط
+                radius: Math.random() * 3 + 1.2,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.2,
                 alpha: 1,
-                color: `hsl(${Math.random() * 20 + 20}, ${Math.random() * 20 + 40}%, ${Math.random() * 20 + 20}%)` 
+                color: `hsl(${Math.random() * 25 + 20}, ${Math.random() * 30 + 40}%, ${Math.random() * 20 + 25}%)` 
             });
         }
     }
 
+    // تنفيذ عملية إطلاق النار الميكانيكية ومعالجة الإصابة والارتداد
     function executeShot() {
         if (ammo <= 0) {
-            playSound('empty');
+            playAdvancedSound('empty');
             document.getElementById('game-status').innerText = "❌ نفدت الذخيرة! اشحن الآن باستخدام Pi.";
             document.getElementById('game-status').style.color = "#f87171";
             return;
@@ -425,25 +556,44 @@
         
         ammo--; 
         document.getElementById('ammo-val').innerText = ammo;
-        playSound('shoot');
         
-        flashIntensity = 0.35; 
-        screenShake = 5;
+        // إطلاق النبرة الصوتية للكلاشينكوف
+        playAdvancedSound('shoot');
+        
+        // تفعيل مؤثر الوميض الناري واهتزاز الشاشة العنيف
+        flashIntensity = 0.5; 
+        screenShake = 7;
 
+        // دفع السلاح ميكانيكياً للخلف وللأعلى (3D Recoil Simulation)
+        gunRecoilZ = -35; 
+        gunRecoilY = -25;
+        gunRecoilAngle = (Math.random() - 0.5) * 0.15;
+
+        // حساب مكان الفوهة اللحظي لوضع الوميض الناري عليها بدقة
+        let gunBaseX = canvas.width - 40; 
+        let gunBaseY = canvas.height + 20;
+        let rot = Math.atan2(aimY - gunBaseY, aimX - gunBaseX);
+        muzzleFlashX = gunBaseX + Math.cos(rot) * 110;
+        muzzleFlashY = gunBaseY + Math.sin(rot) * 110;
+
+        // حساب المسافة الديكارتية للتحقق من دقة النيشان على الطائر
         const distance = Math.sqrt((aimX - target.x)**2 + (aimY - target.y)**2);
         
-        if (distance <= target.radius + 12) {
+        if (distance <= target.radius + 15) {
             score += 10;
             document.getElementById('score-val').innerText = score;
-            playSound('hit');
+            playAdvancedSound('hit');
             createFeatherCloud(target.x, target.y); 
             
             let newLevel = Math.floor(score / 50) + 1;
             if (newLevel > gameLevel) {
                 gameLevel = newLevel;
                 document.getElementById('level-val').innerText = gameLevel;
-                target.xSpeed += (target.xSpeed > 0 ? 0.9 : -0.9);
-                target.ySpeed += (target.ySpeed > 0 ? 0.9 : -0.9);
+                playAdvancedSound('levelup');
+                
+                // زيادة عشوائية وتدريجية في سرعة الطيور لصعوبة التحدي مع الحفاظ على الاتجاه
+                target.xSpeed += (target.xSpeed > 0 ? 0.7 : -0.7);
+                target.ySpeed += (target.ySpeed > 0 ? 0.7 : -0.7);
             }
             
             document.getElementById('game-status').innerText = "🎯 صيد موفق ومباشر! +10 نقاط";
@@ -456,6 +606,7 @@
         }
     }
 
+    // توجيه ذكي لموقع النيشان متوافق مع الفأرة وشاشات اللمس
     function handlePointer(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
         aimX = clientX - rect.left;
@@ -472,6 +623,7 @@
     
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        initAudio(); // تفعيل مبكر لمنع قيود متصفحات الجوال للأصوات
         if(e.touches.length > 0) {
             handlePointer(e.touches[0].clientX, e.touches[0].clientY);
         }
@@ -487,117 +639,193 @@
     fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
     fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
+    // محرك اللعبة الرئيسي ودورة التحديث الرسومي الشاملة (60 إطار بالثانية)
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
-            // تحديث حركة الطائر باستمرار
-            target.x += target.xSpeed; 
+            
+            // 1. تحديثات فيزيائية لحركة ومحاكاة ذكاء الطائر الروبوتي
+            target.glideCounter += 0.05;
+            // إدخال انحراف رياحي عشوائي لجعل الحركة تبدو كطائر حقيقي وليس آلة خطية
+            target.windDrift = Math.sin(target.glideCounter) * 0.4;
+            
+            target.x += target.xSpeed + target.windDrift; 
             target.y += target.ySpeed;
             target.flap += target.flapSpeed;
             
-            if (target.x < 10 || target.x > canvas.width - 10) target.xSpeed = -target.xSpeed;
-            if (target.y < 30 || target.y > canvas.height - 30) target.ySpeed = -target.ySpeed;
+            // الارتداد من الحواف بمرونة
+            if (target.x < 15 || target.x > canvas.width - 15) target.xSpeed = -target.xSpeed;
+            if (target.y < 35 || target.y > canvas.height - 45) target.ySpeed = -target.ySpeed;
             
+            // 2. إدارة محاكاة ارتداد الكلاشينكوف وإعادته لوضعه المستقر تدريجياً وبنعومة
+            gunRecoilZ *= 0.85; 
+            gunRecoilY *= 0.82;
+            gunRecoilAngle *= 0.80;
+
+            // اهتزاز واجهة الشاشة الكلية
             if (screenShake > 0) {
                 const dx = (Math.random() - 0.5) * screenShake;
                 const dy = (Math.random() - 0.5) * screenShake;
                 document.getElementById('game-container').style.transform = `translate(${dx}px, ${dy}px)`;
-                screenShake *= 0.82;
-                if (screenShake < 0.3) {
+                screenShake *= 0.84;
+                if (screenShake < 0.2) {
                     screenShake = 0;
                     document.getElementById('game-container').style.transform = 'none';
                 }
             }
 
-            // رسم الخلفية
+            // 3. رسم البيئة الخلفية للغابة
             if (forestBgImg) {
                 ctx.drawImage(forestBgImg, 0, 0, canvas.width, canvas.height);
             } else {
-                ctx.fillStyle = '#1e293b'; 
+                ctx.fillStyle = '#0f172a'; 
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // رسم جزيئات الريش
+            // 4. معالجة ورسم جزيئات ريش الطيور المتساقط بفعل الإصابة
             particles.forEach((p, index) => {
-                p.x += p.vx; p.y += p.vy; p.vy += 0.02; 
-                p.alpha -= 0.025;
-                if (p.alpha <= 0) { particles.splice(index, 1); }
-                else {
+                p.x += p.vx; 
+                p.y += p.vy; 
+                p.vy += 0.15; // قوة جاذبية طبيعية لأسفل
+                p.rotation += p.rotationSpeed;
+                p.alpha -= 0.02;
+                if (p.alpha <= 0) { 
+                    particles.splice(index, 1); 
+                } else {
                     ctx.save();
                     ctx.globalAlpha = p.alpha;
                     ctx.fillStyle = p.color;
-                    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation);
+                    // رسم الريشة بشكل بيضاوي ممدود ومميز
+                    ctx.beginPath(); 
+                    ctx.ellipse(0, 0, p.radius * 2, p.radius, 0, 0, Math.PI * 2); 
+                    ctx.fill();
                     ctx.restore();
                 }
             });
 
-            if (flashIntensity > 0) {
-                ctx.fillStyle = `rgba(255, 255, 255, ${flashIntensity})`;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                flashIntensity -= 0.08;
-            }
-
-            // رسم مجسم الطائر وحركته
+            // 5. رسم مجسم الطائر الحركي بتفاصيل هندسية دقيقة
             ctx.save();
             ctx.translate(target.x, target.y);
+            
+            // جعل وجه الطائر دائماً يلتفت وينظر باتجاه حركته المتجهة للأمام
             let moveAngle = Math.atan2(target.ySpeed, target.xSpeed);
-            ctx.rotate(moveAngle);
+            if (target.xSpeed < 0) {
+                ctx.scale(1, -1); // قلب الطائر أفقياً إذا كان يطير لليسار لمنع الطيران للخلف
+                ctx.rotate(-moveAngle + Math.PI);
+            } else {
+                ctx.rotate(moveAngle);
+            }
             
-            ctx.fillStyle = '#653b15';
-            ctx.beginPath(); ctx.ellipse(0, 0, target.width/2, target.height/2, 0, 0, Math.PI*2); ctx.fill();
+            // جسم الطائر الرئيسي
+            ctx.fillStyle = '#543011';
+            ctx.beginPath(); 
+            ctx.ellipse(0, 0, target.width/2, target.height/2, 0, 0, Math.PI*2); 
+            ctx.fill();
             
-            let wingFlapOffset = Math.sin(target.flap) * (target.height / 2);
-            ctx.fillStyle = '#845325';
-            ctx.beginPath(); ctx.ellipse(0, - wingFlapOffset / 2, 10, target.height/2 + wingFlapOffset / 2, 0, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.ellipse(0, + wingFlapOffset / 2, 10, target.height/2 + wingFlapOffset / 2, 0, 0, Math.PI*2); ctx.fill();
+            // حركة الأجنحة المرفرفة العلوية والسفلية المتأثرة بزمن الـ Flap
+            let wingFlapOffset = Math.sin(target.flap) * (target.height / 1.4);
+            ctx.fillStyle = '#78461b';
+            ctx.beginPath(); 
+            ctx.ellipse(-2, - wingFlapOffset / 2, 8, target.height/2 + Math.abs(wingFlapOffset)/2, 0.2, 0, Math.PI*2); 
+            ctx.fill();
+            ctx.beginPath(); 
+            ctx.ellipse(-2, + wingFlapOffset / 2, 8, target.height/2 + Math.abs(wingFlapOffset)/2, -0.2, 0, Math.PI*2); 
+            ctx.fill();
             
-            ctx.fillStyle = '#442507';
-            ctx.beginPath(); ctx.arc(target.width/2, 0, 8, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#ca8a04';
-            ctx.beginPath(); ctx.moveTo(target.width/2 + 7, -3); ctx.lineTo(target.width/2 + 15, 0); ctx.lineTo(target.width/2 + 7, 3); ctx.fill();
+            // رأس العين والمنقار الخارجي
+            ctx.fillStyle = '#3a1f05';
+            ctx.beginPath(); ctx.arc(target.width/2 - 2, -3, 9, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#ffffff'; // بريق العين
+            ctx.beginPath(); ctx.arc(target.width/2 + 1, -5, 2, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#eab308'; // منقار ذهبي حاد للصيد
+            ctx.beginPath(); 
+            ctx.moveTo(target.width/2 + 5, -6); 
+            ctx.lineTo(target.width/2 + 16, -3); 
+            ctx.lineTo(target.width/2 + 5, 1); 
+            ctx.fill();
+            
+            // ذيل الطائر الخلفي المتناسق
+            ctx.fillStyle = '#3a1f05';
+            ctx.beginPath();
+            ctx.moveTo(-target.width/2, -4);
+            ctx.lineTo(-target.width/2 - 12, -10);
+            ctx.lineTo(-target.width/2 - 10, 0);
+            ctx.lineTo(-target.width/2 - 12, 10);
+            ctx.lineTo(-target.width/2, 4);
+            ctx.fill();
+
             ctx.restore();
             
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            // نص معلق يعلو الطائر بشكل نقي
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
             ctx.font = 'bold 11px Tahoma';
-            ctx.fillText(`🐦 طائر صيد`, target.x - 22, target.y - target.height - 8);
+            ctx.fillText(`🐦 هدف متحرك`, target.x - 28, target.y - target.height - 5);
 
-            // إحداثيات السلاح في الركن السفلي
+            // 6. رسم الوميض الناري المنفجر عند فوهة البندقية مباشرة
+            if (flashIntensity > 0) {
+                ctx.save();
+                let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 2, muzzleFlashX, muzzleFlashY, 35);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, ' + flashIntensity + ')');
+                gradient.addColorStop(0.3, 'rgba(253, 224, 71, ' + (flashIntensity * 0.9) + ')');
+                gradient.addColorStop(0.7, 'rgba(239, 68, 68, ' + (flashIntensity * 0.4) + ')');
+                gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(muzzleFlashX, muzzleFlashY, 35, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                flashIntensity -= 0.07;
+            }
+
+            // 7. إحداثيات السلاح ومحاكاة البعد الثالث والارتداد (3D Simulation Engine)
             let gunBaseX = canvas.width - 40; 
             let gunBaseY = canvas.height + 20; 
 
             ctx.save();
-            ctx.translate(gunBaseX, gunBaseY);
-            let gunRotation = Math.atan2(aimY - gunBaseY, aimX - gunBaseX) + Math.PI / 2;
+            // تطبيق الارتداد اللحظي والمكاني على إحداثيات السلاح الأساسية
+            ctx.translate(gunBaseX, gunBaseY + gunRecoilY);
+            let gunRotation = Math.atan2(aimY - gunBaseY, aimX - gunBaseX) + Math.PI / 2 + gunRecoilAngle;
             ctx.rotate(gunRotation);
 
-            // رسم البندقية بنقاء هندسي
+            // رسم الكلاشينكوف المنسجم مع الطبيعة بدون بياض
             if (ak47Img && ak47Img.complete && ak47Img.naturalWidth !== 0) {
-                ctx.drawImage(ak47Img, -30, -120, 60, 160);
+                // تعديل أبعاد الطول والعرض ديناميكياً لتوليد عمق بصري تراجعي (Recoil Z-Scale)
+                let currentGunWidth = 60 + (gunRecoilZ * 0.15);
+                let currentGunHeight = 160 + gunRecoilZ;
+                ctx.drawImage(ak47Img, -currentGunWidth / 2, -currentGunHeight + 40, currentGunWidth, currentGunHeight);
             } else {
-                // رسم كلاشينكوف برميجي أنيق ومفرغ إذا لم تكتمل الصورة لمنع تشوه الشاشة بالبياض
-                ctx.fillStyle = '#78350f'; ctx.fillRect(-6, -30, 12, 40); 
-                ctx.fillStyle = '#1e293b'; ctx.fillRect(-4, -90, 8, 70); 
-                ctx.fillStyle = '#475569'; ctx.fillRect(-2, -120, 4, 30); 
+                // رسم بديل برميجي هندسي رائع ومحمي للكتلة الميكانيكية للكلاشينكوف في حال انقطاع السيرفر
+                ctx.fillStyle = '#5c2d17'; ctx.fillRect(-7, -35, 14, 45); 
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(-5, -95, 10, 75); 
+                ctx.fillStyle = '#475569'; ctx.fillRect(-3, -130, 6, 35); 
+                ctx.fillStyle = '#ca8a04'; ctx.fillRect(-2, -135, 4, 8); // فوهة ذهبية
             }
             ctx.restore();
 
-            // رسم النيشان الأحمر المصلح
+            // 8. رسم النيشان المطور المصلح والمحاذاة البصرية
             ctx.save();
             ctx.strokeStyle = '#f87171'; 
-            ctx.lineWidth = 1.8;
+            ctx.lineWidth = 2;
             ctx.translate(aimX, aimY);
-            ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.moveTo(0, -16); ctx.lineTo(0, 16); ctx.stroke();
+            ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(18, 0); ctx.moveTo(0, -18); ctx.lineTo(0, 18); ctx.stroke();
+            // نقطة ارتكاز مركزية دقيقة جداً
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
 
-        }, 1000 / 60);
+        }, 1000 / 60); // تحديثات بمعدل 60 هرتز ثابت لضمان أعلى أداء ونعومة
     }
 
+    // إعادة تعيين موضع الطائر عشوائياً بعد الاصطياد
     function resetTarget() {
-        target.x = Math.random() * (canvas.width - 60) + 30;
-        target.y = Math.random() * (canvas.height - 130) + 40; 
+        target.x = Math.random() * (canvas.width - 80) + 40;
+        target.y = Math.random() * (canvas.height - 140) + 40; 
     }
 
+    // ربط محفظة وبوابات دفع Pi Network الحقيقية لشحن الذخيرة
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
             document.getElementById('game-status').innerText = "⚠️ يجب فتح اللعبة من داخل تطبيق Pi Browser لتشغيل الدفع الحقيقي.";
@@ -630,6 +858,7 @@
         Pi.createPayment(paymentData, callbacks);
     }
 
+    // إرسال كود الفاتورة للسيرفر الخلفي لاعتمادها والموافقة عليها أولياً
     async function approvePaymentOnBackend(paymentId) {
         try {
             await fetch('/api/approve', {
@@ -640,6 +869,7 @@
         } catch (err) { console.error(err); }
     }
 
+    // إتمام المعاملة المالية وإضافة الرصاص لحقيبة اللاعب بشكل آمن وموثق مع صوت الشحن
     async function completePaymentOnBackend(paymentId, txid) {
         try {
             const response = await fetch('/api/complete', {
@@ -653,11 +883,13 @@
                 document.getElementById('ammo-val').innerText = ammo;
                 document.getElementById('game-status').innerText = "🪙 تم تأكيد استلام 1 Pi بنجاح وشحن الذخيرة! 🔋";
                 document.getElementById('game-status').style.color = "#4ade80";
+                playAdvancedSound('reload'); // تشغيل نغمة الشحن الاحترافية
                 updateSupabaseScore();
             }
         } catch (err) { console.error(err); }
     }
     
+    // فحص العمليات المعلقة التي لم تكتمل بسبب إغلاق المتصفح أو انقطاع الشبكة المفاجئ
     async function onIncompletePaymentFound(payment) {
         if (payment && payment.identifier) {
             try {
