@@ -92,9 +92,49 @@
             touch-action: none;
             box-shadow: 0 5px 20px rgba(0,0,0,0.6);
         }
+        
+        /* أزرار التحكم المنفصلة والاحترافية */
+        .controls-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            gap: 10px;
+        }
+        .btn-shoot {
+            background-image: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: white;
+            border: 2px solid #f87171;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
+            transition: transform 0.1s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-shoot:active {
+            transform: scale(0.9);
+            background-image: linear-gradient(135deg, #b91c1c, #7f1d1d);
+        }
+        .btn-ammo {
+            flex: 1;
+            background-image: linear-gradient(135deg, #eab308, #ca8a04); 
+            color: #0f172a; 
+            font-size: 14px; 
+            padding: 12px 15px; 
+            font-weight: 800;
+            border-radius: 15px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(234, 179, 8, 0.3);
+        }
+
         .leaderboard-table {
             width: 100%;
-            margin-top: 15px;
+            margin-top: 20px;
             border-collapse: collapse;
             background: #0f172a;
             border-radius: 12px;
@@ -133,9 +173,12 @@
 
         <canvas id="hunting-canvas" width="480" height="320"></canvas>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px;">حرك إصبعك لتوجيه الكلاشينكوف، واضغط للإطلاق الحقيقي!</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px;">مرر إصبعك داخل الشاشة لتوجيه السلاح بسلاسة دون إطلاق!</p>
         
-        <button class="btn" style="background-image: linear-gradient(135deg, #eab308, #ca8a04); color: #0f172a; font-size: 14px; padding: 10px 25px; width:auto; font-weight: 800;" onclick="buyAmmoWithPi()">🪙 شحن 30 ذخيرة (1 Pi)</button>
+        <div class="controls-wrapper">
+            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 شحن 30 ذخيرة (1 Pi)</button>
+            <button class="btn-shoot" id="fire-trigger">إطلاق 💥</button>
+        </div>
 
         <h3 style="margin-top: 25px; color: #38bdf8;">🏆 لوحة الصدارة العالمية</h3>
         <table class="leaderboard-table">
@@ -160,9 +203,9 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
-    // الروابط المحدثة للأصول المباشرة للعبة
+    // الروابط المباشرة للأصول المستضافة
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=1";
-    const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=480&h=320&q=80"; // صورة غابة حقيقية متناسقة الأبعاد
+    const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=480&h=320&q=80"; 
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -186,6 +229,7 @@
     let flashIntensity = 0;
     let screenShake = 0;
 
+    // إحداثيات النيشان المبدئية
     let aimX = 240;
     let aimY = 160;
     let weaponRecoil = 0;
@@ -195,7 +239,7 @@
     const ctx = canvas.getContext('2d');
     let gameInterval;
     let ak47Img = null; 
-    let forestBgImg = null; // مجسم صورة الغابة
+    let forestBgImg = null; 
 
     let audioCtx;
     function initAudio() {
@@ -236,7 +280,6 @@
         } catch(e){}
     }
 
-    // تحميل صورة الخلفية الطبيعية والسلاح معاً قبل بدء اللعبة
     function preloadAssets() {
         return new Promise((resolve) => {
             let loadedCount = 0;
@@ -266,7 +309,7 @@
         if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         
         const loginBtn = document.getElementById('btn-login');
-        loginBtn.innerText = "جاري تهيئة طبيعة الغابة والاتصال... 🔄";
+        loginBtn.innerText = "جاري تهيئة نظام الصيد المفصول... 🔄";
         
         preloadAssets().then(() => {
             try {
@@ -285,7 +328,7 @@
                             handleLoginSuccess();
                         })
                         .catch((err) => {
-                            console.error("رفض الاتصال من الـ SDK الموثق:", err);
+                            console.error("خطأ الـ SDK الموثق:", err);
                             setupDevAccount();
                         });
                     }, 250);
@@ -376,6 +419,7 @@
         }
     }
 
+    // دالة الإطلاق المعزولة والمستقلة بالكامل
     function executeShot() {
         if (ammo <= 0) {
             playSound('empty');
@@ -414,11 +458,12 @@
             updateSupabaseScore(); 
             resetTarget();
         } else {
-            document.getElementById('game-status').innerText = "💨 طلقة طائشة! وجه فوهة الكلاشينكوف بدقة.";
+            document.getElementById('game-status').innerText = "💨 طلقة طائشة في الهواء! ركز النيشان الأحمر أولاً.";
             document.getElementById('game-status').style.color = "#fbbf24";
         }
     }
 
+    // دالة التوجيه السلس وحساب الإحداثيات
     function handlePointer(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
         aimX = clientX - rect.left;
@@ -430,14 +475,14 @@
         if (aimY > canvas.height) aimY = canvas.height;
     }
 
+    // --- أحداث التوجيه فقط (دون إطلاق نار نهائياً عند اللمس أو التحريك) ---
     canvas.addEventListener('mousemove', (e) => { handlePointer(e.clientX, e.clientY); });
-    canvas.addEventListener('mousedown', (e) => { handlePointer(e.clientX, e.clientY); executeShot(); });
+    canvas.addEventListener('mousedown', (e) => { handlePointer(e.clientX, e.clientY); });
     
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if(e.touches.length > 0) {
             handlePointer(e.touches[0].clientX, e.touches[0].clientY);
-            executeShot();
         }
     });
     canvas.addEventListener('touchmove', (e) => {
@@ -445,6 +490,17 @@
         if(e.touches.length > 0) {
             handlePointer(e.touches[0].clientX, e.touches[0].clientY);
         }
+    });
+
+    // --- ربط زر الإطلاق المنفصل بحدث الضغط الفعلي والمستقل ---
+    const fireTriggerBtn = document.getElementById('fire-trigger');
+    fireTriggerBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        executeShot();
+    });
+    fireTriggerBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        executeShot();
     });
 
     function startGameLoop() {
@@ -468,7 +524,7 @@
                 }
             }
 
-            // --- 🌲 رسم خلفية الغابة الطبيعية الحقيقية 🌲 ---
+            // رسم خلفية الطبيعة
             if (forestBgImg) {
                 ctx.drawImage(forestBgImg, 0, 0, canvas.width, canvas.height);
             } else {
@@ -476,7 +532,7 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // تأثير الريش والجزيئات
+            // رسم الجزيئات والريش
             particles.forEach((p, index) => {
                 p.x += p.vx; p.y += p.vy; p.vy += 0.02; 
                 p.alpha -= 0.025;
@@ -490,14 +546,14 @@
                 }
             });
 
-            // وميض الإطلاق
+            // وميض الشاشة عند الإطلاق
             if (flashIntensity > 0) {
                 ctx.fillStyle = `rgba(255, 255, 255, ${flashIntensity})`;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 flashIntensity -= 0.08;
             }
 
-            // --- رسم الطائر المتحرك فوق الطبيعة ---
+            // رسم الطائر الصيد
             ctx.save();
             ctx.translate(target.x, target.y);
             let moveAngle = Math.atan2(target.ySpeed, target.xSpeed);
@@ -521,7 +577,7 @@
             ctx.font = 'bold 11px Tahoma';
             ctx.fillText(`🐦 طائر صيد`, target.x - 22, target.y - target.height - 8);
 
-            // --- رسم الكلاشينكوف مع ارتداد وميض النيران ---
+            // رسم الكلاشينكوف والالتفات والارتداد
             let gunBaseX = canvas.width - 40; 
             let gunBaseY = canvas.height + 20; 
             
@@ -541,17 +597,16 @@
             }
 
             if (ak47Img) {
-                // دمج ذكي لتقليل أثر الخلفية البيضاء حتى ترفع صورة مفرغة بالكامل
                 ctx.globalCompositeOperation = "source-atop";
                 ctx.drawImage(ak47Img, -30, -120, 60, 160);
-                ctx.globalCompositeOperation = "source-over"; // إعادة الوضع الطبيعي لرسم باقي العناصر
+                ctx.globalCompositeOperation = "source-over"; 
             } else {
                 ctx.fillStyle = '#78350f'; ctx.fillRect(-7, -20, 14, 30);
                 ctx.fillStyle = '#334155'; ctx.fillRect(-5, -55, 10, 40);
             }
             ctx.restore();
 
-            // --- مؤشر التصويب الأحمر الاحترافي ---
+            // مؤشر النيشان الأحمر
             ctx.save();
             ctx.strokeStyle = '#f87171'; 
             ctx.lineWidth = 1.8;
@@ -568,7 +623,7 @@
         target.y = Math.random() * (canvas.height - 130) + 40; 
     }
 
-    // --- أكواد الدفع والمزامنة الأصلية الموثقة لشبكة Pi وبدون أي تعديل ---
+    // --- أكواد الدفع والمزامنة الرسمية الموثقة بدون أدنى تعديل نهائياً ---
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
             document.getElementById('game-status').innerText = "⚠️ يجب فتح اللعبة من داخل تطبيق Pi Browser لتشغيل الدفع الحقيقي.";
