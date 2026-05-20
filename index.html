@@ -285,7 +285,7 @@
 
 <script>
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24pLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
@@ -807,7 +807,7 @@
                 totalHits++;
 
                 let pColor = currentBirdStyle.secondary;
-                if (t.special === "fast") pColor = "#c0c0c0"; 
+                if (t.special === "fast") pColor = "#cbd5e1"; 
                 if (t.special === "bonus") pColor = "#fbbf24"; 
 
                 createFeatherCloud(t.x, t.y, pColor);
@@ -951,15 +951,15 @@
     
     fireTriggerBtn.addEventListener('mousedown', (e) => { 
         e.preventDefault(); 
+        initAudio();
         isFiring = true; 
-        executeShot(); 
     });
     window.addEventListener('mouseup', () => { isFiring = false; });
     
     fireTriggerBtn.addEventListener('touchstart', (e) => { 
         e.preventDefault(); 
+        initAudio();
         isFiring = true; 
-        executeShot(); 
     });
     window.addEventListener('touchend', () => { isFiring = false; });
     
@@ -972,7 +972,7 @@
 
             if (deltaTime > 3) deltaTime = 3; 
 
-            if (isFiring && isRapidFireUnlocked) {
+            if (isFiring) {
                 executeShot();
             }
 
