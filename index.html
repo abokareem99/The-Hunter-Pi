@@ -231,7 +231,7 @@
         </div>
 
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
-        <div><span class="audio-indicator">🔊 Fanfare Audio & Absolute Color Evolution Framework Active</span></div>
+        <div><span class="audio-indicator">🔊 Physically Modeled Gunshot Synthesizer Engine V2 Active</span></div>
  
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Hit the bird 10 times to unlock new color tiers and get 50 FREE AMMO!</p>
         
@@ -341,7 +341,7 @@
         }
     }
 
-    // 🛠️ إعادة المعايرة والهندسة الصوتية لتقديم مؤثرات واقعية تماماً (AK-47 Tactical Audio Overhaul)
+    // 🛠️ المحرك الصوتي التكتيكي الاحترافي المُعاد هندسته بالكامل (Acoustic Ballistic Simulation V2)
     function playAdvancedSound(type) {
         if (!audioCtx) return;
         if (audioCtx.state === 'suspended') {
@@ -352,158 +352,173 @@
             const now = audioCtx.currentTime;
             
             if (type === 'shoot') {
-                // 1. الترددات السفلية المنخفضة العميقة (The Heavy Gun Thump)
-                const bassOsc = audioCtx.createOscillator();
-                const bassGain = audioCtx.createGain();
-                bassOsc.type = 'sine';
-                bassOsc.frequency.setValueAtTime(95, now);
-                bassOsc.frequency.exponentialRampToValueAtTime(10, now + 0.24); // انخفاض سريع يحاكي الارتداد
+                // تصفير أي تأخير زمنّي ورفع الهجوم فوراً لمنع صوت الليزر الكرتوني
                 
-                bassGain.gain.setValueAtTime(1.0, now);
-                bassGain.gain.linearRampToValueAtTime(0.001, now + 0.24);
+                // 1. الموجة الانفجارية الأساسية الصادمة (Shockwave Impulse)
+                const impulseOsc = audioCtx.createOscillator();
+                const impulseGain = audioCtx.createGain();
+                impulseOsc.type = 'sawtooth';
+                impulseOsc.frequency.setValueAtTime(160, now);
+                // انخفاض فوري للتردد لمحاكاة ضغط الهواء المفاجئ
+                impulseOsc.frequency.exponentialRampToValueAtTime(30, now + 0.08); 
                 
-                bassOsc.connect(bassGain);
-                bassGain.connect(audioCtx.destination);
-                bassOsc.start(now);
-                bassOsc.stop(now + 0.24);
+                // Attack حاد جداً (0.001 ثانية) لمحاكاة صدمة الإطلاق الحقيقية
+                impulseGain.gain.setValueAtTime(0.001, now);
+                impulseGain.gain.linearRampToValueAtTime(1.2, now + 0.002);
+                impulseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+                
+                const lpImpulse = audioCtx.createBiquadFilter();
+                lpImpulse.type = 'lowpass';
+                lpImpulse.frequency.setValueAtTime(280, now); // كتم الترددات لجعل الصوت ثقيلاً ومكتوماً وله هيبة
+                
+                impulseOsc.connect(lpImpulse);
+                lpImpulse.connect(impulseGain);
+                impulseGain.connect(audioCtx.destination);
+                
+                impulseOsc.start(now);
+                impulseOsc.stop(now + 0.1);
 
-                // 2. الصوت الميكانيكي الحاد الملازم لأجزاء الـ AK-47 (Metallic Mechanical Click)
-                const clickOsc = audioCtx.createOscillator();
-                const clickGain = audioCtx.createGain();
-                clickOsc.type = 'triangle';
-                clickOsc.frequency.setValueAtTime(1400, now);
-                clickOsc.frequency.setValueAtTime(600, now + 0.02);
-                
-                clickGain.gain.setValueAtTime(0.4, now);
-                clickGain.gain.linearRampToValueAtTime(0.001, now + 0.04);
-                
-                clickOsc.connect(clickGain);
-                clickGain.connect(audioCtx.destination);
-                clickOsc.start(now);
-                clickOsc.stop(now + 0.04);
-
-                // 3. الترددات الفوقية الناتجة عن انفجار الغاز والبارود (High-Frequency White Noise Gas Burst)
-                const bufferSize = audioCtx.sampleRate * 0.28; // صدى ممتد قليلاً يحاكي النيران في الغابة
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
+                // 2. محاكاة ذيل الصدى البيئي الممتد (Acoustic Noise Tail Reverb)
+                const tailBufferSize = audioCtx.sampleRate * 0.45; // صدى ارتداد بطول نصف ثانية تقريباً
+                const tailBuffer = audioCtx.createBuffer(1, tailBufferSize, audioCtx.sampleRate);
+                const tailData = tailBuffer.getChannelData(0);
+                for (let i = 0; i < tailBufferSize; i++) {
+                    tailData[i] = Math.random() * 2 - 1;
                 }
-                const noise = audioCtx.createBufferSource();
-                noise.buffer = buffer;
+                const tailNoise = audioCtx.createBufferSource();
+                tailNoise.buffer = tailBuffer;
                 
-                // فلتر لتنقية الترددات المزعجة وجعل الصوت مكتوماً وواقعياً وثقيلاً
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(750, now);
-                filter.frequency.exponentialRampToValueAtTime(250, now + 0.25);
-                filter.Q.setValueAtTime(4, now);
+                const tailFilter = audioCtx.createBiquadFilter();
+                tailFilter.type = 'bandpass';
+                tailFilter.frequency.setValueAtTime(450, now);
+                tailFilter.frequency.exponentialRampToValueAtTime(120, now + 0.4);
+                tailFilter.Q.setValueAtTime(2, now);
 
-                const noiseGain = audioCtx.createGain();
-                noiseGain.gain.setValueAtTime(0.7, now);
-                noiseGain.gain.exponentialRampToValueAtTime(0.005, now + 0.28);
+                const tailGain = audioCtx.createGain();
+                tailGain.gain.setValueAtTime(0.001, now);
+                tailGain.gain.linearRampToValueAtTime(0.9, now + 0.005); // صعود خاطف
+                tailGain.gain.exponentialRampToValueAtTime(0.001, now + 0.45); // تلاشي طبيعي يحاكي صدى الأماكن المفتوحة
 
-                noise.connect(filter);
-                filter.connect(noiseGain);
-                noiseGain.connect(audioCtx.destination);
-                noise.start(now);
-                noise.stop(now + 0.28);
+                tailNoise.connect(tailFilter);
+                tailFilter.connect(tailGain);
+                tailGain.connect(audioCtx.destination);
+                
+                tailNoise.start(now);
+                tailNoise.stop(now + 0.45);
+
+                // 3. صوت الاحتكاك المعدني المنبثق من أجزاء السلاح (Assault Rifle Mechanical Breach Sizzle)
+                const mechOsc = audioCtx.createOscillator();
+                const mechGain = audioCtx.createGain();
+                mechOsc.type = 'triangle';
+                mechOsc.frequency.setValueAtTime(800, now);
+                mechOsc.frequency.setValueAtTime(400, now + 0.02);
+                
+                const mechFilter = audioCtx.createBiquadFilter();
+                mechFilter.type = 'highpass';
+                mechFilter.frequency.setValueAtTime(1000, now);
+
+                mechGain.gain.setValueAtTime(0.25, now);
+                mechGain.gain.linearRampToValueAtTime(0.001, now + 0.03);
+                
+                mechOsc.connect(mechFilter);
+                mechFilter.connect(mechGain);
+                mechGain.connect(audioCtx.destination);
+                
+                mechOsc.start(now);
+                mechOsc.stop(now + 0.03);
                 
             } else if (type === 'hit') {
-                // صوت ارتطام تكتيكي واختراق حاد (Flesh & Feather Impact Clip)
+                // صوت ارتطام تكتيكي واختراق حاد (Tactical Flesh Impact)
                 const impactOsc = audioCtx.createOscillator();
                 const impactGain = audioCtx.createGain();
                 impactOsc.type = 'sawtooth';
-                impactOsc.frequency.setValueAtTime(220, now);
-                impactOsc.frequency.linearRampToValueAtTime(80, now + 0.12);
+                impactOsc.frequency.setValueAtTime(180, now);
+                impactOsc.frequency.linearRampToValueAtTime(60, now + 0.1);
                 
-                // فلتر مخصص لإعطاء تأثير مكتوم وممتص للصدمة
                 const lpFilter = audioCtx.createBiquadFilter();
                 lpFilter.type = 'lowpass';
-                lpFilter.frequency.setValueAtTime(450, now);
+                lpFilter.frequency.setValueAtTime(380, now);
 
-                impactGain.gain.setValueAtTime(0.6, now);
-                impactGain.gain.linearRampToValueAtTime(0.001, now + 0.14);
+                impactGain.gain.setValueAtTime(0.5, now);
+                impactGain.gain.linearRampToValueAtTime(0.001, now + 0.12);
                 
                 impactOsc.connect(lpFilter);
                 lpFilter.connect(impactGain);
                 impactGain.connect(audioCtx.destination);
                 impactOsc.start(now);
-                impactOsc.stop(now + 0.14);
+                impactOsc.stop(now + 0.12);
                 
             } else if (type === 'empty') {
-                // صوت تكة ميكانيكية جافة للمطرقة عند نفاذ الذخيرة (Dry Metallic Firing Pin Click)
+                // تكة الزناد الجافة الميكانيكية (Dry Steel Pin Click)
                 const emptyOsc = audioCtx.createOscillator();
                 const emptyGain = audioCtx.createGain();
                 emptyOsc.type = 'triangle';
                 emptyOsc.frequency.setValueAtTime(950, now);
-                emptyOsc.frequency.setValueAtTime(450, now + 0.015);
+                emptyOsc.frequency.setValueAtTime(380, now + 0.015);
                 
-                emptyGain.gain.setValueAtTime(0.35, now);
-                emptyGain.gain.linearRampToValueAtTime(0.001, now + 0.03);
+                emptyGain.gain.setValueAtTime(0.3, now);
+                emptyGain.gain.linearRampToValueAtTime(0.001, now + 0.025);
                 
                 emptyOsc.connect(emptyGain);
                 emptyGain.connect(audioCtx.destination);
                 emptyOsc.start(now);
-                emptyOsc.stop(now + 0.03);
+                emptyOsc.stop(now + 0.025);
                 
             } else if (type === 'reload') {
-                // محاكاة حركية تكتيكية ثنائية المراحل لسحب الأجزاء وتلقيم المخزن
-                // المرحلة الأولى: سحب وإخراج الخزنة القديمة
+                // سحب وإدخال مخزن الذخيرة على مرحلتين دقيقتين
                 const osc1 = audioCtx.createOscillator();
                 const gain1 = audioCtx.createGain();
                 osc1.type = 'triangle';
-                osc1.frequency.setValueAtTime(400, now);
-                osc1.frequency.linearRampToValueAtTime(700, now + 0.07);
-                gain1.gain.setValueAtTime(0.25, now);
-                gain1.gain.linearRampToValueAtTime(0.001, now + 0.07);
+                osc1.frequency.setValueAtTime(380, now);
+                osc1.frequency.linearRampToValueAtTime(650, now + 0.06);
+                gain1.gain.setValueAtTime(0.2, now);
+                gain1.gain.linearRampToValueAtTime(0.001, now + 0.06);
                 osc1.connect(gain1);
                 gain1.connect(audioCtx.destination);
                 osc1.start(now);
-                osc1.stop(now + 0.07);
+                osc1.stop(now + 0.06);
 
-                // المرحلة الثانية: إدخال الخزنة الجديدة وإغلاق الأجزاء (بعد 180ms)
-                const delay = 0.18;
+                const delay = 0.16;
                 const osc2 = audioCtx.createOscillator();
                 const gain2 = audioCtx.createGain();
                 osc2.type = 'sawtooth';
-                osc2.frequency.setValueAtTime(250, now + delay);
-                osc2.frequency.exponentialRampToValueAtTime(1100, now + delay + 0.09);
+                osc2.frequency.setValueAtTime(220, now + delay);
+                osc2.frequency.exponentialRampToValueAtTime(1050, now + delay + 0.08);
                 
                 const reloadFilter = audioCtx.createBiquadFilter();
                 reloadFilter.type = 'lowpass';
-                reloadFilter.frequency.value = 1500;
+                reloadFilter.frequency.value = 1400;
 
-                gain2.gain.setValueAtTime(0.3, now + delay);
-                gain2.gain.linearRampToValueAtTime(0.001, now + delay + 0.09);
+                gain2.gain.setValueAtTime(0.25, now + delay);
+                gain2.gain.linearRampToValueAtTime(0.001, now + delay + 0.08);
                 
                 osc2.connect(reloadFilter);
                 reloadFilter.connect(gain2);
                 gain2.connect(audioCtx.destination);
                 osc2.start(now + delay);
-                osc2.stop(now + delay + 0.09);
+                osc2.stop(now + delay + 0.08);
                 
             } else if (type === 'fanfare_bonus') {
-                // نغمة أركيد تصاعدية ونظيفة وموزعة بشكل ممتاز للآذن
+                // نغمة مبهجة ناعمة ونقية وغير حادة لتسجيل الإنجازات
                 const melody = [293.66, 349.23, 440.00, 523.25, 659.25, 880.00]; 
                 melody.forEach((freq, index) => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     
-                    osc.type = 'sine'; // استخدام موجة جيبية لنغمة ناعمة وغير حادة
-                    osc.frequency.setValueAtTime(freq, now + (index * 0.08));
+                    osc.type = 'sine'; 
+                    osc.frequency.setValueAtTime(freq, now + (index * 0.07));
                     
-                    gain.gain.setValueAtTime(0.2, now + (index * 0.08));
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.08) + 0.22);
+                    gain.gain.setValueAtTime(0.15, now + (index * 0.07));
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.07) + 0.2);
                     
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
-                    osc.start(now + (index * 0.08));
-                    osc.stop(now + (index * 0.08) + 0.22);
+                    osc.start(now + (index * 0.07));
+                    osc.stop(now + (index * 0.07) + 0.2);
                 });
             }
         } catch(e){
-            console.error("DSP Tactical Sound Safe-Guard:", e);
+            console.error("DSP Tactical Sound Subsystem Guard:", e);
         }
     }
 
