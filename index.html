@@ -102,7 +102,6 @@
             display: block;
         }
         
-        /* شريط عداد الغضب الجديد */
         .rage-container {
             width: 100%;
             background: #1e293b;
@@ -271,7 +270,6 @@
             <div>Tier: <span id="color-name-display" style="font-weight: 900;">Classic Brown</span></div>
         </div>
 
-        <!-- عداد الغضب البصري الجديد -->
         <div class="rage-container">
             <div class="rage-bar" id="rage-bar-fill"></div>
             <div class="rage-text" id="rage-bar-text">RAGE MULTIPLIER: 0%</div>
@@ -328,7 +326,6 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
     
-    // === متغيرات نظام الغضب الجديد الخارق ===
     let rageMeter = 0; 
     let isRageActive = false; 
     let rageDuration = 0; 
@@ -539,7 +536,6 @@
                 osc2.stop(now + delay + 0.08);
                 
             } else if (type === 'rage_trigger') {
-                // نغمة تفعيل وضع الغضب المدوية
                 for(let i=0; i<3; i++) {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
@@ -758,7 +754,7 @@
 
     function createFeatherCloud(x, y, customColor) {
         let pColor = customColor || currentBirdStyle.secondary;
-        let pCount = isRageActive ? 35 : 25; // جزيئات أكثف وقت الغضب
+        let pCount = isRageActive ? 35 : 25; 
         for (let i = 0; i < pCount; i++) {
             particles.push({
                 x: x, 
@@ -775,7 +771,6 @@
     }
 
     function executeShot() {
-        // إذا لم يكن وضع الغضب نشطاً والذخيرة نفدت
         if (!isRageActive && ammo <= 0) {
             playAdvancedSound('empty');
             document.getElementById('game-status').innerText = "❌ OUT OF AMMO! Refill using your Pi Wallet.";
@@ -783,7 +778,6 @@
             return;
         }
         
-        // استهلاك الذخيرة فقط إذا لم يكن وضع الغضب نشطاً
         if (!isRageActive) {
             ammo--; 
             document.getElementById('ammo-val').innerText = ammo;
@@ -816,12 +810,10 @@
                 hitAny = true;
                 hitCountThisShot++;
                 
-                // مضاعفة النقاط أثناء وضع الغضب الخارق
                 let gainedPoints = isRageActive ? t.points * 2 : t.points;
                 score += gainedPoints;
                 totalHits++;
 
-                // شحن عداد الغضب عند كل إصابة ناجحة
                 if (!isRageActive && rageMeter < 100) {
                     rageMeter += 8; 
                     if (rageMeter >= 100) {
@@ -860,7 +852,7 @@
         if (hitAny) {
             if (hitCountThisShot > 1) {
                 let comboBonus = hitCountThisShot * 15;
-                if (isRageActive) comboBonus *= 2; // دبل كومبو في وضع الغضب
+                if (isRageActive) comboBonus *= 2; 
                 score += comboBonus;
                 currentStatusText = `🔥 SWARM COMBO x${hitCountThisShot}! +${comboBonus} BONUS PTS! ` + currentStatusText;
                 playAdvancedSound('fanfare_bonus');
@@ -912,10 +904,9 @@
         }
     }
 
-    // تفعيل وضع الغضب السينمائي النشط
     function triggerRageMode() {
         isRageActive = true;
-        rageDuration = 360; // يستمر لحوالي 6 ثوانٍ (360 إطار / 60 إطار بالثانية)
+        rageDuration = 360; 
         playAdvancedSound('rage_trigger');
         document.getElementById('fire-trigger').classList.add('rage-active-btn');
         document.getElementById('sys-indicator').innerText = "🔥 WARNING: AK-47 OVERDRIVE FULL-AUTO SYSTEM ENGAGED 🔥";
@@ -1023,7 +1014,7 @@
     });
     window.addEventListener('touchend', () => { isHoldingFire = false; });
     
-    // === حلقة اللعبة الأساسية المحدثة بالمحرك البصري المتكامل والآمن ===
+    // === حلقة اللعبة الأساسية (تم تعديل حساسية حركة المؤشر بالكامل هنا) ===
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
@@ -1033,15 +1024,13 @@
 
             if (deltaTime > 3) deltaTime = 3; 
 
-            // إدارة إطلاق النار التلقائي السريع أثناء وضع طاقة الغضب
             if (isRageActive && isHoldingFire) {
-                if (currentTime - lastAutoFireTime > 90) { // ضربة كل 90 مللي ثانية (سرعة خارقة)
+                if (currentTime - lastAutoFireTime > 90) { 
                     executeShot();
                     lastAutoFireTime = currentTime;
                 }
             }
 
-            // إدارة عداد التناقص الخاص بوضع الغضب
             if (isRageActive) {
                 rageDuration -= deltaTime;
                 rageMeter = (rageDuration / 360) * 100;
@@ -1069,16 +1058,19 @@
                 }
             });
 
+            // --- التعديل الجوهري لسرعة حركة الجويستيك واستجابتها الخاطفة ---
             if (joyActive) {
-                smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
-                smoothJoyY += (joyMoveY - smoothJoyY) * 0.28 * deltaTime;
+                // تقليل التخميد (Damping) من 0.28 إلى 0.55 لتصبح الاستجابة لحظية ومباشرة
+                smoothJoyX += (joyMoveX - smoothJoyX) * 0.55 * deltaTime;
+                smoothJoyY += (joyMoveY - smoothJoyY) * 0.55 * deltaTime;
 
-                let aimSpeed = 5.8 * deltaTime; 
+                // رفع سرعة التصويب الأساسية (aimSpeed) من 5.8 إلى 11.5 لتعطيك تحكماً فائقاً وسريعاً بالشارع
+                let aimSpeed = 11.5 * deltaTime; 
                 aimX += smoothJoyX * aimSpeed;
                 aimY += smoothJoyY * aimSpeed;
             } else {
-                smoothJoyX += (0 - smoothJoyX) * 0.25 * deltaTime;
-                smoothJoyY += (0 - smoothJoyY) * 0.25 * deltaTime;
+                smoothJoyX += (0 - smoothJoyX) * 0.40 * deltaTime;
+                smoothJoyY += (0 - smoothJoyY) * 0.40 * deltaTime;
             }
 
             if (aimX < 0) aimX = 0;
@@ -1087,7 +1079,7 @@
             if (aimY > canvas.height) aimY = canvas.height;
 
             targets.forEach(t => {
-                let speedMultiplier = isRageActive ? 1.4 : 1.0; // زيادة سرعة العصافير لزيادة التحدي وقت الغضب
+                let speedMultiplier = isRageActive ? 1.4 : 1.0; 
                 if (t.sineWave) {
                     t.sineCounter += 0.08 * deltaTime;
                     t.x += t.xSpeed * speedMultiplier * deltaTime;
@@ -1139,7 +1131,6 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // الإضاءة الجوية (تتحول للون البرتقالي المحمر المشتعل وقت الغضب السينمائي)
             ctx.fillStyle = isRageActive ? "rgba(239, 68, 68, 0.25)" : "rgba(2, 6, 23, 0.15)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1245,7 +1236,7 @@
 
             if (flashIntensity > 0) {
                 ctx.save();
-                let flashRadius = isRageActive ? 85 : 55; // لهب أضخم عند الإطلاق التلقائي
+                let flashRadius = isRageActive ? 85 : 55; 
                 let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 3, muzzleFlashX, muzzleFlashY, flashRadius);
                 gradient.addColorStop(0, 'rgba(255, 255, 255, ' + flashIntensity + ')');
                 gradient.addColorStop(0.2, 'rgba(254, 240, 138, ' + (flashIntensity * 0.95) + ')');
@@ -1281,7 +1272,6 @@
             ctx.restore();
 
             ctx.save();
-            // تصويب متوهج وقت الغضب
             ctx.strokeStyle = isRageActive ? '#fef08a' : '#f87171'; 
             ctx.lineWidth = isRageActive ? 3.5 : 2.5;
             ctx.translate(aimX, aimY);
