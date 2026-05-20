@@ -1245,7 +1245,7 @@
         };
 
         const callbacks = {
-            onReadyForServerApproval: function(paymentId) { approvePaymentOnBackend(paymentId); },
+            onReadyForServerApproval: function(paymentId) { approvePaymentOnBackend(paymentId, 'ammo'); },
             onReadyForServerCompletion: function(paymentId, txid) { completePaymentOnBackend(paymentId, txid, 'ammo'); },
             onCancel: function(paymentId) {
                 document.getElementById('game-status').innerText = "❌ Payment aborted by the user.";
@@ -1287,7 +1287,7 @@
         };
 
         const callbacks = {
-            onReadyForServerApproval: function(paymentId) { approvePaymentOnBackend(paymentId); },
+            onReadyForServerApproval: function(paymentId) { approvePaymentOnBackend(paymentId, 'rapid'); },
             onReadyForServerCompletion: function(paymentId, txid) { completePaymentOnBackend(paymentId, txid, 'rapid'); },
             onCancel: function(paymentId) {
                 document.getElementById('game-status').innerText = "❌ Upgrade payment canceled.";
@@ -1301,12 +1301,12 @@
         Pi.createPayment(paymentData, callbacks);
     }
 
-    async function approvePaymentOnBackend(paymentId) {
+    async function approvePaymentOnBackend(paymentId, paymentType) {
         try {
             await fetch('/api/approve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paymentId: paymentId })
+                body: JSON.stringify({ paymentId: paymentId, paymentType: paymentType })
             });
         } catch (err) { console.error(err); }
     }
@@ -1316,7 +1316,7 @@
             const response = await fetch('/api/complete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paymentId: paymentId, txid: txid })
+                body: JSON.stringify({ paymentId: paymentId, txid: txid, paymentType: type })
             });
             const result = await response.json();
             if (result.success) {
@@ -1340,11 +1340,15 @@
     
     async function onIncompletePaymentFound(payment) {
         if (payment && payment.identifier) {
+            let detectedType = 'ammo'; 
+            if (payment.amount === 5.0 || (payment.metadata && payment.metadata.item_code === 'ak47_rapid_fire_mod')) {
+                detectedType = 'rapid';
+            }
             try {
                 await fetch('/api/complete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid })
+                    body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid, paymentType: detectedType })
                 });
             } catch (e) { console.error(e); }
         }
