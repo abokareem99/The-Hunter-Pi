@@ -281,6 +281,16 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
     
+    // === متغيرات المحرك البصري الجديد والبيئة الخلفية (ابتكارات أبو الجيم) ===
+    let bgX = 0; 
+    let leaves = Array.from({length: 15}, () => ({
+        x: Math.random() * 520,
+        y: Math.random() * 350,
+        size: Math.random() * 3 + 2,
+        speed: Math.random() * 1.2 + 0.4,
+        sway: Math.random() * 0.04
+    }));
+    
     const birdColorTiers = [
         { name: "Classic Trio Tier", primary: "#543011", secondary: "#eab308", detail: "#3a1f05", beak: "#f97316" }, 
         { name: "Forest Emerald Pack", primary: "#115e59", secondary: "#10b981", detail: "#064e3b", beak: "#f43f5e" },  
@@ -295,7 +305,6 @@
 
     let currentBirdStyle = birdColorTiers[0];
 
-    // مصفوفة الأهداف المحسنة - 3 طيور بخصائص فيزيائية وسلوكية مختلفة تماماً
     let targets = [
         { 
             id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, 
@@ -715,7 +724,6 @@
         }
     }
 
-    // منطق الإطلاق المطور (Crosshair Scanning) لاصطياد أهداف متعددة بضربة واحدة
     function executeShot() {
         if (ammo <= 0) {
             playAdvancedSound('empty');
@@ -746,7 +754,6 @@
         let currentStatusText = "";
 
         targets.forEach(t => {
-            // نتحقق إن كان الطائر الذهبي مرئياً (غير مختفي) عند محاولة القنص
             if (t.special === "bonus" && t.opacity < 0.2) return;
 
             const distance = Math.sqrt((aimX - t.x)**2 + (aimY - t.y)**2);
@@ -757,18 +764,17 @@
                 totalHits++;
 
                 let pColor = currentBirdStyle.secondary;
-                if (t.special === "fast") pColor = "#c0c0c0"; // فضي
-                if (t.special === "bonus") pColor = "#fbbf24"; // ذهبي
+                if (t.special === "fast") pColor = "#c0c0c0"; 
+                if (t.special === "bonus") pColor = "#fbbf24"; 
 
                 createFeatherCloud(t.x, t.y, pColor);
                 playAdvancedSound('hit');
 
                 if (t.special === "bonus") {
-                    ammoBonusEarned += 12; // جائزة الطائر الذهبي الفورية
+                    ammoBonusEarned += 12; 
                     currentStatusText += "⭐ GHOST REFILL! +12 AMMO! ";
                 }
 
-                // زيادة حادة وتدريجية في صعوبة وسرعة الطائر المصاب
                 let maxAllowedSpeed = 9.0;
                 let speedIncrementX = (t.xSpeed > 0 ? 0.30 : -0.30);
                 let speedIncrementY = (t.ySpeed > 0 ? 0.26 : -0.26);
@@ -785,7 +791,6 @@
 
         if (hitAny) {
             if (hitCountThisShot > 1) {
-                // مكافأة إصابة طائرين أو أكثر معاً (Combo)
                 let comboBonus = hitCountThisShot * 15;
                 score += comboBonus;
                 currentStatusText = `🔥 SWARM COMBO x${hitCountThisShot}! +${comboBonus} BONUS PTS! ` + currentStatusText;
@@ -798,7 +803,6 @@
 
             let statusColor = "#4ade80";
 
-            // المكافأة الدورية لكل 10 إصابات تراكمية
             if (totalHits > 0 && totalHits % 10 === 0) {
                 ammo += 50;
                 playAdvancedSound('fanfare_bonus');
@@ -907,6 +911,7 @@
     fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
     fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
     
+    // === حلقة اللعبة الأساسية المحدثة بالمحرك البصري المتكامل والآمن ===
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
@@ -915,6 +920,19 @@
             lastTime = currentTime;
 
             if (deltaTime > 3) deltaTime = 3; 
+
+            // تحديث حركة الخلفية ببطء لصنع تأثير الـ Parallax البصري المذهل
+            bgX -= 0.25 * deltaTime;
+
+            // تحديث محرك جزيئات أوراق الشجر المتساقطة في الغابة
+            leaves.forEach(leaf => {
+                leaf.y += leaf.speed * deltaTime;
+                leaf.x += Math.sin(leaf.y * 0.02) * 0.4 * deltaTime;
+                if (leaf.y > canvas.height) {
+                    leaf.y = -10;
+                    leaf.x = Math.random() * canvas.width;
+                }
+            });
 
             if (joyActive) {
                 smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
@@ -933,28 +951,23 @@
             if (aimY < 0) aimY = 0;
             if (aimY > canvas.height) aimY = canvas.height;
 
-            // تحديث حركة ومعادلات الـ 3 طيور بالكامل بشكل منفصل
             targets.forEach(t => {
                 if (t.sineWave) {
-                    // الطائر الفضي يتحرك بموجة جيبية جبارة لإرباك عين الصياد
                     t.sineCounter += 0.08 * deltaTime;
                     t.x += t.xSpeed * deltaTime;
                     t.y += (t.ySpeed + Math.sin(t.sineCounter) * 2.5) * deltaTime;
                 } else if (t.special === "bonus") {
-                    // الطائر الذهبي يمتلك ميزة "الاختفاء والظهور الشبحية"
                     t.ghostCounter += 0.03 * deltaTime;
-                    t.opacity = (Math.sin(t.ghostCounter) * 0.5) + 0.5; // يتأرجح بين الشفافية الكاملة والرؤية
+                    t.opacity = (Math.sin(t.ghostCounter) * 0.5) + 0.5; 
                     t.x += t.xSpeed * deltaTime;
                     t.y += t.ySpeed * deltaTime;
                 } else {
-                    // الطائر البني يتحرك بشكل مستقيم ومتزن مع جلب الرياح الداعم له
                     t.x += t.xSpeed * deltaTime;
                     t.y += t.ySpeed * deltaTime;
                 }
 
                 t.flap += t.flapSpeed * deltaTime;
 
-                // حواجز الارتداد الميكانيكية الصارمة لكل طائر
                 let minBorder = 22;
                 let maxXBorder = canvas.width - minBorder;
                 let maxYBorder = canvas.height - 25;
@@ -982,12 +995,26 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // 1. رسم خلفية الغابة بطبقتين متتاليتين لضمان عدم وجود فجوات في الـ Parallax
             if (forestBgImg) {
-                ctx.drawImage(forestBgImg, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(forestBgImg, bgX % canvas.width, 0, canvas.width, canvas.height);
+                ctx.drawImage(forestBgImg, (bgX % canvas.width) + canvas.width, 0, canvas.width, canvas.height);
             } else {
                 ctx.fillStyle = '#070b19';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
+
+            // 2. إضافة تأثير الضباب السينمائي اللطيف (Atmospheric Overlay) لعمق الإضاءة
+            ctx.fillStyle = "rgba(2, 6, 23, 0.15)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 3. رسم جزئيات البيئة الحية (أوراق الشجر المتساقطة المتأرجحة)
+            ctx.fillStyle = "rgba(234, 179, 8, 0.4)"; 
+            leaves.forEach(leaf => {
+                ctx.beginPath();
+                ctx.arc(leaf.x, leaf.y, leaf.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
 
             particles.forEach((p, index) => {
                 p.x += p.vx * deltaTime; 
@@ -1010,7 +1037,6 @@
                 }
             });
 
-            // رسم سرب الطيور الثلاثة بالكامل مع تعديل الألوان التخصصية
             targets.forEach(t => {
                 ctx.save();
                 ctx.globalAlpha = t.opacity;
@@ -1024,7 +1050,6 @@
                     ctx.rotate(moveAngle);
                 }
                 
-                // تحديد ألوان الطائر بناءً على نوعه وفئته الحالية
                 let bodyColor = currentBirdStyle.primary;
                 let wingColor = currentBirdStyle.secondary;
                 let headColor = currentBirdStyle.detail;
@@ -1076,7 +1101,6 @@
 
                 ctx.restore();
 
-                // طباعة الاسم التوضيحي البسيط فوق كل طائر بالسرب
                 if (t.opacity > 0.15) {
                     ctx.fillStyle = 'rgba(255,255,255,0.85)';
                     ctx.font = '900 10px Arial';
