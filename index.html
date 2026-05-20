@@ -301,7 +301,6 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
     
-    // ميكانيكية قفل السلاح الرشاش وإطلاق النار المستمر
     let isRapidFireUnlocked = false;
     let lastShotTime = 0;
     let isFiring = false;
@@ -532,14 +531,14 @@
                 const thudOsc = audioCtx.createOscillator();
                 const thudGain = audioCtx.createGain();
                 thudOsc.type = 'triangle';
-                thudOsc.frequency.setValueAtTime(90, now);
-                thudOsc.frequency.linearRampToValueAtTime(30, now + 0.15);
-                thudGain.gain.setValueAtTime(0.8, now);
-                thudGain.gain.linearRampToValueAtTime(0.001, now + 0.15);
+                thudOsc.frequency.setValueAtTime(110, now);
+                thudOsc.frequency.linearRampToValueAtTime(40, now + 0.14);
+                thudGain.gain.setValueAtTime(0.65, now);
+                thudGain.gain.linearRampToValueAtTime(0.001, now + 0.14);
                 thudOsc.connect(thudGain);
                 thudGain.connect(audioCtx.destination);
                 thudOsc.start(now);
-                thudOsc.stop(now + 0.15);
+                thudOsc.stop(now + 0.14);
                 
             } else if (type === 'fanfare_bonus') {
                 const melody = [329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]; 
@@ -763,7 +762,6 @@
 
     function executeShot() {
         const now = performance.now();
-        // التحكم بمعدل إطلاق الرصاص الميكانيكي (سريع جداً في حالة الرشاش)
         const currentFireRate = isRapidFireUnlocked ? 80 : 350; 
         if (now - lastShotTime < currentFireRate) return;
         lastShotTime = now;
@@ -772,6 +770,7 @@
             playAdvancedSound('empty');
             document.getElementById('game-status').innerText = "❌ OUT OF AMMO! Refill using your Pi Wallet.";
             document.getElementById('game-status').style.color = "#f87171";
+            isFiring = false;
             return;
         }
         
@@ -797,7 +796,7 @@
         let currentStatusText = "";
 
         targets.forEach(t => {
-            if (t.isFalling) return; // لا تصيب طائراً ساقطاً بالفعل
+            if (t.isFalling) return; 
             if (t.special === "bonus" && t.opacity < 0.2) return;
 
             const distance = Math.sqrt((aimX - t.x)**2 + (aimY - t.y)**2);
@@ -814,7 +813,6 @@
                 createFeatherCloud(t.x, t.y, pColor);
                 playAdvancedSound('hit');
 
-                // تحويل حالة الطائر إلى السقوط الفيزيائي التام
                 t.isFalling = true;
 
                 if (t.special === "bonus") {
@@ -822,7 +820,6 @@
                     currentStatusText += "⭐ GHOST REFILL! +12 AMMO! ";
                 }
 
-                // زيادة الصعوبة والسرعة بنسبة 15% للطلقة القادمة عند العودة
                 let maxAllowedSpeed = 12.0;
                 t.xSpeed = Math.sign(t.xSpeed) * (Math.abs(t.xSpeed) * 1.15);
                 t.ySpeed = Math.sign(t.ySpeed) * (Math.abs(t.ySpeed) * 1.15);
@@ -952,7 +949,6 @@
     
     const fireTriggerBtn = document.getElementById('fire-trigger');
     
-    // دعم الإطلاق المتتابع باللمس الطويل عند فتح الرشاش السريع
     fireTriggerBtn.addEventListener('mousedown', (e) => { 
         e.preventDefault(); 
         isFiring = true; 
@@ -967,7 +963,6 @@
     });
     window.addEventListener('touchend', () => { isFiring = false; });
     
-    // حلقة اللعبة الأساسية المحدثة
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
@@ -977,7 +972,6 @@
 
             if (deltaTime > 3) deltaTime = 3; 
 
-            // معالجة الضغط المستمر للرشاش الآلي السريع
             if (isFiring && isRapidFireUnlocked) {
                 executeShot();
             }
@@ -1012,18 +1006,14 @@
 
             targets.forEach(t => {
                 if (t.isFalling) {
-                    // ميكانيكية السقوط الفيزيائي لأسفل عند الإصابة بفعل الجاذبية
                     t.y += 9.5 * deltaTime;
-                    // تدوير الطائر بزاوية سقوط حادة ومميزة
                     t.flap += 0.5 * deltaTime;
                     
-                    // عند ملامسة الأرض بالأسفل، يعاد توليده ريسيت كاملاً
                     if (t.y > canvas.height + 20) {
-                        playAdvancedSound('thud'); // صوت ارتطام الطائر بالأرض
+                        playAdvancedSound('thud'); 
                         resetTarget(t);
                     }
                 } else {
-                    // الحركة الطبيعية في حالة الطيران النشط
                     if (t.sineWave) {
                         t.sineCounter += 0.08 * deltaTime;
                         t.x += t.xSpeed * deltaTime;
@@ -1230,7 +1220,7 @@
     }
 
     function resetTarget(t) {
-        t.isFalling = false; // إعادة ضبط حالة الطيران الطبيعي
+        t.isFalling = false; 
         t.x = Math.random() * (canvas.width - 100) + 50;
         t.y = Math.random() * (canvas.height - 160) + 50; 
         if (t.sineWave) t.sineCounter = 0;
@@ -1269,7 +1259,6 @@
         Pi.createPayment(paymentData, callbacks);
     }
 
-    // شراء ميزة الرشاش السريع المتتابع عبر Pi SDK التجريبي
     function buyRapidFireWithPi() {
         if (isRapidFireUnlocked) {
             document.getElementById('game-status').innerText = "🔥 RAPID FIRE MODE is already active!";
@@ -1278,7 +1267,6 @@
         }
 
         if (typeof Pi === 'undefined' || !window.Pi) {
-            // محاكاة وضع التطوير المحلي والتشغيل الآمن
             isRapidFireUnlocked = true;
             document.getElementById('btn-buy-rapid').style.backgroundImage = "linear-gradient(135deg, #22c55e, #15803d)";
             document.getElementById('btn-buy-rapid').innerText = "⚡ UNLOCKED";
