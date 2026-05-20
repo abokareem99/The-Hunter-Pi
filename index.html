@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE HUNTER Arcade - 3 Birds Swarm Swish Edition 🔥</title>
+    <title>THE HUNTER Arcade - Abu Kareem Cinematic Edition 🔥</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -46,16 +46,18 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.6);
             margin-top: 10px;
         }
+        /* الصورة الشخصية لأبو كريم مع التنسيق الدائري والاشعاع النيوني الأزرق الفخم */
         .hunter-avatar {
-            width: 170px;
-            height: 170px;
+            width: 190px;
+            height: 190px;
             margin: 0 auto 20px auto;
-            border-radius: 16px;
+            border-radius: 50%;
             border: 3px solid #38bdf8;
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.7);
             background-image: url('https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-logo.png'); 
             background-size: cover;
             background-position: center;
+            background-repeat: no-repeat;
         }
         .btn {
             background-image: linear-gradient(135deg, #38bdf8, #0284c7);
@@ -286,7 +288,7 @@
 
 <script>
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24pLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1vzpxb3d4eGJoIiwicm9sZSI6ImFub24pLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
@@ -302,7 +304,7 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
     
-    let isRapidFireUnlocked = true; // مفعّل بشكل تلقائي بناء على حالة فك القفل بالصورة
+    let isRapidFireUnlocked = true; 
     let lastShotTime = 0;
     let isFiring = false;
 
@@ -629,7 +631,6 @@
     async function handleLoginSuccess() {
         document.getElementById('player-name').innerText = playerPiUser;
         
-        // تحديث حالة الزر الأخضر بشكل مرئي
         if (isRapidFireUnlocked) {
             document.getElementById('btn-buy-rapid').style.backgroundImage = "linear-gradient(135deg, #22c55e, #15803d)";
             document.getElementById('btn-buy-rapid').innerText = "⚡ UNLOCKED";
@@ -778,7 +779,6 @@
 
     function executeShot() {
         const now = performance.now();
-        // تم موازنة السرعة البرمجية للكلاش لتتناسب تماماً مع معالجة إطارات الهاتف الذكي (140ms)
         const currentFireRate = isRapidFireUnlocked ? 140 : 400; 
         if (now - lastShotTime < currentFireRate) return;
         lastShotTime = now;
@@ -966,7 +966,6 @@
     
     const fireTriggerBtn = document.getElementById('fire-trigger');
     
-    // رصد الضغط المتواصل الفعلي وبدء الرش
     fireTriggerBtn.addEventListener('mousedown', (e) => { 
         e.preventDefault(); 
         initAudio();
@@ -1356,6 +1355,7 @@
         } catch (err) { console.error(err); }
     }
     
+    /* إصلاح الخطأ البرمجي وصياغة الجافا سكريبت بشكل سليم ومؤمن بالكامل هنا */
     async function onIncompletePaymentFound(payment) {
         if (payment && payment.identifier) {
             let detectedType = 'ammo'; 
@@ -1366,7 +1366,7 @@
                 await fetch('/api/complete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ paymentId: payment.identifier, transaction.txid: payment.transaction.txid, paymentType: detectedType })
+                    body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid, paymentType: detectedType })
                 });
             } catch (e) { console.error(e); }
         }
