@@ -281,7 +281,6 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
     
-    // التشكيلة المبدئية للألوان قبل الدخول في حلقة التوليد اللانهائي الديناميكي
     const birdColorTiers = [
         { name: "Classic Brown & Yellow", primary: "#543011", secondary: "#eab308", detail: "#3a1f05", beak: "#f97316" }, 
         { name: "Forest Emerald Green", primary: "#115e59", secondary: "#10b981", detail: "#064e3b", beak: "#f43f5e" },  
@@ -586,7 +585,6 @@
                 totalHits = Math.floor(score / 10);
                 document.getElementById('hits-val').innerText = totalHits;
                 
-                // مزامنة مستوى اللون عند تحميل نقاط اللاعب المحفوظة سابقاً
                 updateBirdColorTier();
             }
         } catch(e) {}
@@ -601,12 +599,10 @@
         playAdvancedSound('reload');
     }
 
-    // 🧠 الخوارزمية التصاعدية الميكانيكية لتباعد مستويات تغير اللون وتوليد ألوان لا نهائية
     function updateBirdColorTier() {
         let currentTier = 0;
         let cumulativeThreshold = 0;
         
-        // حساب عتبة التطور بناء على متسلسلة (10 إصابات، ثم +20، ثم +30، ثم +40...)
         while (true) {
             let step = 10 + (currentTier * 10); 
             if (totalHits >= cumulativeThreshold + step) {
@@ -617,11 +613,9 @@
             }
         }
         
-        // التحقق مما إذا كان المستوى يقع ضمن مصفوفة الألوان المسبقة أو يحتاج توليد لانهائي
         if (currentTier < birdColorTiers.length) {
             currentBirdStyle = birdColorTiers[currentTier];
         } else {
-            // خوارزمية التوليد اللانهائي المبتكرة لتفادي العودة للون الأصفر البدائي
             let seed = currentTier * 13579;
             
             function generateHexColor(offset) {
@@ -645,7 +639,6 @@
         colorDisplay.style.color = currentBirdStyle.secondary;
     }
 
-    // حساب كم إصابة متبقية بدقة للمرحلة القادمة وعرضها للاعب
     function getNextTierRemainingHits() {
         let currentTier = 0;
         let cumulativeThreshold = 0;
@@ -750,7 +743,6 @@
             let statusText = "";
             let statusColor = "#4ade80";
 
-            // ثبات شحن الذخيرة بعد كل 10 إصابات بالضبط دون تأثر باتساع التدرج
             if (totalHits > 0 && totalHits % 10 === 0) {
                 ammo += 50; 
                 document.getElementById('ammo-val').innerText = ammo;
@@ -761,7 +753,6 @@
                 statusText = "🎯 TARGET DOWN! ";
             }
 
-            // تحديث منطق تغير اللون اللانهائي وحساب التباعد التصاعدي للمرحلة القادمة
             let oldStyleName = currentBirdStyle.name;
             updateBirdColorTier();
 
@@ -776,9 +767,16 @@
             document.getElementById('game-status').innerText = statusText;
             document.getElementById('game-status').style.color = statusColor;
             
-            // زيادة طفيفة وسلسة في سرعة الطائر لجعل التحدي أكثر إثارة
-            target.xSpeed += (target.xSpeed > 0 ? 0.25 : -0.25);
-            target.ySpeed += (target.ySpeed > 0 ? 0.22 : -0.22);
+            // الحد الأقصى الأقصى لسرعة الطائر لمنع اختراق جدار المحاكاة الفيزيائية بشكل مطلق
+            let maxAllowedSpeed = 8.5;
+            let speedIncrementX = (target.xSpeed > 0 ? 0.25 : -0.25);
+            let speedIncrementY = (target.ySpeed > 0 ? 0.22 : -0.22);
+            
+            target.xSpeed += speedIncrementX;
+            target.ySpeed += speedIncrementY;
+            
+            if (Math.abs(target.xSpeed) > maxAllowedSpeed) target.xSpeed = Math.sign(target.xSpeed) * maxAllowedSpeed;
+            if (Math.abs(target.ySpeed) > maxAllowedSpeed) target.ySpeed = Math.sign(target.ySpeed) * maxAllowedSpeed;
             
             updateSupabaseScore(); 
             resetTarget();
@@ -896,8 +894,27 @@
             target.y += target.ySpeed * deltaTime;
             target.flap += target.flapSpeed * deltaTime;
             
-            if (target.x < 15 || target.x > canvas.width - 15) target.xSpeed = -target.xSpeed;
-            if (target.y < 35 || target.y > canvas.height - 45) target.ySpeed = -target.ySpeed;
+            // 🛡️ المصدات البرمجية الصارمة والارتداد الفوري الحاد لمنع خروج الطائر نهائياً
+            let minXBorder = 22;
+            let maxXBorder = canvas.width - 22;
+            let minYBorder = 22;
+            let maxYBorder = canvas.height - 25;
+
+            if (target.x <= minXBorder) {
+                target.x = minXBorder;
+                target.xSpeed = Math.abs(target.xSpeed); 
+            } else if (target.x >= maxXBorder) {
+                target.x = maxXBorder;
+                target.xSpeed = -Math.abs(target.xSpeed); 
+            }
+
+            if (target.y <= minYBorder) {
+                target.y = minYBorder;
+                target.ySpeed = Math.abs(target.ySpeed); 
+            } else if (target.y >= maxYBorder) {
+                target.y = maxYBorder;
+                target.ySpeed = -Math.abs(target.ySpeed); 
+            }
             
             gunRecoilZ *= Math.pow(0.83, deltaTime); 
             gunRecoilY *= Math.pow(0.80, deltaTime);
@@ -1050,8 +1067,8 @@
     }
 
     function resetTarget() {
-        target.x = Math.random() * (canvas.width - 90) + 45;
-        target.y = Math.random() * (canvas.height - 150) + 45; 
+        target.x = Math.random() * (canvas.width - 100) + 50;
+        target.y = Math.random() * (canvas.height - 160) + 50; 
     }
 
     function buyAmmoWithPi() {
