@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE HUNTER Arcade - Absolute Color Shift Edition 🔥</title>
+    <title>THE HUNTER Arcade - Infinite Color Loop Edition 🔥</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -198,10 +198,10 @@
         
         .audio-indicator {
             font-size: 11px;
-            color: #22c55e;
+            color: #38bdf8;
             margin-top: 3px;
             display: inline-block;
-            background: rgba(34, 197, 94, 0.15);
+            background: rgba(56, 189, 248, 0.15);
             padding: 3px 10px;
             border-radius: 20px;
             font-weight: bold;
@@ -227,13 +227,13 @@
             <div>Hits: <span id="hits-val" style="color: #eab308;">0</span> 🎯</div>
             <div>Score: <span id="score-val" style="color: #4ade80;">0</span></div>
             <div>Ammo: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
-            <div>Bird Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown & Yellow</span></div>
+            <div>Tier Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown</span></div>
         </div>
 
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
-        <div><span class="audio-indicator">🔊 High-Gain Physical Gunshot Boost Engine Active</span></div>
+        <div><span class="audio-indicator">🌌 Progressive Target Evolution & Constant Reload System</span></div>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Hit the bird 10 times to unlock new color tiers and get 50 FREE AMMO!</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Hit the bird! Every 10 hits grants +50 AMMO. Color thresholds expand exponentially!</p>
         
         <div class="controls-wrapper">
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
@@ -281,6 +281,7 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
     
+    // التشكيلة المبدئية للألوان قبل الدخول في حلقة التوليد اللانهائي الديناميكي
     const birdColorTiers = [
         { name: "Classic Brown & Yellow", primary: "#543011", secondary: "#eab308", detail: "#3a1f05", beak: "#f97316" }, 
         { name: "Forest Emerald Green", primary: "#115e59", secondary: "#10b981", detail: "#064e3b", beak: "#f43f5e" },  
@@ -341,7 +342,6 @@
         }
     }
 
-    // 🛠️ محرك الصوت المطور مع مضخم طاقة (High-Gain Tonal Amplifier) لرفع الصوت بشكل ضخم وواقعي
     function playAdvancedSound(type) {
         if (!audioCtx) return;
         if (audioCtx.state === 'suspended') {
@@ -352,21 +352,19 @@
             const now = audioCtx.currentTime;
             
             if (type === 'shoot') {
-                // 1. الموجة الانفجارية المزلزلة (Main Blast Wave - High Boost)
                 const impulseOsc = audioCtx.createOscillator();
                 const impulseGain = audioCtx.createGain();
                 impulseOsc.type = 'sawtooth';
                 impulseOsc.frequency.setValueAtTime(175, now);
                 impulseOsc.frequency.exponentialRampToValueAtTime(35, now + 0.1); 
                 
-                // هجوم لحظي خارق لمنع أي خفوت
                 impulseGain.gain.setValueAtTime(0.001, now);
-                impulseGain.gain.linearRampToValueAtTime(3.5, now + 0.001); // رفع معامل التضخيم من 1.2 إلى 3.5 لزيادة القوة
+                impulseGain.gain.linearRampToValueAtTime(3.5, now + 0.001); 
                 impulseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
                 
                 const lpImpulse = audioCtx.createBiquadFilter();
                 lpImpulse.type = 'lowpass';
-                lpImpulse.frequency.setValueAtTime(650, now); // تم رفعها من 280Hz لمنع الصوت من أن يكون مكتوماً بشكل خافت
+                lpImpulse.frequency.setValueAtTime(650, now); 
                 
                 impulseOsc.connect(lpImpulse);
                 lpImpulse.connect(impulseGain);
@@ -375,7 +373,6 @@
                 impulseOsc.start(now);
                 impulseOsc.stop(now + 0.13);
 
-                // 2. تضخيم صدى الطلقة المرتد في الخلفية (Amplified Ambient Reverb Tail)
                 const tailBufferSize = audioCtx.sampleRate * 0.55; 
                 const tailBuffer = audioCtx.createBuffer(1, tailBufferSize, audioCtx.sampleRate);
                 const tailData = tailBuffer.getChannelData(0);
@@ -393,7 +390,7 @@
 
                 const tailGain = audioCtx.createGain();
                 tailGain.gain.setValueAtTime(0.001, now);
-                tailGain.gain.linearRampToValueAtTime(2.2, now + 0.004); // تم رفعه من 0.9 لإعطاء هيبة وصدى ممتد قوي جداً
+                tailGain.gain.linearRampToValueAtTime(2.2, now + 0.004); 
                 tailGain.gain.exponentialRampToValueAtTime(0.001, now + 0.52); 
 
                 tailNoise.connect(tailFilter);
@@ -403,7 +400,6 @@
                 tailNoise.start(now);
                 tailNoise.stop(now + 0.52);
 
-                // 3. طرقعة الغازات المعدنية المصاحبة (High-Frequency Mechanical Crackle)
                 const mechOsc = audioCtx.createOscillator();
                 const mechGain = audioCtx.createGain();
                 mechOsc.type = 'sawtooth';
@@ -413,7 +409,7 @@
                 mechFilter.type = 'highpass';
                 mechFilter.frequency.setValueAtTime(1500, now);
 
-                mechGain.gain.setValueAtTime(0.6, now); // تم رفعها لزيادة حدة طلقة السلاح الحقيقية
+                mechGain.gain.setValueAtTime(0.6, now); 
                 mechGain.gain.linearRampToValueAtTime(0.001, now + 0.04);
                 
                 mechOsc.connect(mechFilter);
@@ -492,22 +488,22 @@
                 osc2.stop(now + delay + 0.08);
                 
             } else if (type === 'fanfare_bonus') {
-                const melody = [293.66, 349.23, 440.00, 523.25, 659.25, 880.00]; 
+                const melody = [329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]; 
                 melody.forEach((freq, index) => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     osc.type = 'sine'; 
-                    osc.frequency.setValueAtTime(freq, now + (index * 0.07));
-                    gain.gain.setValueAtTime(0.2, now + (index * 0.07));
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.07) + 0.2);
+                    osc.frequency.setValueAtTime(freq, now + (index * 0.06));
+                    gain.gain.setValueAtTime(0.25, now + (index * 0.06));
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.06) + 0.18);
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
-                    osc.start(now + (index * 0.07));
-                    osc.stop(now + (index * 0.07) + 0.2);
+                    osc.start(now + (index * 0.06));
+                    osc.stop(now + (index * 0.06) + 0.18);
                 });
             }
         } catch(e){
-            console.error("DSP High Gain Subsystem Guard:", e);
+            console.error("DSP Subsystem Fault Protection:", e);
         }
     }
 
@@ -538,7 +534,7 @@
     function initAndLoginWithPi() {
         initAudio();
         const loginBtn = document.getElementById('btn-login');
-        loginBtn.innerText = "Synchronizing Environments... 🔄";
+        loginBtn.innerText = "Synchronizing Components... 🔄";
         preloadAssets().then(() => {
             try {
                 if (typeof Pi !== 'undefined' && window.Pi) {
@@ -556,7 +552,7 @@
                             handleLoginSuccess();
                         })
                         .catch((err) => {
-                            console.error("Authentication fallback initiated:", err);
+                            console.error("Authentication redirection:", err);
                             setupDevAccount();
                         });
                     }, 250);
@@ -587,14 +583,11 @@
             if (data) { 
                 score = data.high_score || 0; 
                 document.getElementById('score-val').innerText = score;
+                totalHits = Math.floor(score / 10);
+                document.getElementById('hits-val').innerText = totalHits;
                 
-                let savedHits = Math.floor(score / 10);
-                let startTier = Math.floor(savedHits / 10);
-                if (startTier >= birdColorTiers.length) startTier = birdColorTiers.length - 1;
-                currentBirdStyle = birdColorTiers[startTier];
-                
-                document.getElementById('color-name-display').innerText = currentBirdStyle.name;
-                document.getElementById('color-name-display').style.color = currentBirdStyle.secondary;
+                // مزامنة مستوى اللون عند تحميل نقاط اللاعب المحفوظة سابقاً
+                updateBirdColorTier();
             }
         } catch(e) {}
         
@@ -608,17 +601,65 @@
         playAdvancedSound('reload');
     }
 
+    // 🧠 الخوارزمية التصاعدية الميكانيكية لتباعد مستويات تغير اللون وتوليد ألوان لا نهائية
     function updateBirdColorTier() {
-        let tierIndex = Math.floor(totalHits / 10);
-        if (tierIndex >= birdColorTiers.length) {
-            tierIndex = birdColorTiers.length - 1; 
+        let currentTier = 0;
+        let cumulativeThreshold = 0;
+        
+        // حساب عتبة التطور بناء على متسلسلة (10 إصابات، ثم +20، ثم +30، ثم +40...)
+        while (true) {
+            let step = 10 + (currentTier * 10); 
+            if (totalHits >= cumulativeThreshold + step) {
+                cumulativeThreshold += step;
+                currentTier++;
+            } else {
+                break;
+            }
         }
         
-        currentBirdStyle = birdColorTiers[tierIndex];
+        // التحقق مما إذا كان المستوى يقع ضمن مصفوفة الألوان المسبقة أو يحتاج توليد لانهائي
+        if (currentTier < birdColorTiers.length) {
+            currentBirdStyle = birdColorTiers[currentTier];
+        } else {
+            // خوارزمية التوليد اللانهائي المبتكرة لتفادي العودة للون الأصفر البدائي
+            let seed = currentTier * 13579;
+            
+            function generateHexColor(offset) {
+                let r = Math.floor((Math.sin(seed + offset) * 0.5 + 0.5) * 220) + 35;
+                let g = Math.floor((Math.sin(seed + offset + 2) * 0.5 + 0.5) * 220) + 35;
+                let b = Math.floor((Math.sin(seed + offset + 4) * 0.5 + 0.5) * 220) + 35;
+                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+            }
+            
+            currentBirdStyle = {
+                name: `Unstoppable Mythic Gen [${currentTier + 1}]`,
+                primary: generateHexColor(0),
+                secondary: generateHexColor(15),
+                detail: generateHexColor(30),
+                beak: "#ffffff"
+            };
+        }
         
         const colorDisplay = document.getElementById('color-name-display');
         colorDisplay.innerText = currentBirdStyle.name;
         colorDisplay.style.color = currentBirdStyle.secondary;
+    }
+
+    // حساب كم إصابة متبقية بدقة للمرحلة القادمة وعرضها للاعب
+    function getNextTierRemainingHits() {
+        let currentTier = 0;
+        let cumulativeThreshold = 0;
+        
+        while (true) {
+            let step = 10 + (currentTier * 10);
+            if (totalHits >= cumulativeThreshold + step) {
+                cumulativeThreshold += step;
+                currentTier++;
+            } else {
+                let nextThreshold = cumulativeThreshold + step;
+                return nextThreshold - totalHits;
+            }
+        }
     }
 
     async function updateSupabaseScore() {
@@ -706,23 +747,38 @@
             playAdvancedSound('hit');
             createFeatherCloud(target.x, target.y); 
             
+            let statusText = "";
+            let statusColor = "#4ade80";
+
+            // ثبات شحن الذخيرة بعد كل 10 إصابات بالضبط دون تأثر باتساع التدرج
             if (totalHits > 0 && totalHits % 10 === 0) {
                 ammo += 50; 
                 document.getElementById('ammo-val').innerText = ammo;
-                
-                updateBirdColorTier(); 
-                playAdvancedSound('fanfare_bonus'); 
-                
-                document.getElementById('game-status').innerText = `🎁 EVOLUTION! 10 Hits Milestone Reached! Bird Transformed to [${currentBirdStyle.name}] & +50 FREE AMMO! 🎉`;
-                document.getElementById('game-status').style.color = "#a855f7";
-                
-                target.xSpeed += (target.xSpeed > 0 ? 0.6 : -0.6);
-                target.ySpeed += (target.ySpeed > 0 ? 0.6 : -0.6);
+                playAdvancedSound('fanfare_bonus');
+                statusText = "🎁 MAGAZINE REFILL! +50 FREE AMMO LOADED! ";
+                statusColor = "#eab308";
             } else {
-                updateBirdColorTier(); 
-                document.getElementById('game-status').innerText = `🎯 TARGET DOWN! | ${10 - (totalHits % 10)} more hits until next evolution tier!`;
-                document.getElementById('game-status').style.color = "#4ade80";
+                statusText = "🎯 TARGET DOWN! ";
             }
+
+            // تحديث منطق تغير اللون اللانهائي وحساب التباعد التصاعدي للمرحلة القادمة
+            let oldStyleName = currentBirdStyle.name;
+            updateBirdColorTier();
+
+            if (currentBirdStyle.name !== oldStyleName) {
+                statusText += `🔥 EVOLUTION! Transformed to [${currentBirdStyle.name}]!`;
+                statusColor = "#38bdf8";
+            } else {
+                let remaining = getNextTierRemainingHits();
+                statusText += `| Next evolution tier in ${remaining} more hits!`;
+            }
+
+            document.getElementById('game-status').innerText = statusText;
+            document.getElementById('game-status').style.color = statusColor;
+            
+            // زيادة طفيفة وسلسة في سرعة الطائر لجعل التحدي أكثر إثارة
+            target.xSpeed += (target.xSpeed > 0 ? 0.25 : -0.25);
+            target.ySpeed += (target.ySpeed > 0 ? 0.22 : -0.22);
             
             updateSupabaseScore(); 
             resetTarget();
@@ -941,7 +997,7 @@
 
             ctx.fillStyle = 'rgba(255,255,255,0.9)';
             ctx.font = 'bold 11px Arial';
-            ctx.fillText(`🐦 ${currentBirdStyle.name}`, target.x - 30, target.y - target.height - 6);
+            ctx.fillText(`🐦 ${currentBirdStyle.name}`, target.x - 45, target.y - target.height - 6);
 
             if (flashIntensity > 0) {
                 ctx.save();
