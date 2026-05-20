@@ -208,6 +208,7 @@
             padding: 10px;
             border-bottom: 1px solid #1e293b;
             font-size: 13px;
+            text-align: center;
         }
         .leaderboard-table th { 
             background-color: #1e293b;
@@ -276,7 +277,7 @@
             </thead>
             <tbody id="leaderboard-body">
                 <tr>
-                    <td colspan="3" style="color: #94a3b8;">Authenticating Pi Network Ledger...</td>
+                    <td colspan="3" style="color: #94a3b8;">Loading scores from Supabase Database...</td>
                 </tr>
             </tbody>
         </table>
@@ -301,7 +302,7 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
     
-    let isRapidFireUnlocked = false;
+    let isRapidFireUnlocked = true; // مفعّل بشكل تلقائي بناء على حالة فك القفل بالصورة
     let lastShotTime = 0;
     let isFiring = false;
 
@@ -627,6 +628,13 @@
 
     async function handleLoginSuccess() {
         document.getElementById('player-name').innerText = playerPiUser;
+        
+        // تحديث حالة الزر الأخضر بشكل مرئي
+        if (isRapidFireUnlocked) {
+            document.getElementById('btn-buy-rapid').style.backgroundImage = "linear-gradient(135deg, #22c55e, #15803d)";
+            document.getElementById('btn-buy-rapid').innerText = "⚡ UNLOCKED";
+        }
+
         try {
             let { data } = await _supabaseClient
                 .from(TABLE_NAME)
@@ -730,17 +738,25 @@
                 .select('pi_username, high_score')
                 .order('high_score', { ascending: false })
                 .limit(5);
+            
             const tbody = document.getElementById('leaderboard-body');
             tbody.innerHTML = "";
+            
             if (data && data.length > 0) {
                 data.forEach((row, index) => {
                     const tr = document.createElement('tr');
-                    if (row.pi_username === playerPiUser) tr.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
+                    if (row.pi_username === playerPiUser) {
+                        tr.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
+                    }
                     tr.innerHTML = `<td>${index + 1}</td><td>${row.pi_username}</td><td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>`;
                     tbody.appendChild(tr);
                 });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="3" style="color: #94a3b8;">No high scores recorded yet. Be the first!</td></tr>`;
             }
-        } catch (err) {}
+        } catch (err) {
+            console.error("Leaderboard fetch fault:", err);
+        }
     }
 
     function createFeatherCloud(x, y, customColor) {
@@ -762,7 +778,8 @@
 
     function executeShot() {
         const now = performance.now();
-        const currentFireRate = isRapidFireUnlocked ? 80 : 350; 
+        // تم موازنة السرعة البرمجية للكلاش لتتناسب تماماً مع معالجة إطارات الهاتف الذكي (140ms)
+        const currentFireRate = isRapidFireUnlocked ? 140 : 400; 
         if (now - lastShotTime < currentFireRate) return;
         lastShotTime = now;
 
@@ -949,6 +966,7 @@
     
     const fireTriggerBtn = document.getElementById('fire-trigger');
     
+    // رصد الضغط المتواصل الفعلي وبدء الرش
     fireTriggerBtn.addEventListener('mousedown', (e) => { 
         e.preventDefault(); 
         initAudio();
@@ -1348,7 +1366,7 @@
                 await fetch('/api/complete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid, paymentType: detectedType })
+                    body: JSON.stringify({ paymentId: payment.identifier, transaction.txid: payment.transaction.txid, paymentType: detectedType })
                 });
             } catch (e) { console.error(e); }
         }
