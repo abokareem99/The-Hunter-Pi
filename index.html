@@ -232,7 +232,7 @@
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
         <div><span class="audio-indicator">🌌 Tri-Target Swarm System & Dynamic Combo Multipliers Loaded</span></div>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Colors evolve every 5 hits! Hunt them down! 🚀</p>
         
         <div class="controls-wrapper">
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
@@ -631,18 +631,9 @@
         playAdvancedSound('reload');
     }
 
+    // خوارزمية التحديث الجديدة: تغيير المستوى والألوان كل 5 إصابات تماماً
     function updateBirdColorTier() {
-        let currentTier = 0;
-        let cumulativeThreshold = 0;
-        while (true) {
-            let step = 10 + (currentTier * 10);
-            if (totalHits >= cumulativeThreshold + step) {
-                cumulativeThreshold += step;
-                currentTier++;
-            } else {
-                break;
-            }
-        }
+        let currentTier = Math.floor(totalHits / 5);
         
         if (currentTier < birdColorTiers.length) {
             currentBirdStyle = birdColorTiers[currentTier];
@@ -669,18 +660,9 @@
     }
 
     function getNextTierRemainingHits() {
-        let currentTier = 0;
-        let cumulativeThreshold = 0;
-        while (true) {
-            let step = 10 + (currentTier * 10);
-            if (totalHits >= cumulativeThreshold + step) {
-                cumulativeThreshold += step;
-                currentTier++;
-            } else {
-                let nextThreshold = cumulativeThreshold + step;
-                return nextThreshold - totalHits;
-            }
-        }
+        let currentTier = Math.floor(totalHits / 5);
+        let nextThreshold = (currentTier + 1) * 5;
+        return nextThreshold - totalHits;
     }
 
     async function updateSupabaseScore() {
@@ -789,8 +771,8 @@
                 }
 
                 let pColor = currentBirdStyle.secondary;
-                if (t.special === "fast") pColor = "#c0c0c0"; 
-                if (t.special === "bonus") pColor = "#fbbf24"; 
+                if (t.special === "fast") pColor = currentBirdStyle.primary; 
+                if (t.special === "bonus") pColor = "#ffffff"; 
 
                 createFeatherCloud(t.x, t.y, pColor);
                 playAdvancedSound('hit');
@@ -843,7 +825,7 @@
             if (currentBirdStyle.name !== oldStyleName) {
                 currentStatusText += `🔥 LEVEL UP: [${currentBirdStyle.name}]!`;
                 statusColor = "#38bdf8";
-                createFloatingText(canvas.width/2, 100, "LEVEL UP!", "#38bdf8");
+                createFloatingText(canvas.width/2, 100, "SWARM EVOLVED!", "#38bdf8");
             } else {
                 let remaining = getNextTierRemainingHits();
                 currentStatusText += `| Next swarm tier in ${remaining} hits.`;
@@ -1063,8 +1045,25 @@
             let headColor = currentBirdStyle.detail;
             let beakColor = currentBirdStyle.beak;
 
-            if (t.special === "fast") { bodyColor = "#475569"; wingColor = "#cbd5e1"; headColor = "#1e293b"; } 
-            else if (t.special === "bonus") { bodyColor = "#b45309"; wingColor = "#fbbf24"; headColor = "#78350f"; beakColor = "#ef4444"; }
+            // تغيير واضح للألوان لجميع الطيور بناءً على المستوى الحالي لتعزيز الرؤية
+            if (t.special === "fast") { 
+                bodyColor = currentBirdStyle.secondary; 
+                wingColor = currentBirdStyle.primary; 
+                headColor = "#ffffff"; 
+            } else if (t.special === "bonus") { 
+                bodyColor = "#ffffff"; 
+                wingColor = currentBirdStyle.detail; 
+                headColor = currentBirdStyle.secondary; 
+            }
+
+            // إضافة الهالة المضيئة (Neon Glow) لتأكيد التغيير كل 5 إصابات
+            let currentTierNum = Math.floor(totalHits / 5);
+            if (currentTierNum > 0) {
+                ctx.shadowColor = currentBirdStyle.secondary;
+                ctx.shadowBlur = 5 + (currentTierNum * 2); // تزداد الإضاءة كلما زاد المستوى
+            } else {
+                ctx.shadowBlur = 0;
+            }
             
             ctx.fillStyle = bodyColor;
             ctx.beginPath(); 
@@ -1075,6 +1074,9 @@
             ctx.fillStyle = wingColor;
             ctx.beginPath(); ctx.ellipse(-2, - wingFlapOffset / 2, 9, t.height/2 + Math.abs(wingFlapOffset)/2, 0.2, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.ellipse(-2, + wingFlapOffset / 2, 9, t.height/2 + Math.abs(wingFlapOffset)/2, -0.2, 0, Math.PI*2); ctx.fill();
+
+            // إلغاء الهالة للرأس والتفاصيل حتى تكون واضحة
+            ctx.shadowBlur = 0;
 
             ctx.fillStyle = headColor;
             ctx.beginPath(); ctx.arc(t.width/2 - 2, -3, 9, 0, Math.PI*2); ctx.fill();
