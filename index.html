@@ -22,7 +22,7 @@
             transition: background-color 0.3s ease;
         }
         body.rage-active {
-            background-color: #1a0505; /* تلوين الخلفية بالأحمر المكتوم أثناء الغضب */
+            background-color: #1a0505; 
         }
         .container {
             max-width: 540px;
@@ -110,7 +110,6 @@
             gap: 5px;
         }
 
-        /* شريط وعداد الغضب (Rage UI Subsystem) */
         .rage-meter-container {
             width: 100%;
             background: #1e293b;
@@ -345,12 +344,11 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
 
-    // متغيرات نظام الغضب الجديد (Rage System Variables)
     let ragePoints = 0;
-    const maxRagePoints = 5; // يتفعل عند 5 إصابات متتالية
+    const maxRagePoints = 5; 
     let isRageModeActive = false;
-    let rageTimeRemaining = 0; // بالثواني
-    let lastRageFireTime = 0; // للتحكم في الإطلاق التلقائي السريع
+    let rageTimeRemaining = 0; 
+    let lastRageFireTime = 0; 
 
     let bgX = 0;
     let leaves = Array.from({length: 15}, () => ({
@@ -431,9 +429,6 @@
         }
     }
 
-    // =========================================================================
-    // نِظام الهندسة الصوتية الرقمية المتقدم والمضخم مع إضافة مؤثرات الغضب الحارقة
-    // =========================================================================
     function playAdvancedSound(type) {
         if (!audioCtx) return;
         if (audioCtx.state === 'suspended') {
@@ -444,10 +439,8 @@
             const now = audioCtx.currentTime;
             
             if (type === 'shoot') {
-                // إذا كان وضع الغضب نشطاً، يتم تضخيم البيس وموجة الضغط بمقدار الضعف!
                 const multiplier = isRageModeActive ? 2.2 : 1.0;
 
-                // 1. تضخيم البيس والترددات المنخفضة جداً البارودية (Bass-Boost)
                 const subOsc = audioCtx.createOscillator();
                 const subGain = audioCtx.createGain();
                 subOsc.type = 'sine';
@@ -462,7 +455,6 @@
                 subOsc.start(now);
                 subOsc.stop(now + 0.22);
 
-                // 2. الانفجار البارودي الميكانيكي (صوت موجة الضغط للكلاشينكوف المطور)
                 const bufferSize = audioCtx.sampleRate * 0.35;
                 const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const data = buffer.getChannelData(0);
@@ -487,7 +479,6 @@
                 noise.start(now);
                 noise.stop(now + 0.25);
 
-                // 3. الصوت الميكانيكي الارتدادي للترباس (Bolt-Action Mechanism Release)
                 const mechOsc = audioCtx.createOscillator();
                 const mechGain = audioCtx.createGain();
                 const mechFilter = audioCtx.createBiquadFilter();
@@ -510,7 +501,6 @@
                 mechOsc.stop(now + 0.1);
 
             } else if (type === 'hit') {
-                // صوت اختراق الرصاص الثقيل لجسد الطائر وتفتيت الهدف
                 const impactOsc = audioCtx.createOscillator();
                 const impactGain = audioCtx.createGain();
                 impactOsc.type = 'triangle';
@@ -525,7 +515,6 @@
                 impactOsc.start(now);
                 impactOsc.stop(now + 0.16);
 
-                // صوت تمزق وتناثر الريش العنيف القوي
                 const featherBufferSize = audioCtx.sampleRate * 0.2;
                 const featherBuffer = audioCtx.createBuffer(1, featherBufferSize, audioCtx.sampleRate);
                 const featherData = featherBuffer.getChannelData(0);
@@ -551,7 +540,6 @@
                 featherNoise.stop(now + 0.2);
 
             } else if (type === 'rage_trigger') {
-                // تفعيل صدمة صوتية انفجارية متبوعة بصفير حاد عند بدء وضع الغضب (Sonic Blast)
                 const blastOsc = audioCtx.createOscillator();
                 const blastGain = audioCtx.createGain();
                 blastOsc.type = 'sawtooth';
@@ -572,7 +560,6 @@
                 blastOsc.start(now);
                 blastOsc.stop(now + 0.6);
 
-                // صوت صفير سينمائي مرافق للانفجار
                 const riserOsc = audioCtx.createOscillator();
                 const riserGain = audioCtx.createGain();
                 riserOsc.type = 'sine';
@@ -680,38 +667,41 @@
         });
     }
 
+    // =========================================================================
+    // إصلاح دالة الدخول (التنفيذ الفوري للمصادقة لمنع التعليق)
+    // =========================================================================
     function initAndLoginWithPi() {
-        initAudio();
+        initAudio(); // تفعيل فوري لنظام الصوت مع نقرة المستخدم لمنع قيود المتصفح
+        preloadAssets(); // تحميل الأصول في الخلفية بدون حظر الخيوط البرمجية
+        
         const loginBtn = document.getElementById('btn-login');
         loginBtn.innerText = "Synchronizing Components... 🔄";
-        preloadAssets().then(() => {
-            try {
-                if (typeof Pi !== 'undefined' && window.Pi) {
-                    if (!isSdkInitialized) {
-                        window.Pi.init({ version: "2.0" });
-                        isSdkInitialized = true;
-                    }
-                    
-                    setTimeout(() => {
-                        window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
-                        .then(function(auth) {
-                            playerPiUser = auth.user.username;
-                            currentPiUserId = auth.user.uid;
-                            playerWallet = auth.user.uid || "Pi_Network_User";
-                            handleLoginSuccess();
-                        })
-                        .catch((err) => {
-                            console.error("Authentication redirection:", err);
-                            setupDevAccount();
-                        });
-                    }, 250);
-                } else {
-                    setupDevAccount();
+
+        try {
+            if (typeof Pi !== 'undefined' && window.Pi) {
+                if (!isSdkInitialized) {
+                    window.Pi.init({ version: "2.0" });
+                    isSdkInitialized = true;
                 }
-            } catch (e) {
+                
+                // تشغيل التوثيق المباشر لضمان عدم حدوث حظر للمصادقة داخل متصفح Pi
+                window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
+                .then(function(auth) {
+                    playerPiUser = auth.user.username;
+                    currentPiUserId = auth.user.uid;
+                    playerWallet = auth.user.uid || "Pi_Network_User";
+                    handleLoginSuccess();
+                })
+                .catch((err) => {
+                    console.error("Authentication redirection:", err);
+                    setupDevAccount();
+                });
+            } else {
                 setupDevAccount();
             }
-        });
+        } catch (e) {
+            setupDevAccount();
+        }
     }
 
     function setupDevAccount() {
@@ -843,7 +833,6 @@
 
     function createFeatherCloud(x, y, customColor) {
         let pColor = customColor || currentBirdStyle.secondary;
-        // مضاعفة عدد جزيئات الريش المتناثرة عند الإصابة في وضع الغضب لإعطاء تدمير واقعي
         let count = isRageModeActive ? 60 : 35;
         for (let i = 0; i < count; i++) {
             particles.push({
@@ -860,7 +849,6 @@
         }
     }
 
-    // دالة تحديث وتلوين واجهة عداد الغضب الرقمي (Rage System UI Updater)
     function updateRageMeterUI() {
         const bar = document.getElementById('rage-progress');
         const txt = document.getElementById('rage-status-text');
@@ -878,13 +866,11 @@
         }
     }
 
-    // دالة تفعيل وضع الغضب السينمائي المطور
     function triggerRageMode() {
         isRageModeActive = true;
-        rageTimeRemaining = 7.0; // مدة وضع الغضب 7 ثوانٍ
+        rageTimeRemaining = 7.0; 
         ragePoints = maxRagePoints;
         
-        // إشعال واجهات العرض بالألوان الحمراء المتوهجة والنابضة
         document.body.classList.add('rage-active');
         document.getElementById('game-container').classList.add('rage-glow');
         document.getElementById('game-main-title').classList.add('rage-title');
@@ -894,10 +880,9 @@
         document.getElementById('audio-engine-tag').style.color = "#ef4444";
 
         playAdvancedSound('rage_trigger');
-        screenShake = 35; // هزة أرضية للشاشة بأكملها عند التفعيل
+        screenShake = 35; 
     }
 
-    // دالة إيقاف وضع الغضب وإعادة النظام للحالة الطبيعية
     function deactivateRageMode() {
         isRageModeActive = false;
         ragePoints = 0;
@@ -915,7 +900,6 @@
     }
 
     function executeShot() {
-        // إذا لم يكن في وضع الغضب، نتحقق من وجود الذخيرة
         if (!isRageModeActive && ammo <= 0) {
             playAdvancedSound('empty');
             document.getElementById('game-status').innerText = "❌ OUT OF AMMO! Refill using your Pi Wallet.";
@@ -923,7 +907,6 @@
             return;
         }
         
-        // إنقاص الذخيرة فقط إذا كان وضع الغضب غير نشط (Infinite Ammo during Rage)
         if (!isRageModeActive) {
             ammo--; 
             document.getElementById('ammo-val').innerText = ammo;
@@ -931,7 +914,6 @@
 
         playAdvancedSound('shoot');
         
-        // زيادة شدة الوميض وحجم الفلاش ومقدار الاهتزاز والارتداد في وضع الغضب
         flashIntensity = isRageModeActive ? 1.4 : 0.95; 
         screenShake = isRageModeActive ? 32 : 24;     
         gunRecoilZ = isRageModeActive ? -110 : -75;     
@@ -957,7 +939,6 @@
                 hitAny = true;
                 hitCountThisShot++;
  
-                // مضاعفة النقاط المكتسبة إذا كان وضع الغضب نشطاً (Double Points Boost)
                 let calculatedPoints = isRageModeActive ? (t.points * 2) : t.points;
                 score += calculatedPoints;
                 totalHits++;
@@ -989,7 +970,6 @@
         });
         
         if (hitAny) {
-            // زيادة نقاط الغضب عند الإصابة الناجحة
             if (!isRageModeActive) {
                 ragePoints++;
                 if (ragePoints >= maxRagePoints) {
@@ -999,7 +979,7 @@
 
             if (hitCountThisShot > 1) {
                 let comboBonus = hitCountThisShot * 15;
-                if (isRageModeActive) comboBonus *= 2; // مضاعفة بونص الكومبو
+                if (isRageModeActive) comboBonus *= 2; 
                 score += comboBonus;
                 currentStatusText = `🔥 SWARM COMBO x${hitCountThisShot}! +${comboBonus} BONUS PTS! ` + currentStatusText;
                 playAdvancedSound('fanfare_bonus');
@@ -1037,7 +1017,6 @@
 
             updateSupabaseScore();
         } else {
-            // إنقاص نقاط الغضب عند تضييع الهدف للحفاظ على موازنة اللعبة وتحدي الكومبو متتالي
             if (!isRageModeActive && ragePoints > 0) {
                 ragePoints--;
             }
@@ -1117,7 +1096,6 @@
         if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
     });
     
-    // دعم ميزة الإطلاق التلقائي اللمسي المستمر في وضع الغضب
     let isFireButtonHeld = false;
     const fireTriggerBtn = document.getElementById('fire-trigger');
 
@@ -1146,12 +1124,10 @@
 
             if (deltaTime > 3) deltaTime = 3; 
 
-            // إدارة وقت وضع الغضب التنازلي المطور (Rage Timer Subsystem)
             if (isRageModeActive) {
                 rageTimeRemaining -= (16.666 / 1000) * deltaTime;
                 updateRageMeterUI();
 
-                // ميزة إطلاق السلاح الأوتوماتيكي السريع جداً عند استمرار الضغط في وضع الغضب
                 if (isFireButtonHeld && (currentTime - lastRageFireTime > 110)) {
                     fireTriggerBtn.classList.add('rage-firing');
                     executeShot();
@@ -1163,7 +1139,7 @@
                 }
             }
 
-            bgX -= (isRageModeActive ? 0.75 : 0.25) * deltaTime; // تسريع حركية الخلفية في وضع الغضب لإعطاء بعد حركي واقعي
+            bgX -= (isRageModeActive ? 0.75 : 0.25) * deltaTime; 
 
             leaves.forEach(leaf => {
                 leaf.y += leaf.speed * (isRageModeActive ? 2.0 : 1.0) * deltaTime;
@@ -1179,7 +1155,7 @@
                 smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
                 smoothJoyY += (joyMoveY - smoothJoyY) * 0.28 * deltaTime;
 
-                let aimSpeed = (isRageModeActive ? 7.5 : 5.8) * deltaTime; // جعل تنقل الكروسه أسرع وأسلس أثناء الغضب
+                let aimSpeed = (isRageModeActive ? 7.5 : 5.8) * deltaTime; 
                 aimX += smoothJoyX * aimSpeed;
                 aimY += smoothJoyY * aimSpeed;
             } else {
@@ -1193,7 +1169,6 @@
             if (aimY > canvas.height) aimY = canvas.height;
 
             targets.forEach(t => {
-                // تسريع حركة الطيور والاهتزاز العشوائي لزيادة التحدي والإثارة الميكانيكية للعبة
                 let currentSpeedMult = isRageModeActive ? 1.6 : 1.0;
 
                 if (t.sineWave) {
@@ -1246,7 +1221,6 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // رسم تأثير الفلتر الأحمر فوق اللعبة بالتوافق مع نبض العداد
             if (isRageModeActive) {
                 ctx.fillStyle = `rgba(239, 68, 68, ${0.08 + Math.sin(currentTime * 0.01) * 0.04})`;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1358,7 +1332,6 @@
                 }
             });
             
-            // وميض الفوهة (Muzzle Flash) يصبح أضخم وأكثر وهجاً في وضع الغضب
             if (flashIntensity > 0) {
                 ctx.save();
                 let flashRadius = isRageModeActive ? 85 : 55;
@@ -1396,7 +1369,6 @@
             }
             ctx.restore();
             
-            // رسم الكروسه (Aim Reticle) بلون أحمر غاضب متوهج أثناء تفعيل الوضع
             ctx.save();
             ctx.strokeStyle = isRageModeActive ? '#f43f5e' : '#f87171'; 
             ctx.lineWidth = isRageModeActive ? 3.5 : 2.5;
