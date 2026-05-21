@@ -282,7 +282,6 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
 
-    // === متغيرات المحرك البصري الجديد والبيئة الخلفية (ابتكارات أبو الجيم) ===
     let bgX = 0;
     let leaves = Array.from({length: 15}, () => ({
         x: Math.random() * 520,
@@ -362,7 +361,9 @@
         }
     }
 
-    // === دالة الصوت المُعدلة لواقعية الكلاش والارتطام ===
+    // =========================================================================
+    // نِظام التوليد والهندسة الصوتية الرقمية المطور (تضخيم، ارتداد، ومؤثرات واقعية)
+    // =========================================================================
     function playAdvancedSound(type) {
         if (!audioCtx) return;
         if (audioCtx.state === 'suspended') {
@@ -373,101 +374,113 @@
             const now = audioCtx.currentTime;
             
             if (type === 'shoot') {
-                // 1. الانفجار البارودي (صوت الطلقة الأساسي)
-                const bufferSize = audioCtx.sampleRate * 0.3;
+                // 1. تضخيم البيس والترددات المنخفضة جداً البارودية (الموجة تحت الصوتية)
+                const subOsc = audioCtx.createOscillator();
+                const subGain = audioCtx.createGain();
+                subOsc.type = 'sine';
+                subOsc.frequency.setValueAtTime(95, now);
+                subOsc.frequency.exponentialRampToValueAtTime(25, now + 0.18);
+                
+                // مضخم بيس جبار (Bass-Boost) ليعطي اهتزازاً عميقاً وصدمة سمعية
+                subGain.gain.setValueAtTime(2.8, now);
+                subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                
+                subOsc.connect(subGain);
+                subGain.connect(audioCtx.destination);
+                subOsc.start(now);
+                subOsc.stop(now + 0.22);
+
+                // 2. الانفجار البارودي الميكانيكي (صوت جاف حاد وموجة ضغط هواء الكلاشينكوف)
+                const bufferSize = audioCtx.sampleRate * 0.35;
                 const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const data = buffer.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1; // ضجيج أبيض
+                    data[i] = Math.random() * 2 - 1; 
                 }
                 const noise = audioCtx.createBufferSource();
                 noise.buffer = buffer;
 
                 const noiseFilter = audioCtx.createBiquadFilter();
                 noiseFilter.type = 'lowpass';
-                noiseFilter.frequency.setValueAtTime(8000, now);
-                noiseFilter.frequency.exponentialRampToValueAtTime(300, now + 0.15);
+                // فلتر منخفض لجعل الصوت أضخم ومكتوم قليلاً مثل الأسلحة الحقيقية في الغابات
+                noiseFilter.frequency.setValueAtTime(4500, now);
+                noiseFilter.frequency.exponentialRampToValueAtTime(220, now + 0.14);
 
                 const noiseGain = audioCtx.createGain();
-                noiseGain.gain.setValueAtTime(1.5, now);
-                noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                noiseGain.gain.setValueAtTime(1.9, now);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
 
                 noise.connect(noiseFilter);
                 noiseFilter.connect(noiseGain);
                 noiseGain.connect(audioCtx.destination);
                 noise.start(now);
-                noise.stop(now + 0.2);
+                noise.stop(now + 0.25);
 
-                // 2. الارتداد والضربة (التردد المنخفض)
-                const osc = audioCtx.createOscillator();
-                const oscGain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(180, now);
-                osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
-
-                oscGain.gain.setValueAtTime(1.2, now);
-                oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-
-                osc.connect(oscGain);
-                oscGain.connect(audioCtx.destination);
-                osc.start(now);
-                osc.stop(now + 0.15);
-
-                // 3. الصوت الميكانيكي للسلاح (صوت سحب الأقسام)
+                // 3. الصوت المعدني لترباس الكلاش وصوت الارتداد للأجزاء الداخلية (Bolt-Action Release)
                 const mechOsc = audioCtx.createOscillator();
                 const mechGain = audioCtx.createGain();
-                mechOsc.type = 'square';
-                mechOsc.frequency.setValueAtTime(800, now + 0.05); // تأخير بسيط
+                const mechFilter = audioCtx.createBiquadFilter();
+                
+                mechOsc.type = 'sawtooth';
+                mechOsc.frequency.setValueAtTime(950, now + 0.04);
+                mechOsc.frequency.linearRampToValueAtTime(300, now + 0.09);
+                
+                mechFilter.type = 'bandpass';
+                mechFilter.frequency.value = 1800;
                 
                 mechGain.gain.setValueAtTime(0, now);
-                mechGain.gain.setValueAtTime(0.2, now + 0.05);
-                mechGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                mechGain.gain.setValueAtTime(0.45, now + 0.04);
+                mechGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
 
-                mechOsc.connect(mechGain);
+                mechOsc.connect(mechFilter);
+                mechFilter.connect(mechGain);
                 mechGain.connect(audioCtx.destination);
                 mechOsc.start(now);
-                mechOsc.stop(now + 0.1);
+                mechOsc.stop(now + 0.11);
 
             } else if (type === 'hit') {
-                // 1. صوت اختراق الرصاصة (الضربة العميقة)
+                // 1. صوت موجة الاصطدام واختراق الرصاصة الثقيلة لجسد الطائر (Flesh & Bullet Impact)
                 const impactOsc = audioCtx.createOscillator();
                 const impactGain = audioCtx.createGain();
                 impactOsc.type = 'triangle';
-                impactOsc.frequency.setValueAtTime(150, now);
-                impactOsc.frequency.exponentialRampToValueAtTime(30, now + 0.1);
+                impactOsc.frequency.setValueAtTime(130, now);
+                // نزول سريع في التردد لمحاكاة الارتطام بجسم صلب سائل
+                impactOsc.frequency.exponentialRampToValueAtTime(20, now + 0.12);
                 
-                impactGain.gain.setValueAtTime(1.5, now);
-                impactGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                impactGain.gain.setValueAtTime(2.2, now);
+                impactGain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
                 
                 impactOsc.connect(impactGain);
                 impactGain.connect(audioCtx.destination);
                 impactOsc.start(now);
-                impactOsc.stop(now + 0.15);
+                impactOsc.stop(now + 0.16);
 
-                // 2. صوت تناثر الريش واللحم (ضجيج مفلتر)
-                const featherBufferSize = audioCtx.sampleRate * 0.15;
+                // 2. صوت تمزق الريش وتناثر الجلد (Dynamic Feather Exploding & Distortion)
+                const featherBufferSize = audioCtx.sampleRate * 0.18;
                 const featherBuffer = audioCtx.createBuffer(1, featherBufferSize, audioCtx.sampleRate);
                 const featherData = featherBuffer.getChannelData(0);
                 for (let i = 0; i < featherBufferSize; i++) {
-                    featherData[i] = Math.random() * 2 - 1;
+                    // توليد ضوضاء بيضاء ممزوجة بتمزقات
+                    featherData[i] = (Math.random() * 2 - 1) * (1 - (i / featherBufferSize));
                 }
                 const featherNoise = audioCtx.createBufferSource();
                 featherNoise.buffer = featherBuffer;
 
                 const featherFilter = audioCtx.createBiquadFilter();
+                // استخدام فلتر تمرير النطاق (Bandpass) للتركيز على خشونة صوت تكسر الريش العالي
                 featherFilter.type = 'bandpass';
-                featherFilter.frequency.setValueAtTime(2000, now);
-                featherFilter.frequency.linearRampToValueAtTime(500, now + 0.1);
+                featherFilter.frequency.setValueAtTime(1600, now);
+                featherFilter.frequency.linearRampToValueAtTime(700, now + 0.12);
 
                 const featherGain = audioCtx.createGain();
-                featherGain.gain.setValueAtTime(0.8, now);
-                featherGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                featherGain.gain.setValueAtTime(1.3, now);
+                featherGain.gain.exponentialRampToValueAtTime(0.005, now + 0.14);
 
                 featherNoise.connect(featherFilter);
                 featherFilter.connect(featherGain);
                 featherGain.connect(audioCtx.destination);
                 featherNoise.start(now);
-                featherNoise.stop(now + 0.15);
+                featherNoise.stop(now + 0.18);
 
             } else if (type === 'empty') {
                 const emptyOsc = audioCtx.createOscillator();
@@ -725,17 +738,18 @@
 
     function createFeatherCloud(x, y, customColor) {
         let pColor = customColor || currentBirdStyle.secondary;
-        for (let i = 0; i < 25; i++) {
+        // زيادة عدد الجزيئات المتناثرة لتعزيز الواقعية البصرية مع صوت الاصطدام
+        for (let i = 0; i < 35; i++) {
             particles.push({
                 x: x, 
                 y: y,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.8) * 7, 
-                radius: Math.random() * 4 + 1.5,
+                vx: (Math.random() - 0.5) * 11,
+                vy: (Math.random() - 0.8) * 9, 
+                radius: Math.random() * 4.5 + 1.5,
                 rotation: Math.random() * Math.PI * 2,
-                rotationSpeed: (Math.random() - 0.5) * 0.3,
+                rotationSpeed: (Math.random() - 0.5) * 0.4,
                 alpha: 1,
-                color: Math.random() > 0.4 ? pColor : 'rgba(239, 68, 68, 0.8)'
+                color: Math.random() > 0.35 ? pColor : 'rgba(239, 68, 68, 0.9)'
             });
         }
     }
@@ -751,12 +765,16 @@
         ammo--; 
         document.getElementById('ammo-val').innerText = ammo;
         playAdvancedSound('shoot');
-        flashIntensity = 0.8; 
-        screenShake = 14;     
+        flashIntensity = 0.95; 
+        
+        // زيادة شدة اهتزاز الشاشة ليتوافق مع تضخيم صوت الطلقة العنيف (من 14 إلى 24)
+        screenShake = 24;     
 
-        gunRecoilZ = -55;     
-        gunRecoilY = -38;     
-        gunRecoilAngle = (Math.random() - 0.5) * 0.22;
+        // زيادة رد فعل السلاح بصرياً (الارتداد والتحرك للخلف ولأعلى)
+        gunRecoilZ = -75;     
+        gunRecoilY = -50;     
+        gunRecoilAngle = (Math.random() - 0.5) * 0.35;
+        
         let gunBaseX = canvas.width - 40;
         let gunBaseY = canvas.height + 20;
         let rot = Math.atan2(aimY - gunBaseY, aimX - gunBaseX);
@@ -811,7 +829,7 @@
                 score += comboBonus;
                 currentStatusText = `🔥 SWARM COMBO x${hitCountThisShot}! +${comboBonus} BONUS PTS! ` + currentStatusText;
                 playAdvancedSound('fanfare_bonus');
-                screenShake = 22;
+                screenShake = 32; // اهتزاز أقوى عند ضرب أكثر من هدف معاً
             }
 
             document.getElementById('score-val').innerText = score;
@@ -923,7 +941,6 @@
     fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
     fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
-    // === حلقة اللعبة الأساسية المحدثة بالمحرك البصري المتكامل والآمن ===
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
@@ -933,10 +950,8 @@
 
             if (deltaTime > 3) deltaTime = 3; 
 
-            // تحديث حركة الخلفية ببطء لصنع تأثير الـ Parallax البصري المذهل
             bgX -= 0.25 * deltaTime;
 
-            // تحديث محرك جزيئات أوراق الشجر المتساقطة في الغابة
             leaves.forEach(leaf => {
                 leaf.y += leaf.speed * deltaTime;
                 leaf.x += Math.sin(leaf.y * 0.02) * 0.4 * deltaTime;
@@ -1007,7 +1022,6 @@
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // 1. رسم خلفية الغابة بطبقتين متتاليتين لضمان عدم وجود فجوات في الـ Parallax
             if (forestBgImg) {
                 ctx.drawImage(forestBgImg, bgX % canvas.width, 0, canvas.width, canvas.height);
                 ctx.drawImage(forestBgImg, (bgX % canvas.width) + canvas.width, 0, canvas.width, canvas.height);
@@ -1016,11 +1030,9 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // 2. إضافة تأثير الضباب السينمائي اللطيف (Atmospheric Overlay) لعمق الإضاءة
             ctx.fillStyle = "rgba(2, 6, 23, 0.15)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 3. رسم جزئيات البيئة الحية (أوراق الشجر المتساقطة المتأرجحة)
             ctx.fillStyle = "rgba(234, 179, 8, 0.4)";
             leaves.forEach(leaf => {
                 ctx.beginPath();
