@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE HUNTER Arcade - Rage Mode Unleashed 🔥</title>
+    <title>THE HUNTER Arcade - 3 Birds Swarm Swish Edition 🔥</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -19,10 +19,6 @@
             touch-action: none;
             user-select: none;
             overflow-x: hidden;
-            transition: background-color 0.3s ease;
-        }
-        body.rage-active {
-            background-color: #1a0505; 
         }
         .container {
             max-width: 540px;
@@ -32,12 +28,7 @@
             border-radius: 24px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.9);
             border: 1px solid #475569;
-            transition: transform 0.04s cubic-bezier(0.1, 0.8, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-        }
-        .container.rage-glow {
-            border-color: #ef4444;
-            box-shadow: 0 0 30px rgba(239, 68, 68, 0.6), inset 0 0 15px rgba(239, 68, 68, 0.3);
+            transition: transform 0.04s cubic-bezier(0.1, 0.8, 0.3, 1);
         }
         h1 { 
             color: #38bdf8;
@@ -46,16 +37,6 @@
             font-size: 26px;
             letter-spacing: 1px;
             text-shadow: 0 3px 6px rgba(0,0,0,0.9);
-            transition: color 0.3s;
-        }
-        h1.rage-title {
-            color: #ef4444;
-            text-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
-            animation: pulse 0.5s infinite alternate;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.03); }
         }
         .welcome-card {
             background: #0f172a;
@@ -93,7 +74,8 @@
         .btn:hover { 
             transform: scale(1.02);
         }
-        .hidden { display: none; }
+        .hidden { display: none;
+        }
         
         .stats-bar {
             display: flex;
@@ -101,7 +83,7 @@
             background: rgba(15, 23, 42, 0.9);
             padding: 10px;
             border-radius: 14px;
-            margin-bottom: 5px; 
+            margin-bottom: 8px; 
             font-weight: bold;
             border: 1px solid #334155;
             font-size: 11px;
@@ -109,40 +91,6 @@
             flex-wrap: wrap;
             gap: 5px;
         }
-
-        .rage-meter-container {
-            width: 100%;
-            background: #1e293b;
-            height: 14px;
-            border-radius: 7px;
-            margin-bottom: 8px;
-            border: 1px solid #475569;
-            overflow: hidden;
-            position: relative;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
-        }
-        .rage-meter-bar {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #f97316, #ef4444, #b91c1c);
-            transition: width 0.2s ease-out;
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
-        }
-        .rage-meter-text {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            font-size: 10px;
-            font-weight: 900;
-            line-height: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #ffffff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.9);
-        }
-
         #hunting-canvas {
             border: 3px solid #38bdf8;
             border-radius: 16px;
@@ -153,10 +101,6 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.8);
             background-color: #070b19;
             display: block;
-            transition: border-color 0.3s;
-        }
-        #hunting-canvas.rage-border {
-            border-color: #ef4444;
         }
         
         .controls-wrapper {
@@ -186,10 +130,9 @@
             transition: transform 0.05s ease;
             -webkit-tap-highlight-color: transparent;
         }
-        .btn-shoot:active, .btn-shoot.rage-firing {
+        .btn-shoot:active {
             transform: scale(0.85);
-            background-image: linear-gradient(135deg, #b91c1c, #7f1d1d, #450a0a);
-            box-shadow: 0 0 25px rgba(239, 68, 68, 0.9);
+            background-image: linear-gradient(135deg, #991b1b, #451a03);
         }
 
         .joystick-container {
@@ -269,7 +212,7 @@
 <body>
 
 <div class="container" id="game-container">
-    <h1 id="game-main-title">🎮 THE HUNTER</h1>
+    <h1>🎮 THE HUNTER</h1>
 
     <div id="auth-section">
         <div class="welcome-card">
@@ -285,16 +228,12 @@
             <div>Hits: <span id="hits-val" style="color: #eab308;">0</span> 🎯</div>
             <div>Score: <span id="score-val" style="color: #4ade80;">0</span></div>
             <div>Ammo: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
+            <div>Rage: <span id="rage-val" style="color: #ef4444;">0%</span> 😡</div>
             <div>Tier Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown</span></div>
         </div>
 
-        <div class="rage-meter-container">
-            <div class="rage-meter-bar" id="rage-progress"></div>
-            <div class="rage-meter-text" id="rage-status-text">Rage Meter: 0% [Hit targets to trigger]</div>
-        </div>
-
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
-        <div><span class="audio-indicator" id="audio-engine-tag">🌌 Tri-Target Swarm System & Dynamic Combo Multipliers Loaded</span></div>
+        <div><span class="audio-indicator">🌌 Tri-Target Swarm System & Dynamic Combo Multipliers Loaded</span></div>
  
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
         
@@ -344,12 +283,12 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
 
-    let ragePoints = 0;
-    const maxRagePoints = 5; 
-    let isRageModeActive = false;
-    let rageTimeRemaining = 0; 
-    let lastRageFireTime = 0; 
+    // Rage Mode Variables
+    let rageMeter = 0;
+    let isRageMode = false;
+    let rageTimeLeft = 0;
 
+    // === متغيرات المحرك البصري الجديد والبيئة الخلفية ===
     let bgX = 0;
     let leaves = Array.from({length: 15}, () => ({
         x: Math.random() * 520,
@@ -385,7 +324,8 @@
             sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast"
         },
         { 
-            id: 3, type: "ghost_refiller", x: 400, y: 80, xSpeed: 4.0, ySpeed: -2.2, 
+            id: 3, type: "ghost_refiller", x: 400, 
+            y: 80, xSpeed: 4.0, ySpeed: -2.2, 
             width: 46, height: 36, flap: 3.0, flapSpeed: 0.20, radius: 23, 
             sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0
         }
@@ -396,7 +336,6 @@
     let muzzleFlashX = 0;
     let muzzleFlashY = 0;
     let screenShake = 0;
-
     let aimX = 260;
     let aimY = 175;
 
@@ -408,7 +347,6 @@
     let smoothJoyX = 0; 
     let smoothJoyY = 0; 
     const maxJoyDistance = 35;
-
     let lastTime = performance.now(); 
 
     const canvas = document.getElementById('hunting-canvas');
@@ -422,7 +360,6 @@
     let gunRecoilAngle = 0;
 
     let audioCtx;
-
     function initAudio() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -437,143 +374,106 @@
 
         try {
             const now = audioCtx.currentTime;
-            
             if (type === 'shoot') {
-                const multiplier = isRageModeActive ? 2.2 : 1.0;
-
-                const subOsc = audioCtx.createOscillator();
-                const subGain = audioCtx.createGain();
-                subOsc.type = 'sine';
-                subOsc.frequency.setValueAtTime(isRageModeActive ? 110 : 95, now);
-                subOsc.frequency.exponentialRampToValueAtTime(20, now + 0.18);
+                const impulseOsc = audioCtx.createOscillator();
+                const impulseGain = audioCtx.createGain();
+                impulseOsc.type = 'sawtooth';
+                impulseOsc.frequency.setValueAtTime(175, now);
+                impulseOsc.frequency.exponentialRampToValueAtTime(35, now + 0.1); 
                 
-                subGain.gain.setValueAtTime(2.8 * multiplier, now);
-                subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                impulseGain.gain.setValueAtTime(0.001, now);
+                impulseGain.gain.linearRampToValueAtTime(3.5, now + 0.001);
+                impulseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
                 
-                subOsc.connect(subGain);
-                subGain.connect(audioCtx.destination);
-                subOsc.start(now);
-                subOsc.stop(now + 0.22);
-
-                const bufferSize = audioCtx.sampleRate * 0.35;
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1; 
+                const lpImpulse = audioCtx.createBiquadFilter();
+                lpImpulse.type = 'lowpass';
+                lpImpulse.frequency.setValueAtTime(650, now); 
+                
+                impulseOsc.connect(lpImpulse);
+                lpImpulse.connect(impulseGain);
+                
+                const tailBufferSize = audioCtx.sampleRate * 0.55; 
+                const tailBuffer = audioCtx.createBuffer(1, tailBufferSize, audioCtx.sampleRate);
+                const tailData = tailBuffer.getChannelData(0);
+                for (let i = 0; i < tailBufferSize; i++) {
+                    tailData[i] = Math.random() * 2 - 1;
                 }
-                const noise = audioCtx.createBufferSource();
-                noise.buffer = buffer;
+                const tailNoise = audioCtx.createBufferSource();
+                tailNoise.buffer = tailBuffer;
+                
+                const tailFilter = audioCtx.createBiquadFilter();
+                tailFilter.type = 'bandpass';
+                tailFilter.frequency.setValueAtTime(550, now);
+                tailFilter.frequency.exponentialRampToValueAtTime(140, now + 0.5);
+                tailFilter.Q.setValueAtTime(1.5, now);
+                
+                const tailGain = audioCtx.createGain();
+                tailGain.gain.setValueAtTime(0.001, now);
+                tailGain.gain.linearRampToValueAtTime(2.2, now + 0.004); 
+                tailGain.gain.exponentialRampToValueAtTime(0.001, now + 0.52); 
 
-                const noiseFilter = audioCtx.createBiquadFilter();
-                noiseFilter.type = 'lowpass';
-                noiseFilter.frequency.setValueAtTime(isRageModeActive ? 5500 : 4500, now);
-                noiseFilter.frequency.exponentialRampToValueAtTime(isRageModeActive ? 300 : 220, now + 0.14);
+                tailNoise.connect(tailFilter);
+                tailFilter.connect(tailGain);
+                
+                // Echo Node
+                const delay = audioCtx.createDelay();
+                delay.delayTime.value = 0.15;
+                const feedback = audioCtx.createGain();
+                feedback.gain.value = 0.25;
+                delay.connect(feedback);
+                feedback.connect(delay);
+                delay.connect(audioCtx.destination);
 
-                const noiseGain = audioCtx.createGain();
-                noiseGain.gain.setValueAtTime(1.9 * multiplier, now);
-                noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-
-                noise.connect(noiseFilter);
-                noiseFilter.connect(noiseGain);
-                noiseGain.connect(audioCtx.destination);
-                noise.start(now);
-                noise.stop(now + 0.25);
+                impulseGain.connect(audioCtx.destination);
+                impulseGain.connect(delay); // Connect to echo
+                tailGain.connect(audioCtx.destination);
+                tailGain.connect(delay); // Connect to echo
+                
+                impulseOsc.start(now);
+                impulseOsc.stop(now + 0.13);
+                tailNoise.start(now);
+                tailNoise.stop(now + 0.52);
 
                 const mechOsc = audioCtx.createOscillator();
                 const mechGain = audioCtx.createGain();
-                const mechFilter = audioCtx.createBiquadFilter();
-                
                 mechOsc.type = 'sawtooth';
-                mechOsc.frequency.setValueAtTime(isRageModeActive ? 1200 : 950, now + 0.02);
-                mechOsc.frequency.linearRampToValueAtTime(400, now + 0.08);
+                mechOsc.frequency.setValueAtTime(1100, now);
                 
-                mechFilter.type = 'bandpass';
-                mechFilter.frequency.value = isRageModeActive ? 2200 : 1800;
-                
-                mechGain.gain.setValueAtTime(0, now);
-                mechGain.gain.setValueAtTime(0.6, now + 0.02);
-                mechGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+                const mechFilter = audioCtx.createBiquadFilter();
+                mechFilter.type = 'highpass';
+                mechFilter.frequency.setValueAtTime(1500, now);
 
+                mechGain.gain.setValueAtTime(0.6, now); 
+                mechGain.gain.linearRampToValueAtTime(0.001, now + 0.04);
+                
                 mechOsc.connect(mechFilter);
                 mechFilter.connect(mechGain);
                 mechGain.connect(audioCtx.destination);
+                
                 mechOsc.start(now);
-                mechOsc.stop(now + 0.1);
-
+                mechOsc.stop(now + 0.04);
+                
             } else if (type === 'hit') {
-                const impactOsc = audioCtx.createOscillator();
-                const impactGain = audioCtx.createGain();
-                impactOsc.type = 'triangle';
-                impactOsc.frequency.setValueAtTime(isRageModeActive ? 160 : 130, now);
-                impactOsc.frequency.exponentialRampToValueAtTime(15, now + 0.12);
+                // Enhanced Impact Sound
+                const hitOsc = audioCtx.createOscillator();
+                const hitGain = audioCtx.createGain();
+                hitOsc.type = 'square';
+                hitOsc.frequency.setValueAtTime(600, now);
+                hitOsc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
                 
-                impactGain.gain.setValueAtTime(2.5, now);
-                impactGain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+                const lpFilter = audioCtx.createBiquadFilter();
+                lpFilter.type = 'lowpass';
+                lpFilter.frequency.setValueAtTime(800, now);
+
+                hitGain.gain.setValueAtTime(0.9, now);
+                hitGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
                 
-                impactOsc.connect(impactGain);
-                impactGain.connect(audioCtx.destination);
-                impactOsc.start(now);
-                impactOsc.stop(now + 0.16);
-
-                const featherBufferSize = audioCtx.sampleRate * 0.2;
-                const featherBuffer = audioCtx.createBuffer(1, featherBufferSize, audioCtx.sampleRate);
-                const featherData = featherBuffer.getChannelData(0);
-                for (let i = 0; i < featherBufferSize; i++) {
-                    featherData[i] = (Math.random() * 2 - 1) * (1 - (i / featherBufferSize));
-                }
-                const featherNoise = audioCtx.createBufferSource();
-                featherNoise.buffer = featherBuffer;
-
-                const featherFilter = audioCtx.createBiquadFilter();
-                featherFilter.type = 'bandpass';
-                featherFilter.frequency.setValueAtTime(2000, now);
-                featherFilter.frequency.linearRampToValueAtTime(600, now + 0.14);
-
-                const featherGain = audioCtx.createGain();
-                featherGain.gain.setValueAtTime(1.5, now);
-                featherGain.gain.exponentialRampToValueAtTime(0.005, now + 0.15);
-
-                featherNoise.connect(featherFilter);
-                featherFilter.connect(featherGain);
-                featherGain.connect(audioCtx.destination);
-                featherNoise.start(now);
-                featherNoise.stop(now + 0.2);
-
-            } else if (type === 'rage_trigger') {
-                const blastOsc = audioCtx.createOscillator();
-                const blastGain = audioCtx.createGain();
-                blastOsc.type = 'sawtooth';
-                blastOsc.frequency.setValueAtTime(60, now);
-                blastOsc.frequency.linearRampToValueAtTime(450, now + 0.4);
+                hitOsc.connect(lpFilter);
+                lpFilter.connect(hitGain);
+                hitGain.connect(audioCtx.destination);
+                hitOsc.start(now);
+                hitOsc.stop(now + 0.15);
                 
-                const blastFilter = audioCtx.createBiquadFilter();
-                blastFilter.type = 'lowpass';
-                blastFilter.frequency.setValueAtTime(1200, now);
-
-                blastGain.gain.setValueAtTime(3.5, now);
-                blastGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-
-                blastOsc.connect(blastFilter);
-                blastFilter.connect(blastGain);
-                blastGain.connect(audioCtx.destination);
-                
-                blastOsc.start(now);
-                blastOsc.stop(now + 0.6);
-
-                const riserOsc = audioCtx.createOscillator();
-                const riserGain = audioCtx.createGain();
-                riserOsc.type = 'sine';
-                riserOsc.frequency.setValueAtTime(200, now);
-                riserOsc.frequency.exponentialRampToValueAtTime(1800, now + 0.5);
-                
-                riserGain.gain.setValueAtTime(0.6, now);
-                riserGain.gain.linearRampToValueAtTime(0.001, now + 0.5);
-                
-                riserOsc.connect(riserGain);
-                riserGain.connect(audioCtx.destination);
-                riserOsc.start(now);
-                riserOsc.stop(now + 0.5);
-
             } else if (type === 'empty') {
                 const emptyOsc = audioCtx.createOscillator();
                 const emptyGain = audioCtx.createGain();
@@ -628,12 +528,10 @@
                     const gain = audioCtx.createGain();
                     osc.type = 'sine'; 
                     osc.frequency.setValueAtTime(freq, now + (index * 0.06));
-   
                     gain.gain.setValueAtTime(0.25, now + (index * 0.06));
                     gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.06) + 0.18);
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
-           
                     osc.start(now + (index * 0.06));
                     osc.stop(now + (index * 0.06) + 0.18);
                 });
@@ -667,41 +565,38 @@
         });
     }
 
-    // =========================================================================
-    // إصلاح دالة الدخول (التنفيذ الفوري للمصادقة لمنع التعليق)
-    // =========================================================================
     function initAndLoginWithPi() {
-        initAudio(); // تفعيل فوري لنظام الصوت مع نقرة المستخدم لمنع قيود المتصفح
-        preloadAssets(); // تحميل الأصول في الخلفية بدون حظر الخيوط البرمجية
-        
+        initAudio();
         const loginBtn = document.getElementById('btn-login');
         loginBtn.innerText = "Synchronizing Components... 🔄";
-
-        try {
-            if (typeof Pi !== 'undefined' && window.Pi) {
-                if (!isSdkInitialized) {
-                    window.Pi.init({ version: "2.0" });
-                    isSdkInitialized = true;
-                }
-                
-                // تشغيل التوثيق المباشر لضمان عدم حدوث حظر للمصادقة داخل متصفح Pi
-                window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
-                .then(function(auth) {
-                    playerPiUser = auth.user.username;
-                    currentPiUserId = auth.user.uid;
-                    playerWallet = auth.user.uid || "Pi_Network_User";
-                    handleLoginSuccess();
-                })
-                .catch((err) => {
-                    console.error("Authentication redirection:", err);
+        preloadAssets().then(() => {
+            try {
+                if (typeof Pi !== 'undefined' && window.Pi) {
+                    if (!isSdkInitialized) {
+                        window.Pi.init({ version: "2.0" });
+                        isSdkInitialized = true;
+                    }
+                    
+                    setTimeout(() => {
+                        window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
+                        .then(function(auth) {
+                            playerPiUser = auth.user.username;
+                            currentPiUserId = auth.user.uid;
+                            playerWallet = auth.user.uid || "Pi_Network_User";
+                            handleLoginSuccess();
+                        })
+                        .catch((err) => {
+                            console.error("Authentication redirection:", err);
+                            setupDevAccount();
+                        });
+                    }, 250);
+                } else {
                     setupDevAccount();
-                });
-            } else {
+                }
+            } catch (e) {
                 setupDevAccount();
             }
-        } catch (e) {
-            setupDevAccount();
-        }
+        });
     }
 
     function setupDevAccount() {
@@ -719,7 +614,6 @@
                 .select('high_score')
                 .eq('pi_username', playerPiUser)
                 .maybeSingle();
-                
             if (data) { 
                 score = data.high_score || 0; 
                 document.getElementById('score-val').innerText = score;
@@ -816,14 +710,12 @@
                 .select('pi_username, high_score')
                 .order('high_score', { ascending: false })
                 .limit(5);
-                
             const tbody = document.getElementById('leaderboard-body');
             tbody.innerHTML = "";
             if (data && data.length > 0) {
                 data.forEach((row, index) => {
                     const tr = document.createElement('tr');
                     if (row.pi_username === playerPiUser) tr.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
-                
                     tr.innerHTML = `<td>${index + 1}</td><td>${row.pi_username}</td><td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>`;
                     tbody.appendChild(tr);
                 });
@@ -833,93 +725,39 @@
 
     function createFeatherCloud(x, y, customColor) {
         let pColor = customColor || currentBirdStyle.secondary;
-        let count = isRageModeActive ? 60 : 35;
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < 25; i++) {
             particles.push({
                 x: x, 
                 y: y,
-                vx: (Math.random() - 0.5) * (isRageModeActive ? 15 : 11),
-                vy: (Math.random() - 0.8) * (isRageModeActive ? 13 : 9), 
-                radius: Math.random() * 4.5 + 1.5,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.8) * 7, 
+                radius: Math.random() * 4 + 1.5,
                 rotation: Math.random() * Math.PI * 2,
-                rotationSpeed: (Math.random() - 0.5) * 0.4,
+                rotationSpeed: (Math.random() - 0.5) * 0.3,
                 alpha: 1,
-                color: Math.random() > 0.35 ? pColor : 'rgba(239, 68, 68, 0.9)'
+                color: Math.random() > 0.4 ? pColor : 'rgba(239, 68, 68, 0.8)'
             });
         }
     }
 
-    function updateRageMeterUI() {
-        const bar = document.getElementById('rage-progress');
-        const txt = document.getElementById('rage-status-text');
-        
-        if (isRageModeActive) {
-            let pct = (rageTimeRemaining / 7) * 100;
-            bar.style.width = `${pct}%`;
-            bar.style.background = 'linear-gradient(90deg, #dc2626, #f43f5e, #ffffff)';
-            txt.innerText = `🔥 RAGE ACTIVE! FREE AMMO & DOUBLE PTS: ${rageTimeRemaining.toFixed(1)}s`;
-        } else {
-            let pct = (ragePoints / maxRagePoints) * 100;
-            bar.style.width = `${pct}%`;
-            bar.style.background = 'linear-gradient(90deg, #f97316, #ef4444, #b91c1c)';
-            txt.innerText = `Rage Meter: ${pct.toFixed(0)}% [${ragePoints}/${maxRagePoints} Combo Hits]`;
-        }
-    }
-
-    function triggerRageMode() {
-        isRageModeActive = true;
-        rageTimeRemaining = 7.0; 
-        ragePoints = maxRagePoints;
-        
-        document.body.classList.add('rage-active');
-        document.getElementById('game-container').classList.add('rage-glow');
-        document.getElementById('game-main-title').classList.add('rage-title');
-        document.getElementById('game-main-title').innerText = "🔥 RAGE MODE UNLEASHED 🔥";
-        document.getElementById('hunting-canvas').classList.add('rage-border');
-        document.getElementById('audio-engine-tag').innerText = "🚀 RAGE SUB-SYSTEM ACTIVE - INFINITE AMMO & X2 POINTS ENABLED";
-        document.getElementById('audio-engine-tag').style.color = "#ef4444";
-
-        playAdvancedSound('rage_trigger');
-        screenShake = 35; 
-    }
-
-    function deactivateRageMode() {
-        isRageModeActive = false;
-        ragePoints = 0;
-        rageTimeRemaining = 0;
-        
-        document.body.classList.remove('rage-active');
-        document.getElementById('game-container').classList.remove('rage-glow');
-        document.getElementById('game-main-title').classList.remove('rage-title');
-        document.getElementById('game-main-title').innerText = "🎮 THE HUNTER";
-        document.getElementById('hunting-canvas').classList.remove('rage-border');
-        document.getElementById('audio-engine-tag').innerText = "🌌 Tri-Target Swarm System & Dynamic Combo Multipliers Loaded";
-        document.getElementById('audio-engine-tag').style.color = "#38bdf8";
-        
-        updateRageMeterUI();
-    }
-
     function executeShot() {
-        if (!isRageModeActive && ammo <= 0) {
+        if (ammo <= 0 && !isRageMode) {
             playAdvancedSound('empty');
             document.getElementById('game-status').innerText = "❌ OUT OF AMMO! Refill using your Pi Wallet.";
             document.getElementById('game-status').style.color = "#f87171";
             return;
         }
         
-        if (!isRageModeActive) {
-            ammo--; 
-            document.getElementById('ammo-val').innerText = ammo;
-        }
-
+        if (!isRageMode) ammo--; 
+        document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
+        
         playAdvancedSound('shoot');
-        
-        flashIntensity = isRageModeActive ? 1.4 : 0.95; 
-        screenShake = isRageModeActive ? 32 : 24;     
-        gunRecoilZ = isRageModeActive ? -110 : -75;     
-        gunRecoilY = isRageModeActive ? -70 : -50;     
-        gunRecoilAngle = (Math.random() - 0.5) * (isRageModeActive ? 0.55 : 0.35);
-        
+        flashIntensity = 0.8; 
+        screenShake = 14;     
+
+        gunRecoilZ = -55;     
+        gunRecoilY = -38;     
+        gunRecoilAngle = (Math.random() - 0.5) * 0.22;
         let gunBaseX = canvas.width - 40;
         let gunBaseY = canvas.height + 20;
         let rot = Math.atan2(aimY - gunBaseY, aimX - gunBaseX);
@@ -934,14 +772,29 @@
         targets.forEach(t => {
             if (t.special === "bonus" && t.opacity < 0.2) return;
 
+            // Rage mode gives a wider hit radius!
+            let hitRadius = isRageMode ? t.radius + 45 : t.radius + 18;
             const distance = Math.sqrt((aimX - t.x)**2 + (aimY - t.y)**2);
-            if (distance <= t.radius + 18) {
+            
+            if (distance <= hitRadius) {
                 hitAny = true;
                 hitCountThisShot++;
- 
-                let calculatedPoints = isRageModeActive ? (t.points * 2) : t.points;
-                score += calculatedPoints;
+                score += t.points;
                 totalHits++;
+
+                // Rage Meter Logic
+                if (!isRageMode) {
+                    rageMeter++;
+                    document.getElementById('rage-val').innerText = (rageMeter * 10) + "%";
+                    if (rageMeter >= 10) {
+                        isRageMode = true;
+                        rageTimeLeft = 300; // 300 frames (~5 seconds at 60fps)
+                        rageMeter = 0;
+                        document.getElementById('rage-val').innerText = "MAX!";
+                        currentStatusText = "🔥 RAGE MODE ACTIVATED! INFINITE AMMO! 🔥 " + currentStatusText;
+                        playAdvancedSound('fanfare_bonus');
+                    }
+                }
 
                 let pColor = currentBirdStyle.secondary;
                 if (t.special === "fast") pColor = "#c0c0c0"; 
@@ -955,7 +808,7 @@
                     currentStatusText += "⭐ GHOST REFILL! +12 AMMO! ";
                 }
 
-                let maxAllowedSpeed = isRageModeActive ? 12.0 : 9.0;
+                let maxAllowedSpeed = 9.0;
                 let speedIncrementX = (t.xSpeed > 0 ? 0.30 : -0.30);
                 let speedIncrementY = (t.ySpeed > 0 ? 0.26 : -0.26);
              
@@ -968,63 +821,52 @@
                 resetTarget(t);
             }
         });
-        
-        if (hitAny) {
-            if (!isRageModeActive) {
-                ragePoints++;
-                if (ragePoints >= maxRagePoints) {
-                    triggerRageMode();
-                }
-            }
 
+        if (hitAny) {
             if (hitCountThisShot > 1) {
                 let comboBonus = hitCountThisShot * 15;
-                if (isRageModeActive) comboBonus *= 2; 
                 score += comboBonus;
                 currentStatusText = `🔥 SWARM COMBO x${hitCountThisShot}! +${comboBonus} BONUS PTS! ` + currentStatusText;
                 playAdvancedSound('fanfare_bonus');
-                screenShake = 38; 
+                screenShake = 22;
             }
 
             document.getElementById('score-val').innerText = score;
             document.getElementById('hits-val').innerText = totalHits;
-            let statusColor = isRageModeActive ? "#ef4444" : "#4ade80";
+            let statusColor = isRageMode ? "#ef4444" : "#4ade80";
 
             if (totalHits > 0 && totalHits % 10 === 0) {
-                ammo += 50;
+                if (!isRageMode) ammo += 50; 
                 playAdvancedSound('fanfare_bonus');
                 currentStatusText += "🎁 INVENTORY BOX! +50 AMMO! ";
                 statusColor = "#eab308";
             }
 
-            if (currentStatusText === "") currentStatusText = isRageModeActive ? "🔥 TARGET OBLITERATED! X2 " : "🎯 TARGETS SMASHED! ";
+            if (currentStatusText === "") currentStatusText = "🎯 TARGETS SMASHED! ";
             let oldStyleName = currentBirdStyle.name;
             updateBirdColorTier();
 
             if (currentBirdStyle.name !== oldStyleName) {
                 currentStatusText += `🔥 LEVEL UP: [${currentBirdStyle.name}]!`;
                 statusColor = "#38bdf8";
-            } else if (!isRageModeActive) {
+            } else {
                 let remaining = getNextTierRemainingHits();
                 currentStatusText += `| Next swarm tier in ${remaining} hits.`;
             }
 
-            if (ammoBonusEarned > 0) ammo += ammoBonusEarned;
-            document.getElementById('ammo-val').innerText = ammo;
+            if (ammoBonusEarned > 0 && !isRageMode) ammo += ammoBonusEarned;
+            document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
 
             document.getElementById('game-status').innerText = currentStatusText;
             document.getElementById('game-status').style.color = statusColor;
 
             updateSupabaseScore();
         } else {
-            if (!isRageModeActive && ragePoints > 0) {
-                ragePoints--;
+            if (!isRageMode) {
+                document.getElementById('game-status').innerText = "💨 SHOT MISSED! Adjust your AK-47 trajectory.";
+                document.getElementById('game-status').style.color = "#fbbf24";
             }
-            document.getElementById('game-status').innerText = "💨 SHOT MISSED! Adjust your AK-47 trajectory.";
-            document.getElementById('game-status').style.color = "#fbbf24";
         }
-
-        updateRageMeterUI();
     }
 
     function setupJoystickListeners() {
@@ -1047,7 +889,6 @@
             let deltaX = touch.clientX - joyStartX;
             let deltaY = touch.clientY - joyStartY;
             let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-            
             if (distance > maxJoyDistance) {
                 deltaX = (deltaX / distance) * maxJoyDistance;
                 deltaY = (deltaY / distance) * maxJoyDistance;
@@ -1095,26 +936,11 @@
         e.preventDefault();
         if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
     });
-    
-    let isFireButtonHeld = false;
     const fireTriggerBtn = document.getElementById('fire-trigger');
+    fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
+    fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
-    function handleFireStart(e) {
-        e.preventDefault();
-        isFireButtonHeld = true;
-        executeShot();
-    }
-    function handleFireEnd(e) {
-        e.preventDefault();
-        isFireButtonHeld = false;
-        fireTriggerBtn.classList.remove('rage-firing');
-    }
-
-    fireTriggerBtn.addEventListener('mousedown', handleFireStart);
-    window.addEventListener('mouseup', handleFireEnd);
-    fireTriggerBtn.addEventListener('touchstart', handleFireStart, { passive: false });
-    window.addEventListener('touchend', handleFireEnd);
-
+    // === حلقة اللعبة الأساسية المحدثة بالمحرك البصري المتكامل والآمن ===
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
@@ -1124,27 +950,25 @@
 
             if (deltaTime > 3) deltaTime = 3; 
 
-            if (isRageModeActive) {
-                rageTimeRemaining -= (16.666 / 1000) * deltaTime;
-                updateRageMeterUI();
-
-                if (isFireButtonHeld && (currentTime - lastRageFireTime > 110)) {
-                    fireTriggerBtn.classList.add('rage-firing');
-                    executeShot();
-                    lastRageFireTime = currentTime;
-                }
-
-                if (rageTimeRemaining <= 0) {
-                    deactivateRageMode();
+            // تحديث حالة الغضب (Rage Mode Timer)
+            if (isRageMode) {
+                rageTimeLeft -= deltaTime;
+                if (rageTimeLeft <= 0) {
+                    isRageMode = false;
+                    document.getElementById('rage-val').innerText = "0%";
+                    document.getElementById('ammo-val').innerText = ammo;
+                    document.getElementById('game-status').innerText = "🧊 الغضب انتهى! عدنا للوضع الطبيعي.";
+                    document.getElementById('game-status').style.color = "#38bdf8";
                 }
             }
 
-            bgX -= (isRageModeActive ? 0.75 : 0.25) * deltaTime; 
+            // تحديث حركة الخلفية
+            bgX -= 0.25 * deltaTime;
 
+            // تحديث محرك جزيئات أوراق الشجر
             leaves.forEach(leaf => {
-                leaf.y += leaf.speed * (isRageModeActive ? 2.0 : 1.0) * deltaTime;
+                leaf.y += leaf.speed * deltaTime;
                 leaf.x += Math.sin(leaf.y * 0.02) * 0.4 * deltaTime;
-            
                 if (leaf.y > canvas.height) {
                     leaf.y = -10;
                     leaf.x = Math.random() * canvas.width;
@@ -1155,7 +979,7 @@
                 smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
                 smoothJoyY += (joyMoveY - smoothJoyY) * 0.28 * deltaTime;
 
-                let aimSpeed = (isRageModeActive ? 7.5 : 5.8) * deltaTime; 
+                let aimSpeed = 5.8 * deltaTime; 
                 aimX += smoothJoyX * aimSpeed;
                 aimY += smoothJoyY * aimSpeed;
             } else {
@@ -1169,23 +993,21 @@
             if (aimY > canvas.height) aimY = canvas.height;
 
             targets.forEach(t => {
-                let currentSpeedMult = isRageModeActive ? 1.6 : 1.0;
-
                 if (t.sineWave) {
                     t.sineCounter += 0.08 * deltaTime;
-                    t.x += t.xSpeed * currentSpeedMult * deltaTime;
-                    t.y += (t.ySpeed + Math.sin(t.sineCounter) * 2.5) * currentSpeedMult * deltaTime;
+                    t.x += t.xSpeed * deltaTime;
+                    t.y += (t.ySpeed + Math.sin(t.sineCounter) * 2.5) * deltaTime;
                 } else if (t.special === "bonus") {
                     t.ghostCounter += 0.03 * deltaTime;
                     t.opacity = (Math.sin(t.ghostCounter) * 0.5) + 0.5; 
-                    t.x += t.xSpeed * currentSpeedMult * deltaTime;
-                    t.y += t.ySpeed * currentSpeedMult * deltaTime;
+                    t.x += t.xSpeed * deltaTime;
+                    t.y += t.ySpeed * deltaTime;
                 } else {
-                    t.x += t.xSpeed * currentSpeedMult * deltaTime;
-                    t.y += t.ySpeed * currentSpeedMult * deltaTime;
+                    t.x += t.xSpeed * deltaTime;
+                    t.y += t.ySpeed * deltaTime;
                 }
 
-                t.flap += t.flapSpeed * (isRageModeActive ? 2.0 : 1.0) * deltaTime;
+                t.flap += t.flapSpeed * deltaTime;
 
                 let minBorder = 22;
                 let maxXBorder = canvas.width - minBorder;
@@ -1213,6 +1035,7 @@
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 1. رسم خلفية الغابة بطبقتين
             if (forestBgImg) {
                 ctx.drawImage(forestBgImg, bgX % canvas.width, 0, canvas.width, canvas.height);
                 ctx.drawImage(forestBgImg, (bgX % canvas.width) + canvas.width, 0, canvas.width, canvas.height);
@@ -1221,15 +1044,16 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            if (isRageModeActive) {
-                ctx.fillStyle = `rgba(239, 68, 68, ${0.08 + Math.sin(currentTime * 0.01) * 0.04})`;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // 2. إضافة تأثير الضباب السينمائي أو لون الغضب (Rage Tint)
+            if (isRageMode) {
+                ctx.fillStyle = "rgba(220, 38, 38, 0.25)"; // تأثير أحمر للغضب
             } else {
                 ctx.fillStyle = "rgba(2, 6, 23, 0.15)";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = isRageModeActive ? "rgba(239, 68, 68, 0.6)" : "rgba(234, 179, 8, 0.4)";
+            // 3. رسم جزئيات البيئة الحية 
+            ctx.fillStyle = "rgba(234, 179, 8, 0.4)";
             leaves.forEach(leaf => {
                 ctx.beginPath();
                 ctx.arc(leaf.x, leaf.y, leaf.size, 0, Math.PI * 2);
@@ -1241,7 +1065,6 @@
                 p.y += p.vy * deltaTime; 
                 p.vy += 0.18 * deltaTime; 
                 p.rotation += p.rotationSpeed * deltaTime;
-              
                 p.alpha -= 0.025 * deltaTime;
                 if (p.alpha <= 0) { 
                     particles.splice(index, 1); 
@@ -1264,7 +1087,6 @@
                 ctx.translate(t.x, t.y);
                 
                 let moveAngle = Math.atan2(t.ySpeed, t.xSpeed);
-           
                 if (t.xSpeed < 0) {
                     ctx.scale(1, -1);
                     ctx.rotate(-moveAngle + Math.PI);
@@ -1324,25 +1146,23 @@
                 ctx.restore();
                 
                 if (t.opacity > 0.15) {
-                    ctx.fillStyle = isRageModeActive ? '#fca5a5' : 'rgba(255,255,255,0.85)';
+                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
                     ctx.font = '900 10px Arial';
                     let label = t.special === "normal" ? "Leader" : (t.special === "fast" ? "Wave Jumper" : "Ghost Gold");
-                    if (isRageModeActive) label += " [X2]";
                     ctx.fillText(label, t.x - 22, t.y - t.height - 4);
                 }
             });
             
             if (flashIntensity > 0) {
                 ctx.save();
-                let flashRadius = isRageModeActive ? 85 : 55;
-                let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 3, muzzleFlashX, muzzleFlashY, flashRadius);
-                gradient.addColorStop(0, 'rgba(255, 255, 255, ' + Math.min(flashIntensity, 1) + ')');
-                gradient.addColorStop(0.2, 'rgba(254, 215, 170, ' + Math.min(flashIntensity * 0.95, 1) + ')');
-                gradient.addColorStop(0.6, 'rgba(239, 68, 68, ' + (flashIntensity * 0.6) + ')');
+                let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 3, muzzleFlashX, muzzleFlashY, 55);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, ' + flashIntensity + ')');
+                gradient.addColorStop(0.2, 'rgba(244, 240, 138, ' + (flashIntensity * 0.95) + ')');
+                gradient.addColorStop(0.6, 'rgba(249, 115, 22, ' + (flashIntensity * 0.6) + ')');
                 gradient.addColorStop(1, 'rgba(220, 38, 38, 0)');
                 ctx.fillStyle = gradient;
                 ctx.beginPath();
-                ctx.arc(muzzleFlashX, muzzleFlashY, flashRadius, 0, Math.PI * 2);
+                ctx.arc(muzzleFlashX, muzzleFlashY, 55, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
                 flashIntensity -= 0.06 * deltaTime;
@@ -1370,16 +1190,16 @@
             ctx.restore();
             
             ctx.save();
-            ctx.strokeStyle = isRageModeActive ? '#f43f5e' : '#f87171'; 
-            ctx.lineWidth = isRageModeActive ? 3.5 : 2.5;
+            // تغيير لون المؤشر في حالة الغضب
+            ctx.strokeStyle = isRageMode ? '#fbbf24' : '#f87171'; 
+            ctx.lineWidth = 2.5;
             ctx.translate(aimX, aimY);
-            ctx.beginPath(); ctx.arc(0, 0, isRageModeActive ? 14 : 11, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.stroke();
             ctx.beginPath();
-            let lineSize = isRageModeActive ? 26 : 22;
-            ctx.moveTo(-lineSize, 0); ctx.lineTo(lineSize, 0); 
-            ctx.moveTo(0, -lineSize); ctx.lineTo(lineSize, ctx.moving ? 0 : lineSize); ctx.stroke();
-            ctx.fillStyle = isRageModeActive ? '#ffffff' : '#ef4444';
-            ctx.beginPath(); ctx.arc(0, 0, isRageModeActive ? 4 : 3, 0, Math.PI * 2);
+            ctx.moveTo(-22, 0);
+            ctx.lineTo(22, 0); ctx.moveTo(0, -22); ctx.lineTo(0, 22); ctx.stroke();
+            ctx.fillStyle = isRageMode ? '#fbbf24' : '#ef4444';
+            ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
 
@@ -1445,7 +1265,7 @@
             const result = await response.json();
             if (result.success) {
                 ammo += 30;
-                document.getElementById('ammo-val').innerText = ammo;
+                document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
                 document.getElementById('game-status').innerText = "🪙 1 Pi received successfully! Magazine reloaded. 🔋";
                 document.getElementById('game-status').style.color = "#4ade80";
                 playAdvancedSound('reload');
