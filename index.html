@@ -233,7 +233,7 @@
         </div>
 
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
-        <div><span class="audio-indicator">🌌 Tri-Target Swarm System & Dynamic Combo Multipliers Loaded</span></div>
+        <div><span class="audio-indicator">🌌 Tri-Target Swarm System & Dynamic Backgrounds</span></div>
  
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
         
@@ -271,7 +271,13 @@
     const TABLE_NAME = "hunter_game_scores"; 
 
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
-    const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"; 
+    
+    // إعداد مسارات الخلفيات (صحراء -> جبال -> غابات)
+    const BACKGROUNDS = [
+        "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?auto=format&fit=crop&w=520&h=350&q=80", // Desert
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=520&h=350&q=80", // Mountains
+        "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"  // Forests
+    ];
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -288,8 +294,11 @@
     let isRageMode = false;
     let rageTimeLeft = 0;
 
-    // === متغيرات المحرك البصري الجديد والبيئة الخلفية ===
+    // Background & Engine Variables
     let bgX = 0;
+    let currentBgImg = null;
+    let currentBgIndex = 0;
+
     let leaves = Array.from({length: 15}, () => ({
         x: Math.random() * 520,
         y: Math.random() * 350,
@@ -353,7 +362,6 @@
     const ctx = canvas.getContext('2d');
     let gameInterval;
     let ak47Img = null;
-    let forestBgImg = null; 
 
     let gunRecoilZ = 0;
     let gunRecoilY = 0;
@@ -415,7 +423,6 @@
                 tailNoise.connect(tailFilter);
                 tailFilter.connect(tailGain);
                 
-                // Echo Node
                 const delay = audioCtx.createDelay();
                 delay.delayTime.value = 0.15;
                 const feedback = audioCtx.createGain();
@@ -425,9 +432,9 @@
                 delay.connect(audioCtx.destination);
 
                 impulseGain.connect(audioCtx.destination);
-                impulseGain.connect(delay); // Connect to echo
+                impulseGain.connect(delay); 
                 tailGain.connect(audioCtx.destination);
-                tailGain.connect(delay); // Connect to echo
+                tailGain.connect(delay); 
                 
                 impulseOsc.start(now);
                 impulseOsc.stop(now + 0.13);
@@ -454,7 +461,6 @@
                 mechOsc.stop(now + 0.04);
                 
             } else if (type === 'hit') {
-                // Enhanced Impact Sound
                 const hitOsc = audioCtx.createOscillator();
                 const hitGain = audioCtx.createGain();
                 hitOsc.type = 'square';
@@ -537,8 +543,16 @@
                 });
             }
         } catch(e){
-            console.error("DSP Subsystem Fault Protection:", e);
+            console.error("DSP Subsystem Fault:", e);
         }
+    }
+
+    function loadBackgroundImage(index) {
+        let img = new Image();
+        img.src = BACKGROUNDS[index % BACKGROUNDS.length];
+        img.crossOrigin = "anonymous";
+        img.onload = () => { currentBgImg = img; };
+        img.onerror = () => { currentBgImg = null; };
     }
 
     function preloadAssets() {
@@ -557,11 +571,12 @@
             ak47Img.onload = checkLoad;
             ak47Img.onerror = () => { ak47Img = null; checkLoad(); };
 
-            forestBgImg = new Image();
-            forestBgImg.src = BG_FOREST_URL;
-            forestBgImg.crossOrigin = "anonymous";
-            forestBgImg.onload = checkLoad;
-            forestBgImg.onerror = () => { forestBgImg = null; checkLoad(); };
+            // تحميل الخلفية الأولى (الصحراء)
+            currentBgImg = new Image();
+            currentBgImg.src = BACKGROUNDS[0];
+            currentBgImg.crossOrigin = "anonymous";
+            currentBgImg.onload = checkLoad;
+            currentBgImg.onerror = () => { currentBgImg = null; checkLoad(); };
         });
     }
 
@@ -586,7 +601,7 @@
                             handleLoginSuccess();
                         })
                         .catch((err) => {
-                            console.error("Authentication redirection:", err);
+                            console.error("Auth redirection:", err);
                             setupDevAccount();
                         });
                     }, 250);
@@ -635,18 +650,8 @@
     }
 
     function updateBirdColorTier() {
-        let currentTier = 0;
-        let cumulativeThreshold = 0;
-        
-        while (true) {
-            let step = 10 + (currentTier * 10);
-            if (totalHits >= cumulativeThreshold + step) {
-                cumulativeThreshold += step;
-                currentTier++;
-            } else {
-                break;
-            }
-        }
+        // حساب المستوى بناءً على كل 10 إصابات
+        let currentTier = Math.floor(totalHits / 10);
         
         if (currentTier < birdColorTiers.length) {
             currentBirdStyle = birdColorTiers[currentTier];
@@ -667,6 +672,12 @@
                 beak: "#ffffff"
             };
         }
+
+        // تغيير الخلفية إذا اختلف المستوى
+        if (currentBgIndex !== currentTier) {
+            currentBgIndex = currentTier;
+            loadBackgroundImage(currentBgIndex);
+        }
         
         const colorDisplay = document.getElementById('color-name-display');
         colorDisplay.innerText = currentBirdStyle.name;
@@ -674,19 +685,9 @@
     }
 
     function getNextTierRemainingHits() {
-        let currentTier = 0;
-        let cumulativeThreshold = 0;
-        
-        while (true) {
-            let step = 10 + (currentTier * 10);
-            if (totalHits >= cumulativeThreshold + step) {
-                cumulativeThreshold += step;
-                currentTier++;
-            } else {
-                let nextThreshold = cumulativeThreshold + step;
-                return nextThreshold - totalHits;
-            }
-        }
+        let currentTier = Math.floor(totalHits / 10);
+        let nextThreshold = (currentTier + 1) * 10;
+        return nextThreshold - totalHits;
     }
 
     async function updateSupabaseScore() {
@@ -772,7 +773,6 @@
         targets.forEach(t => {
             if (t.special === "bonus" && t.opacity < 0.2) return;
 
-            // Rage mode gives a wider hit radius!
             let hitRadius = isRageMode ? t.radius + 45 : t.radius + 18;
             const distance = Math.sqrt((aimX - t.x)**2 + (aimY - t.y)**2);
             
@@ -782,13 +782,12 @@
                 score += t.points;
                 totalHits++;
 
-                // Rage Meter Logic
                 if (!isRageMode) {
                     rageMeter++;
                     document.getElementById('rage-val').innerText = (rageMeter * 10) + "%";
                     if (rageMeter >= 10) {
                         isRageMode = true;
-                        rageTimeLeft = 300; // 300 frames (~5 seconds at 60fps)
+                        rageTimeLeft = 300; 
                         rageMeter = 0;
                         document.getElementById('rage-val').innerText = "MAX!";
                         currentStatusText = "🔥 RAGE MODE ACTIVATED! INFINITE AMMO! 🔥 " + currentStatusText;
@@ -847,11 +846,11 @@
             updateBirdColorTier();
 
             if (currentBirdStyle.name !== oldStyleName) {
-                currentStatusText += `🔥 LEVEL UP: [${currentBirdStyle.name}]!`;
+                currentStatusText += `🔥 LEVEL UP: [${currentBirdStyle.name}]! (New Background Area)`;
                 statusColor = "#38bdf8";
             } else {
                 let remaining = getNextTierRemainingHits();
-                currentStatusText += `| Next swarm tier in ${remaining} hits.`;
+                currentStatusText += `| Next swarm & background in ${remaining} hits.`;
             }
 
             if (ammoBonusEarned > 0 && !isRageMode) ammo += ammoBonusEarned;
@@ -940,7 +939,6 @@
     fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
     fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
-    // === حلقة اللعبة الأساسية المحدثة بالمحرك البصري المتكامل والآمن ===
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
@@ -950,7 +948,6 @@
 
             if (deltaTime > 3) deltaTime = 3; 
 
-            // تحديث حالة الغضب (Rage Mode Timer)
             if (isRageMode) {
                 rageTimeLeft -= deltaTime;
                 if (rageTimeLeft <= 0) {
@@ -962,10 +959,8 @@
                 }
             }
 
-            // تحديث حركة الخلفية
             bgX -= 0.25 * deltaTime;
 
-            // تحديث محرك جزيئات أوراق الشجر
             leaves.forEach(leaf => {
                 leaf.y += leaf.speed * deltaTime;
                 leaf.x += Math.sin(leaf.y * 0.02) * 0.4 * deltaTime;
@@ -1035,24 +1030,23 @@
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // 1. رسم خلفية الغابة بطبقتين
-            if (forestBgImg) {
-                ctx.drawImage(forestBgImg, bgX % canvas.width, 0, canvas.width, canvas.height);
-                ctx.drawImage(forestBgImg, (bgX % canvas.width) + canvas.width, 0, canvas.width, canvas.height);
+            
+            // رسم الخلفية المتغيرة
+            if (currentBgImg) {
+                ctx.drawImage(currentBgImg, bgX % canvas.width, 0, canvas.width, canvas.height);
+                ctx.drawImage(currentBgImg, (bgX % canvas.width) + canvas.width, 0, canvas.width, canvas.height);
             } else {
                 ctx.fillStyle = '#070b19';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // 2. إضافة تأثير الضباب السينمائي أو لون الغضب (Rage Tint)
             if (isRageMode) {
-                ctx.fillStyle = "rgba(220, 38, 38, 0.25)"; // تأثير أحمر للغضب
+                ctx.fillStyle = "rgba(220, 38, 38, 0.25)"; 
             } else {
                 ctx.fillStyle = "rgba(2, 6, 23, 0.15)";
             }
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 3. رسم جزئيات البيئة الحية 
             ctx.fillStyle = "rgba(234, 179, 8, 0.4)";
             leaves.forEach(leaf => {
                 ctx.beginPath();
@@ -1190,7 +1184,6 @@
             ctx.restore();
             
             ctx.save();
-            // تغيير لون المؤشر في حالة الغضب
             ctx.strokeStyle = isRageMode ? '#fbbf24' : '#f87171'; 
             ctx.lineWidth = 2.5;
             ctx.translate(aimX, aimY);
