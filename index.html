@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE HUNTER Arcade - 3 Birds Swarm Swish Edition 🔥</title>
+    <title>THE HUNTER Arcade - World Shift Edition 🔥</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
+        /* =========================================
+           CSS STYLES & UI DESIGN
+           ========================================= */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #020617; 
@@ -100,6 +103,7 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.8);
             background-color: #070b19;
             display: block;
+            transition: border-color 0.3s ease;
         }
         
         .controls-wrapper {
@@ -156,10 +160,8 @@
             position: absolute;
             box-shadow: 0 3px 10px rgba(0,0,0,0.6);
             cursor: pointer;
-            /* تمت إزالة الـ transition لتفادي التقطيع أثناء السحب */
         }
         
-        /* كلاس جديد للأنيميشن الارتدادي عند إفلات العصا فقط */
         .joystick-knob.release-anim {
             transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
@@ -211,6 +213,28 @@
             border-radius: 20px;
             font-weight: bold;
         }
+        
+        .developer-footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        #shield-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(250, 204, 21, 0.15);
+            border: 4px solid #facc15;
+            border-radius: 16px;
+            pointer-events: none;
+            display: none;
+            box-shadow: inset 0 0 30px rgba(250, 204, 21, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -218,6 +242,7 @@
 <div class="container" id="game-container">
     <h1>🎮 THE HUNTER</h1>
 
+    <!-- SECTION: LOGIN -->
     <div id="auth-section">
         <div class="welcome-card">
             <div class="hunter-avatar"></div>
@@ -226,20 +251,24 @@
         </div>
     </div>
 
+    <!-- SECTION: GAMEPLAY -->
     <div id="game-section" class="hidden">
         <div class="stats-bar">
             <div>Hunter: <span id="player-name" style="color: #38bdf8;">...</span></div>
-            <div>Hits: <span id="hits-val" style="color: #eab308;">0</span> 🎯</div>
             <div>Score: <span id="score-val" style="color: #4ade80;">0</span></div>
             <div>Ammo: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
-            <div>Rage: <span id="rage-val" style="color: #ef4444;">0%</span> 😡</div>
-            <div>Tier Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown</span></div>
+            <div>Acc: <span id="acc-val" style="color: #06b6d4;">100%</span> 🎯</div>
+            <div>World: <span id="env-name" style="color: #fbbf24; font-weight: bold;">Forest</span> 🌍</div>
         </div>
 
-        <canvas id="hunting-canvas" width="520" height="350"></canvas>
-        <div><span class="audio-indicator">🌌 Tri-Target Swarm System & Dynamic Combo Multipliers Loaded</span></div>
+        <div style="position: relative;">
+            <canvas id="hunting-canvas" width="520" height="350"></canvas>
+            <div id="shield-overlay"></div>
+        </div>
+        
+        <div><span class="audio-indicator">🌌 Dynamic World Shift & Golden Bird Enabled</span></div>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Survive the Swarm! Environments will shift as you hunt. 🚀</p>
         
         <div class="controls-wrapper">
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
@@ -264,10 +293,17 @@
                 </tr>
             </tbody>
         </table>
+        
+        <div class="developer-footer">
+            Developed by Abu Kareem
+        </div>
     </div>
 </div>
 
 <script>
+    /* =========================================
+       SYSTEM CONFIGURATION & SUPABASE
+       ========================================= */
     const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
@@ -277,68 +313,54 @@
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    /* =========================================
+       GAME STATE VARIABLES
+       ========================================= */
     let score = 0;
     let ammo = 30;
     let totalHits = 0; 
+    let shotsFired = 0;
+    let comboCount = 0;
+    
     let playerPiUser = "";
     let playerWallet = ""; 
     let currentPiUserId = "";
     let isSdkInitialized = false;
 
-    // Rage Mode Variables
-    let rageMeter = 0;
+    // Shield System (Golden Boss Reward)
+    let shieldActive = false;
+    let shieldTimeLeft = 0;
     let isRageMode = false;
     let rageTimeLeft = 0;
 
-    let bgX = 0;
-    let leaves = Array.from({length: 15}, () => ({
-        x: Math.random() * 520,
-        y: Math.random() * 350,
-        size: Math.random() * 3 + 2,
-        speed: Math.random() * 1.2 + 0.4,
-        sway: Math.random() * 0.04
-    }));
+    // Canvas Settings
+    const canvas = document.getElementById('hunting-canvas');
+    const ctx = canvas.getContext('2d');
+    let animationId; 
+    let ak47Img = null;
+    let forestBgImg = null; 
+    let lastTime = performance.now(); 
 
-    const birdColorTiers = [
-        { name: "Classic Trio Tier", primary: "#543011", secondary: "#eab308", detail: "#3a1f05", beak: "#f97316" }, 
-        { name: "Forest Emerald Pack", primary: "#115e59", secondary: "#10b981", detail: "#064e3b", beak: "#f43f5e" },  
-        { name: "Neon Cyber Squad", primary: "#0369a1", secondary: "#06b6d4", detail: "#0c4a6e", beak: "#fbbf24" },      
-        { name: "Royal Purple Swarm", primary: "#6b21a8", secondary: "#a855f7", detail: "#4c1d95", beak: "#22c55e" },    
-        { name: "Cosmic Amber Legion 🌟", primary: "#b45309", secondary: "#fbbf24", detail: "#78350f", beak: "#ef4444" },  
-        { name: "Magma Crimson Rush 🔥", primary: "#991b1b", secondary: "#ef4444", detail: "#450a0a", beak: "#ffffff" },  
-        { name: "Prism Rainbow Flock 🌈", primary: "#db2777", secondary: "#3b82f6", detail: "#4f46e5", beak: "#eab308" },  
-        { name: "Cyber Shadow Division 🥷", primary: "#1e293b", secondary: "#475569", detail: "#0f172a", beak: "#38bdf8" },  
-        { name: "GODLIKE GOLD SWARM 👑", primary: "#d97706", secondary: "#fef08a", detail: "#78350f", beak: "#f97316" }   
-    ];
-    let currentBirdStyle = birdColorTiers[0];
+    // Dynamic Crosshair
+    let crosshairColor = "#ef4444";
+    let aimX = 260;
+    let aimY = 175;
 
-    let targets = [
-        { 
-            id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, 
-            width: 44, height: 35, flap: 0, flapSpeed: 0.25, radius: 22, 
-            sineWave: false, opacity: 1.0, points: 10, special: "normal"
-        },
-        { 
-            id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, 
-            width: 38, height: 30, flap: 1.5, flapSpeed: 0.35, radius: 19, 
-            sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast"
-        },
-        { 
-            id: 3, type: "ghost_refiller", x: 400, y: 80, xSpeed: 4.0, ySpeed: -2.2, 
-            width: 46, height: 36, flap: 3.0, flapSpeed: 0.20, radius: 23, 
-            sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0
-        }
-    ];
-    
+    // Visual Effects State
     let particles = []; 
+    let envParticles = [];
     let floatingTexts = []; 
     let flashIntensity = 0;
     let muzzleFlashX = 0;
     let muzzleFlashY = 0;
     let screenShake = 0;
-    let aimX = 260;
-    let aimY = 175;
+    
+    // Weapon Physics
+    let gunRecoilZ = 0;
+    let gunRecoilY = 0;
+    let gunRecoilAngle = 0;
 
+    // Joystick State
     let joyActive = false;
     let joyStartX = 0;
     let joyStartY = 0;
@@ -347,34 +369,102 @@
     let smoothJoyX = 0; 
     let smoothJoyY = 0; 
     const maxJoyDistance = 35;
-    let lastTime = performance.now(); 
 
-    const canvas = document.getElementById('hunting-canvas');
-    const ctx = canvas.getContext('2d');
-    let animationId; 
-    let ak47Img = null;
-    let forestBgImg = null; 
+    /* =========================================
+       ENVIRONMENT (WORLD SHIFT) SYSTEM
+       ========================================= */
+    const ENVIRONMENTS = [
+        { id: 0, name: "Forest", bgTint: "rgba(15, 23, 42, 0.4)", pColor: "#22c55e", pType: "leaf" },
+        { id: 1, name: "Desert", bgTint: "rgba(120, 53, 15, 0.6)", pColor: "#f59e0b", pType: "sand" },
+        { id: 2, name: "Snow Peak", bgTint: "rgba(226, 232, 240, 0.6)", pColor: "#ffffff", pType: "snow" },
+        { id: 3, name: "Volcano", bgTint: "rgba(69, 10, 10, 0.7)", pColor: "#ef4444", pType: "ember" }
+    ];
+    let currentEnvIndex = 0;
+    let bgX = 0;
 
-    let gunRecoilZ = 0;
-    let gunRecoilY = 0;
-    let gunRecoilAngle = 0;
+    function initEnvParticles() {
+        envParticles = [];
+        for(let i=0; i<30; i++) {
+            envParticles.push(createEnvParticle());
+        }
+    }
 
+    function createEnvParticle() {
+        return {
+            x: Math.random() * 520,
+            y: Math.random() * 350,
+            size: Math.random() * 3 + 1,
+            speedX: (Math.random() - 0.5) * 2,
+            speedY: Math.random() * 2 + 0.5,
+            sway: Math.random() * 0.04
+        };
+    }
+
+    function checkWorldShift() {
+        let newIndex = 0;
+        if (totalHits >= 60) newIndex = 3;
+        else if (totalHits >= 40) newIndex = 2;
+        else if (totalHits >= 20) newIndex = 1;
+        
+        if (newIndex !== currentEnvIndex) {
+            currentEnvIndex = newIndex;
+            document.getElementById('env-name').innerText = ENVIRONMENTS[currentEnvIndex].name;
+            document.getElementById('env-name').style.color = ENVIRONMENTS[currentEnvIndex].pColor;
+            canvas.style.borderColor = ENVIRONMENTS[currentEnvIndex].pColor;
+            initEnvParticles();
+            playAdvancedSound('fanfare_bonus');
+            showFloatingText(260, 175, `${ENVIRONMENTS[currentEnvIndex].name} UNLOCKED!`, ENVIRONMENTS[currentEnvIndex].pColor, 24);
+        }
+    }
+
+    /* =========================================
+       BIRD TARGETS SYSTEM
+       ========================================= */
+    const birdColorTiers = [
+        { name: "Classic Trio Tier", primary: "#543011", secondary: "#eab308", detail: "#3a1f05", beak: "#f97316" }, 
+        { name: "Forest Emerald", primary: "#115e59", secondary: "#10b981", detail: "#064e3b", beak: "#f43f5e" }
+    ];
+    let currentBirdStyle = birdColorTiers[0];
+
+    let targets = [
+        { id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, width: 44, height: 35, flap: 0, flapSpeed: 0.25, radius: 22, sineWave: false, opacity: 1.0, points: 10, special: "normal" },
+        { id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, width: 38, height: 30, flap: 1.5, flapSpeed: 0.35, radius: 19, sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast" },
+        { id: 3, type: "ghost_refiller", x: 400, y: 80, xSpeed: 4.0, ySpeed: -2.2, width: 46, height: 36, flap: 3.0, flapSpeed: 0.20, radius: 23, sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0 }
+    ];
+
+    function spawnGoldenBird() {
+        // Spawn every 30 hits if it doesn't already exist
+        let goldenExists = targets.find(t => t.special === "golden_boss");
+        if (totalHits > 0 && totalHits % 30 === 0 && !goldenExists) {
+            targets.push({
+                id: 99, type: "golden_boss", x: -50, y: Math.random() * 200 + 50,
+                xSpeed: 6.5, ySpeed: 2.5, width: 55, height: 45, flap: 0, flapSpeed: 0.4,
+                radius: 30, sineWave: true, sineCounter: 0, opacity: 1.0, points: 200, special: "golden_boss"
+            });
+            document.getElementById('game-status').innerText = "⚠️ MYSTERY GOLDEN BIRD APPEARED! ⚠️";
+            document.getElementById('game-status').style.color = "#fbbf24";
+            playAdvancedSound('fanfare_bonus');
+        }
+    }
+
+    /* =========================================
+       AUDIO SYNTHESIS SUBSYSTEM (Web Audio API)
+       ========================================= */
     let audioCtx;
     function initAudio() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
     function playAdvancedSound(type) {
         if (!audioCtx) return;
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-
         try {
             const now = audioCtx.currentTime;
+            
             if (type === 'shoot') {
+                // Realistic gunshot synth
                 const impulseOsc = audioCtx.createOscillator();
                 const impulseGain = audioCtx.createGain();
                 impulseOsc.type = 'sawtooth';
@@ -395,9 +485,8 @@
                 const tailBufferSize = audioCtx.sampleRate * 0.55; 
                 const tailBuffer = audioCtx.createBuffer(1, tailBufferSize, audioCtx.sampleRate);
                 const tailData = tailBuffer.getChannelData(0);
-                for (let i = 0; i < tailBufferSize; i++) {
-                    tailData[i] = Math.random() * 2 - 1;
-                }
+                for (let i = 0; i < tailBufferSize; i++) tailData[i] = Math.random() * 2 - 1;
+                
                 const tailNoise = audioCtx.createBufferSource();
                 tailNoise.buffer = tailBuffer;
                 
@@ -415,42 +504,11 @@
                 tailNoise.connect(tailFilter);
                 tailFilter.connect(tailGain);
                 
-                const delay = audioCtx.createDelay();
-                delay.delayTime.value = 0.15;
-                const feedback = audioCtx.createGain();
-                feedback.gain.value = 0.25;
-                delay.connect(feedback);
-                feedback.connect(delay);
-                delay.connect(audioCtx.destination);
-
                 impulseGain.connect(audioCtx.destination);
-                impulseGain.connect(delay);
                 tailGain.connect(audioCtx.destination);
-                tailGain.connect(delay); 
                 
-                impulseOsc.start(now);
-                impulseOsc.stop(now + 0.13);
-                tailNoise.start(now);
-                tailNoise.stop(now + 0.52);
-
-                const mechOsc = audioCtx.createOscillator();
-                const mechGain = audioCtx.createGain();
-                mechOsc.type = 'sawtooth';
-                mechOsc.frequency.setValueAtTime(1100, now);
-                
-                const mechFilter = audioCtx.createBiquadFilter();
-                mechFilter.type = 'highpass';
-                mechFilter.frequency.setValueAtTime(1500, now);
-
-                mechGain.gain.setValueAtTime(0.6, now); 
-                mechGain.gain.linearRampToValueAtTime(0.001, now + 0.04);
-                
-                mechOsc.connect(mechFilter);
-                mechFilter.connect(mechGain);
-                mechGain.connect(audioCtx.destination);
-                
-                mechOsc.start(now);
-                mechOsc.stop(now + 0.04);
+                impulseOsc.start(now); impulseOsc.stop(now + 0.13);
+                tailNoise.start(now); tailNoise.stop(now + 0.52);
                 
             } else if (type === 'hit') {
                 const hitOsc = audioCtx.createOscillator();
@@ -459,18 +517,12 @@
                 hitOsc.frequency.setValueAtTime(600, now);
                 hitOsc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
                 
-                const lpFilter = audioCtx.createBiquadFilter();
-                lpFilter.type = 'lowpass';
-                lpFilter.frequency.setValueAtTime(800, now);
-
                 hitGain.gain.setValueAtTime(0.9, now);
                 hitGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
                 
-                hitOsc.connect(lpFilter);
-                lpFilter.connect(hitGain);
-                hitGain.connect(audioCtx.destination);
-                hitOsc.start(now);
-                hitOsc.stop(now + 0.15);
+                hitOsc.connect(hitGain); hitGain.connect(audioCtx.destination);
+                hitOsc.start(now); hitOsc.stop(now + 0.15);
+                
             } else if (type === 'empty') {
                 const emptyOsc = audioCtx.createOscillator();
                 const emptyGain = audioCtx.createGain();
@@ -481,10 +533,8 @@
                 emptyGain.gain.setValueAtTime(0.4, now);
                 emptyGain.gain.linearRampToValueAtTime(0.001, now + 0.025);
                 
-                emptyOsc.connect(emptyGain);
-                emptyGain.connect(audioCtx.destination);
-                emptyOsc.start(now);
-                emptyOsc.stop(now + 0.025);
+                emptyOsc.connect(emptyGain); emptyGain.connect(audioCtx.destination);
+                emptyOsc.start(now); emptyOsc.stop(now + 0.025);
                 
             } else if (type === 'reload') {
                 const osc1 = audioCtx.createOscillator();
@@ -494,30 +544,8 @@
                 osc1.frequency.linearRampToValueAtTime(700, now + 0.06);
                 gain1.gain.setValueAtTime(0.3, now);
                 gain1.gain.linearRampToValueAtTime(0.001, now + 0.06);
-                osc1.connect(gain1);
-                gain1.connect(audioCtx.destination);
-                osc1.start(now);
-                osc1.stop(now + 0.06);
-
-                const delay = 0.16;
-                const osc2 = audioCtx.createOscillator();
-                const gain2 = audioCtx.createGain();
-                osc2.type = 'sawtooth';
-                osc2.frequency.setValueAtTime(250, now + delay);
-                osc2.frequency.exponentialRampToValueAtTime(1150, now + delay + 0.08);
-                
-                const reloadFilter = audioCtx.createBiquadFilter();
-                reloadFilter.type = 'lowpass';
-                reloadFilter.frequency.value = 1500;
-                
-                gain2.gain.setValueAtTime(0.35, now + delay);
-                gain2.gain.linearRampToValueAtTime(0.001, now + delay + 0.08);
-                
-                osc2.connect(reloadFilter);
-                reloadFilter.connect(gain2);
-                gain2.connect(audioCtx.destination);
-                osc2.start(now + delay);
-                osc2.stop(now + delay + 0.08);
+                osc1.connect(gain1); gain1.connect(audioCtx.destination);
+                osc1.start(now); osc1.stop(now + 0.06);
                 
             } else if (type === 'fanfare_bonus') {
                 const melody = [329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
@@ -528,17 +556,16 @@
                     osc.frequency.setValueAtTime(freq, now + (index * 0.06));
                     gain.gain.setValueAtTime(0.25, now + (index * 0.06));
                     gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.06) + 0.18);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.start(now + (index * 0.06));
-                    osc.stop(now + (index * 0.06) + 0.18);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(now + (index * 0.06)); osc.stop(now + (index * 0.06) + 0.18);
                 });
             }
-        } catch(e){
-            console.error("DSP Subsystem Fault Protection:", e);
-        }
+        } catch(e) { console.error("Audio Engine Fault:", e); }
     }
 
+    /* =========================================
+       INITIALIZATION & LOGIN (PI SDK)
+       ========================================= */
     function preloadAssets() {
         return new Promise((resolve) => {
             let loadedCount = 0;
@@ -566,7 +593,7 @@
     function initAndLoginWithPi() {
         initAudio();
         const loginBtn = document.getElementById('btn-login');
-        loginBtn.innerText = "Synchronizing Components... 🔄";
+        loginBtn.innerText = "Synchronizing Systems... 🔄";
         preloadAssets().then(() => {
             try {
                 if (typeof Pi !== 'undefined' && window.Pi) {
@@ -574,7 +601,6 @@
                         window.Pi.init({ version: "2.0" });
                         isSdkInitialized = true;
                     }
-                    
                     setTimeout(() => {
                         window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
                         .then(function(auth) {
@@ -584,7 +610,7 @@
                             handleLoginSuccess();
                         })
                         .catch((err) => {
-                            console.error("Authentication redirection:", err);
+                            console.error("Auth redirect:", err);
                             setupDevAccount();
                         });
                     }, 250);
@@ -598,7 +624,7 @@
     }
 
     function setupDevAccount() {
-        playerPiUser = "Abokareem999";
+        playerPiUser = "Abu Kareem"; // Set to user's requested name
         currentPiUserId = "DEV_UID_ABUKAREEM_OFFICIAL";
         playerWallet = "GCOHCVV66Y7UX3KB36V4B7NS5W"; 
         handleLoginSuccess();
@@ -616,15 +642,15 @@
                 score = data.high_score || 0; 
                 document.getElementById('score-val').innerText = score;
                 totalHits = Math.floor(score / 10);
-                document.getElementById('hits-val').innerText = totalHits;
-                
-                updateBirdColorTier();
+                checkWorldShift();
             }
         } catch(e) {}
         
         updateSupabaseScore();
         document.getElementById('auth-section').className = 'hidden';
         document.getElementById('game-section').className = '';
+        
+        initEnvParticles();
         lastTime = performance.now(); 
         startGameLoop();
         setupJoystickListeners(); 
@@ -632,61 +658,9 @@
         playAdvancedSound('reload');
     }
 
-    function updateBirdColorTier() {
-        let currentTier = 0;
-        let cumulativeThreshold = 0;
-        
-        while (true) {
-            let step = 10 + (currentTier * 10);
-            if (totalHits >= cumulativeThreshold + step) {
-                cumulativeThreshold += step;
-                currentTier++;
-            } else {
-                break;
-            }
-        }
-        
-        if (currentTier < birdColorTiers.length) {
-            currentBirdStyle = birdColorTiers[currentTier];
-        } else {
-            let seed = currentTier * 13579;
-            function generateHexColor(offset) {
-                let r = Math.floor((Math.sin(seed + offset) * 0.5 + 0.5) * 220) + 35;
-                let g = Math.floor((Math.sin(seed + offset + 2) * 0.5 + 0.5) * 220) + 35;
-                let b = Math.floor((Math.sin(seed + offset + 4) * 0.5 + 0.5) * 220) + 35;
-                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-            }
-            
-            currentBirdStyle = {
-                name: `Mythic Swarm Gen [${currentTier + 1}]`,
-                primary: generateHexColor(0),
-                secondary: generateHexColor(15),
-                detail: generateHexColor(30),
-                beak: "#ffffff"
-            };
-        }
-        
-        const colorDisplay = document.getElementById('color-name-display');
-        colorDisplay.innerText = currentBirdStyle.name;
-        colorDisplay.style.color = currentBirdStyle.secondary;
-    }
-
-    function getNextTierRemainingHits() {
-        let currentTier = 0;
-        let cumulativeThreshold = 0;
-        
-        while (true) {
-            let step = 10 + (currentTier * 10);
-            if (totalHits >= cumulativeThreshold + step) {
-                cumulativeThreshold += step;
-                currentTier++;
-            } else {
-                let nextThreshold = cumulativeThreshold + step;
-                return nextThreshold - totalHits;
-            }
-        }
-    }
-
+    /* =========================================
+       LEADERBOARD LOGIC
+       ========================================= */
     async function updateSupabaseScore() {
         if (!playerPiUser) return;
         try {
@@ -721,14 +695,19 @@
         } catch (err) {}
     }
 
+    /* =========================================
+       GAMEPLAY LOGIC & CONTROLS
+       ========================================= */
+    function showFloatingText(x, y, text, color, size = 18) {
+        floatingTexts.push({ x: x, y: y, text: text, alpha: 1.0, color: color, size: size });
+    }
+
     function createFeatherCloud(x, y, customColor) {
-        let pColor = customColor || currentBirdStyle.secondary;
+        let pColor = customColor || "#eab308";
         for (let i = 0; i < 25; i++) {
             particles.push({
-                x: x, 
-                y: y,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.8) * 7, 
+                x: x, y: y,
+                vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.8) * 7, 
                 radius: Math.random() * 4 + 1.5,
                 rotation: Math.random() * Math.PI * 2,
                 rotationSpeed: (Math.random() - 0.5) * 0.3,
@@ -738,24 +717,37 @@
         }
     }
 
+    function activateShield() {
+        shieldActive = true;
+        shieldTimeLeft = 10; // 10 seconds of shield
+        document.getElementById('shield-overlay').style.display = 'block';
+    }
+
     function executeShot() {
-        if (ammo <= 0 && !isRageMode) {
+        if (ammo <= 0 && !shieldActive) {
             playAdvancedSound('empty');
             document.getElementById('game-status').innerText = "❌ OUT OF AMMO! Refill using your Pi Wallet.";
             document.getElementById('game-status').style.color = "#f87171";
             return;
         }
         
-        if (!isRageMode) ammo--;
-        document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
+        shotsFired++;
+        if (!shieldActive) ammo--;
+        document.getElementById('ammo-val').innerText = shieldActive ? "🛡️" : ammo;
         
         playAdvancedSound('shoot');
-        flashIntensity = 0.8; 
-        screenShake = 14;     
+        
+        // Muzzle Flash
+        flashIntensity = 1.0; 
+        
+        // Dynamic Screen Shake (scales with combo)
+        screenShake = 12 + (comboCount * 3);     
 
+        // Recoil Logic
         gunRecoilZ = -55;     
         gunRecoilY = -38;
         gunRecoilAngle = (Math.random() - 0.5) * 0.22;
+        
         let gunBaseX = canvas.width - 40;
         let gunBaseY = canvas.height + 20;
         let rot = Math.atan2(aimY - gunBaseY, aimX - gunBaseX);
@@ -764,13 +756,12 @@
         
         let hitAny = false;
         let hitCountThisShot = 0;
-        let ammoBonusEarned = 0;
         let currentStatusText = "";
 
         targets.forEach(t => {
             if (t.special === "bonus" && t.opacity < 0.2) return;
 
-            let hitRadius = isRageMode ? t.radius + 45 : t.radius + 18;
+            let hitRadius = t.radius + 18;
             const distance = Math.sqrt((aimX - t.x)**2 + (aimY - t.y)**2);
            
             if (distance <= hitRadius) {
@@ -779,118 +770,81 @@
                 score += t.points;
                 totalHits++;
                 
-                floatingTexts.push({
-                    x: t.x,
-                    y: t.y,
-                    text: `+${t.points}`,
-                    alpha: 1.0,
-                    color: t.special === "bonus" ? '#fbbf24' : '#4ade80'
-                });
+                showFloatingText(t.x, t.y, `+${t.points}`, t.special === "bonus" || t.special === "golden_boss" ? '#fbbf24' : '#4ade80');
 
-                if (!isRageMode) {
-                    rageMeter++;
-                    document.getElementById('rage-val').innerText = (rageMeter * 10) + "%";
-                    if (rageMeter >= 10) {
-                        isRageMode = true;
-                        rageTimeLeft = 300; 
-                        rageMeter = 0;
-                        document.getElementById('rage-val').innerText = "MAX!";
-                        currentStatusText = "🔥 RAGE MODE ACTIVATED! INFINITE AMMO! 🔥 " + currentStatusText;
-                        playAdvancedSound('fanfare_bonus');
-                    }
-                }
-
-                let pColor = currentBirdStyle.secondary;
+                let pColor = "#eab308";
                 if (t.special === "fast") pColor = "#c0c0c0"; 
-                if (t.special === "bonus") pColor = "#fbbf24"; 
+                if (t.special === "golden_boss") pColor = "#facc15"; 
 
                 createFeatherCloud(t.x, t.y, pColor);
                 playAdvancedSound('hit');
 
-                if (t.special === "bonus") {
-                    ammoBonusEarned += 12; 
-                    currentStatusText += "⭐ GHOST REFILL! +12 AMMO! ";
+                if (t.special === "golden_boss") {
+                    activateShield();
+                    currentStatusText = "👑 GOLDEN BOSS SLAIN! SHIELD ACTIVATED (10s)! ";
+                    // Remove boss after hit
+                    targets = targets.filter(target => target.id !== 99);
+                } else {
+                    resetTarget(t);
                 }
-
-                let maxAllowedSpeed = 9.0;
-                let speedIncrementX = (t.xSpeed > 0 ? 0.30 : -0.30);
-                let speedIncrementY = (t.ySpeed > 0 ? 0.26 : -0.26);
-             
-                t.xSpeed += speedIncrementX;
-                t.ySpeed += speedIncrementY;
-                
-                if (Math.abs(t.xSpeed) > maxAllowedSpeed) t.xSpeed = Math.sign(t.xSpeed) * maxAllowedSpeed;
-                if (Math.abs(t.ySpeed) > maxAllowedSpeed) t.ySpeed = Math.sign(t.ySpeed) * maxAllowedSpeed;
-
-                resetTarget(t);
             }
         });
 
+        // Crosshair dynamic coloring logic
+        let accuracy = (totalHits / shotsFired) * 100;
+        document.getElementById('acc-val').innerText = Math.round(accuracy) + "%";
+        if (accuracy > 80 && shotsFired > 5) crosshairColor = "#06b6d4"; // Neon Cyan
+        else crosshairColor = "#ef4444"; // Default Red
+
         if (hitAny) {
+            comboCount++;
             if (hitCountThisShot > 1) {
                 let comboBonus = hitCountThisShot * 15;
                 score += comboBonus;
-                currentStatusText = `🔥 SWARM COMBO x${hitCountThisShot}! +${comboBonus} BONUS PTS! ` + currentStatusText;
+                currentStatusText = `🔥 SWARM COMBO x${hitCountThisShot}! +${comboBonus} PTS! ` + currentStatusText;
                 playAdvancedSound('fanfare_bonus');
-                screenShake = 22;
-                
-                floatingTexts.push({
-                    x: aimX, y: aimY - 40, text: `COMBO +${comboBonus}!`, alpha: 1.0, color: '#f97316'
-                });
+                showFloatingText(aimX, aimY - 40, `COMBO +${comboBonus}!`, '#f97316');
             }
 
             document.getElementById('score-val').innerText = score;
-            document.getElementById('hits-val').innerText = totalHits;
-            let statusColor = isRageMode ? "#ef4444" : "#4ade80";
             
-            if (totalHits > 0 && totalHits % 10 === 0) {
-                if (!isRageMode) ammo += 50;
-                playAdvancedSound('fanfare_bonus');
-                currentStatusText += "🎁 INVENTORY BOX! +50 AMMO! ";
-                statusColor = "#eab308";
-            }
+            checkWorldShift();
+            spawnGoldenBird();
 
-            if (currentStatusText === "") currentStatusText = "🎯 TARGETS SMASHED! ";
-            let oldStyleName = currentBirdStyle.name;
-            updateBirdColorTier();
-
-            if (currentBirdStyle.name !== oldStyleName) {
-                currentStatusText += `🔥 LEVEL UP: [${currentBirdStyle.name}]!`;
-                statusColor = "#38bdf8";
-            } else {
-                let remaining = getNextTierRemainingHits();
-                currentStatusText += `| Next swarm tier in ${remaining} hits.`;
-            }
-
-            if (ammoBonusEarned > 0 && !isRageMode) ammo += ammoBonusEarned;
-            document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
-
+            if (currentStatusText === "") currentStatusText = `🎯 TARGET HIT! Combo x${comboCount}`;
             document.getElementById('game-status').innerText = currentStatusText;
-            document.getElementById('game-status').style.color = statusColor;
+            document.getElementById('game-status').style.color = "#4ade80";
 
             updateSupabaseScore();
         } else {
-            if (!isRageMode) {
-                document.getElementById('game-status').innerText = "💨 SHOT MISSED! Adjust your AK-47 trajectory.";
+            comboCount = 0; // Reset combo
+            if (!shieldActive) {
+                document.getElementById('game-status').innerText = "💨 SHOT MISSED! Focus your aim.";
                 document.getElementById('game-status').style.color = "#fbbf24";
             }
         }
     }
 
-    // === التصحيح الجذري لحركة الجويستيك ===
+    function resetTarget(t) {
+        t.x = Math.random() * (canvas.width - 100) + 50;
+        t.y = Math.random() * (canvas.height - 160) + 50; 
+        if (t.sineWave) t.sineCounter = 0;
+        if (t.special === "bonus") t.ghostCounter = Math.random() * 5;
+    }
+
+    /* =========================================
+       INPUT & CONTROLS
+       ========================================= */
     function setupJoystickListeners() {
         const joyContainer = document.getElementById('joy-container');
         const joyKnob = document.getElementById('joy-knob');
 
         function handleJoyStart(e) {
-            // منع سلوك الشاشة الافتراضي أثناء بدء اللمس
             if (e.cancelable && e.type === 'touchstart') e.preventDefault(); 
             initAudio();
             joyActive = true;
-            // إزالة الأنيميشن الارتدادي لضمان سرعة اللصق بالإصبع
             joyKnob.classList.remove('release-anim'); 
             
-            const touch = e.touches ? e.touches[0] : e;
             const rect = joyContainer.getBoundingClientRect();
             joyStartX = rect.left + rect.width / 2;
             joyStartY = rect.top + rect.height / 2;
@@ -898,18 +852,15 @@
 
         function handleJoyMove(e) {
             if (!joyActive) return;
-            // الأهم: منع سحب الشاشة (Scrolling) أثناء التمرير
             if (e.cancelable) e.preventDefault(); 
             
             const touch = e.touches ? e.touches[0] : e;
-            
             let deltaX = touch.clientX - joyStartX;
             let deltaY = touch.clientY - joyStartY;
             let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
             if (distance > maxJoyDistance) {
                 deltaX = (deltaX / distance) * maxJoyDistance;
                 deltaY = (deltaY / distance) * maxJoyDistance;
-                distance = maxJoyDistance;
             }
 
             joyKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
@@ -919,18 +870,15 @@
 
         function handleJoyEnd() {
             joyActive = false;
-            // تفعيل الأنيميشن الارتدادي لعودة العصا بمرونة 
             joyKnob.classList.add('release-anim'); 
             joyKnob.style.transform = 'translate(0px, 0px)';
             joyMoveX = 0;
             joyMoveY = 0;
         }
 
-        // مستمعات الأحداث للموس واللمس (تفعيل passive: false مهم لمنع المتصفح من التدخل)
         joyContainer.addEventListener('mousedown', handleJoyStart);
         window.addEventListener('mousemove', handleJoyMove);
         window.addEventListener('mouseup', handleJoyEnd);
-
         joyContainer.addEventListener('touchstart', handleJoyStart, { passive: false });
         window.addEventListener('touchmove', handleJoyMove, { passive: false });
         window.addEventListener('touchend', handleJoyEnd);
@@ -946,21 +894,17 @@
         if (aimY > canvas.height) aimY = canvas.height;
     }
 
-    canvas.addEventListener('mousemove', (e) => { handleCanvasPointer(e.clientX, e.clientY); });
-    canvas.addEventListener('mousedown', (e) => { handleCanvasPointer(e.clientX, e.clientY); });
-    canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
-    });
-    canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
-    });
+    canvas.addEventListener('mousemove', (e) => handleCanvasPointer(e.clientX, e.clientY));
+    canvas.addEventListener('mousedown', (e) => handleCanvasPointer(e.clientX, e.clientY));
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY); });
     
-    const fireTriggerBtn = document.getElementById('fire-trigger');
-    fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
-    fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
+    document.getElementById('fire-trigger').addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
+    document.getElementById('fire-trigger').addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
+    /* =========================================
+       MAIN GAME LOOP
+       ========================================= */
     function startGameLoop() {
         if(animationId) cancelAnimationFrame(animationId);
         lastTime = performance.now();
@@ -968,35 +912,49 @@
         function update(currentTime) {
             let deltaTime = (currentTime - lastTime) / 16.666; 
             lastTime = currentTime;
-
             if (deltaTime > 3) deltaTime = 3; 
 
-            if (isRageMode) {
-                rageTimeLeft -= deltaTime;
-                if (rageTimeLeft <= 0) {
-                    isRageMode = false;
-                    document.getElementById('rage-val').innerText = "0%";
+            // Shield Timer Logic
+            if (shieldActive) {
+                shieldTimeLeft -= (deltaTime * 0.016); // roughly seconds
+                if (shieldTimeLeft <= 0) {
+                    shieldActive = false;
+                    document.getElementById('shield-overlay').style.display = 'none';
                     document.getElementById('ammo-val').innerText = ammo;
-                    document.getElementById('game-status').innerText = "🧊 الغضب انتهى! عدنا للوضع الطبيعي.";
-                    document.getElementById('game-status').style.color = "#38bdf8";
+                    document.getElementById('game-status').innerText = "Shield depleted.";
                 }
             }
 
             bgX -= 0.25 * deltaTime;
 
-            leaves.forEach(leaf => {
-                leaf.y += leaf.speed * deltaTime;
-                leaf.x += Math.sin(leaf.y * 0.02) * 0.4 * deltaTime;
-                if (leaf.y > canvas.height) {
-                    leaf.y = -10;
-                    leaf.x = Math.random() * canvas.width;
+            // Update Environment Particles
+            envParticles.forEach(p => {
+                let currentEnv = ENVIRONMENTS[currentEnvIndex];
+                if (currentEnv.pType === "snow") {
+                    p.y += p.speedY * 0.5 * deltaTime;
+                    p.x += Math.sin(p.y * 0.05) * 1.5 * deltaTime;
+                } else if (currentEnv.pType === "sand") {
+                    p.x -= (p.speedY + 3) * deltaTime;
+                    p.y += (Math.random() - 0.5) * deltaTime;
+                } else if (currentEnv.pType === "ember") {
+                    p.y -= p.speedY * 1.5 * deltaTime;
+                    p.x += Math.sin(p.y * 0.02) * deltaTime;
+                } else { // Leaf
+                    p.y += p.speedY * 0.8 * deltaTime;
+                    p.x += Math.sin(p.y * 0.02) * 0.5 * deltaTime;
+                }
+
+                if (p.y > canvas.height + 10 || p.x < -10 || p.y < -10) {
+                    p.y = currentEnv.pType === "ember" ? canvas.height + 10 : (currentEnv.pType === "sand" ? Math.random() * canvas.height : -10);
+                    p.x = currentEnv.pType === "sand" ? canvas.width + 10 : Math.random() * canvas.width;
                 }
             });
             
+            // Joystick Smooth Aiming
             if (joyActive) {
                 smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
                 smoothJoyY += (joyMoveY - smoothJoyY) * 0.28 * deltaTime;
-                let aimSpeed = 5.8 * deltaTime; 
+                let aimSpeed = 6.5 * deltaTime; 
                 aimX += smoothJoyX * aimSpeed;
                 aimY += smoothJoyY * aimSpeed;
             } else {
@@ -1009,11 +967,12 @@
             if (aimY < 0) aimY = 0;
             if (aimY > canvas.height) aimY = canvas.height;
 
+            // Target Physics
             targets.forEach(t => {
                 if (t.sineWave) {
-                    t.sineCounter += 0.08 * deltaTime;
+                    t.sineCounter += (t.special === "golden_boss" ? 0.15 : 0.08) * deltaTime;
                     t.x += t.xSpeed * deltaTime;
-                    t.y += (t.ySpeed + Math.sin(t.sineCounter) * 2.5) * deltaTime;
+                    t.y += (t.ySpeed + Math.sin(t.sineCounter) * (t.special === "golden_boss" ? 4.5 : 2.5)) * deltaTime;
                 } else if (t.special === "bonus") {
                     t.ghostCounter += 0.03 * deltaTime;
                     t.opacity = (Math.sin(t.ghostCounter) * 0.5) + 0.5; 
@@ -1036,10 +995,12 @@
                 if (t.y >= maxYBorder) { t.y = maxYBorder; t.ySpeed = -Math.abs(t.ySpeed); }
             });
             
+            // Recoil Recovery
             gunRecoilZ *= Math.pow(0.83, deltaTime);
             gunRecoilY *= Math.pow(0.80, deltaTime);
             gunRecoilAngle *= Math.pow(0.78, deltaTime);
 
+            // Screen Shake
             if (screenShake > 0) {
                 const dx = (Math.random() - 0.5) * screenShake;
                 const dy = (Math.random() - 0.5) * screenShake;
@@ -1051,30 +1012,28 @@
                 }
             }
 
+            // RENDERING
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
+            // Draw Background Image
             if (forestBgImg) {
                 ctx.drawImage(forestBgImg, bgX % canvas.width, 0, canvas.width, canvas.height);
                 ctx.drawImage(forestBgImg, (bgX % canvas.width) + canvas.width, 0, canvas.width, canvas.height);
-            } else {
-                ctx.fillStyle = '#070b19';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
-
-            if (isRageMode) {
-                ctx.fillStyle = "rgba(220, 38, 38, 0.25)";
-            } else {
-                ctx.fillStyle = "rgba(2, 6, 23, 0.15)";
-            }
+            
+            // Apply Environment Overlay Tint
+            ctx.fillStyle = ENVIRONMENTS[currentEnvIndex].bgTint;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            ctx.fillStyle = "rgba(234, 179, 8, 0.4)";
-            leaves.forEach(leaf => {
+            // Draw Environment Particles
+            ctx.fillStyle = ENVIRONMENTS[currentEnvIndex].pColor;
+            envParticles.forEach(p => {
                 ctx.beginPath();
-                ctx.arc(leaf.x, leaf.y, leaf.size, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 ctx.fill();
             });
             
+            // Hit Particles
             particles.forEach((p, index) => {
                 p.x += p.vx * deltaTime; 
                 p.y += p.vy * deltaTime; 
@@ -1096,6 +1055,7 @@
                 }
             });
             
+            // Draw Targets
             targets.forEach(t => {
                 ctx.save();
                 ctx.globalAlpha = t.opacity;
@@ -1109,65 +1069,35 @@
                     ctx.rotate(moveAngle);
                 }
                 
-                let bodyColor = currentBirdStyle.primary;
-                let wingColor = currentBirdStyle.secondary;
-                let headColor = currentBirdStyle.detail;
-                let beakColor = currentBirdStyle.beak;
+                let bodyColor = "#543011";
+                let wingColor = "#eab308";
+                let headColor = "#3a1f05";
+                let beakColor = "#f97316";
 
-                if (t.special === "fast") {
-                    bodyColor = "#475569"; wingColor = "#cbd5e1"; headColor = "#1e293b";
-                } else if (t.special === "bonus") {
-                    bodyColor = "#b45309"; wingColor = "#fbbf24"; headColor = "#78350f"; beakColor = "#ef4444";
-                }
+                if (t.special === "fast") { bodyColor = "#475569"; wingColor = "#cbd5e1"; headColor = "#1e293b"; } 
+                else if (t.special === "bonus") { bodyColor = "#b45309"; wingColor = "#fbbf24"; headColor = "#78350f"; beakColor = "#ef4444"; }
+                else if (t.special === "golden_boss") { bodyColor = "#facc15"; wingColor = "#ffffff"; headColor = "#eab308"; beakColor = "#ef4444"; }
                 
                 ctx.fillStyle = bodyColor;
-                ctx.beginPath(); 
-                ctx.ellipse(0, 0, t.width/2, t.height/2, 0, 0, Math.PI*2); 
-                ctx.fill();
+                ctx.beginPath(); ctx.ellipse(0, 0, t.width/2, t.height/2, 0, 0, Math.PI*2); ctx.fill();
                 
                 let wingFlapOffset = Math.sin(t.flap) * (t.height / 1.3);
                 ctx.fillStyle = wingColor;
-                ctx.beginPath(); 
-                ctx.ellipse(-2, - wingFlapOffset / 2, 9, t.height/2 + Math.abs(wingFlapOffset)/2, 0.2, 0, Math.PI*2); 
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(-2, + wingFlapOffset / 2, 9, t.height/2 + Math.abs(wingFlapOffset)/2, -0.2, 0, Math.PI*2); 
-                ctx.fill();
+                ctx.beginPath(); ctx.ellipse(-2, - wingFlapOffset / 2, 9, t.height/2 + Math.abs(wingFlapOffset)/2, 0.2, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(-2, + wingFlapOffset / 2, 9, t.height/2 + Math.abs(wingFlapOffset)/2, -0.2, 0, Math.PI*2); ctx.fill();
 
                 ctx.fillStyle = headColor;
-                ctx.beginPath();
-                ctx.arc(t.width/2 - 2, -3, 9, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(t.width/2 - 2, -3, 9, 0, Math.PI*2); ctx.fill();
                 
                 ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                ctx.arc(t.width/2 + 1, -5, 2, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(t.width/2 + 1, -5, 2, 0, Math.PI*2); ctx.fill();
                 
                 ctx.fillStyle = beakColor;
-                ctx.beginPath();
-                ctx.moveTo(t.width/2 + 5, -6); 
-                ctx.lineTo(t.width/2 + 17, -3); 
-                ctx.lineTo(t.width/2 + 5, 2); 
-                ctx.fill();
-
-                ctx.fillStyle = headColor;
-                ctx.beginPath();
-                ctx.moveTo(-t.width/2, -4);
-                ctx.lineTo(-t.width/2 - 14, -11);
-                ctx.lineTo(-t.width/2 - 11, 0);
-                ctx.lineTo(-t.width/2 - 14, 11);
-                ctx.lineTo(-t.width/2, 4);
-                ctx.fill();
-
+                ctx.beginPath(); ctx.moveTo(t.width/2 + 5, -6); ctx.lineTo(t.width/2 + 17, -3); ctx.lineTo(t.width/2 + 5, 2); ctx.fill();
                 ctx.restore();
-                
-                if (t.opacity > 0.15) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                    ctx.font = '900 10px Arial';
-                    let label = t.special === "normal" ? "Leader" : (t.special === "fast" ? "Wave Jumper" : "Ghost Gold");
-                    ctx.fillText(label, t.x - 22, t.y - t.height - 4);
-                }
             });
             
+            // Floating Text
             floatingTexts.forEach((ft, index) => {
                 ft.y -= 1.5 * deltaTime;
                 ft.alpha -= 0.02 * deltaTime;
@@ -1176,8 +1106,8 @@
                 } else {
                     ctx.save();
                     ctx.globalAlpha = ft.alpha;
-                    ctx.fillStyle = ft.color || '#4ade80';
-                    ctx.font = 'bold 18px Arial';
+                    ctx.fillStyle = ft.color;
+                    ctx.font = `900 ${ft.size}px Arial`;
                     ctx.shadowColor = "rgba(0,0,0,0.8)";
                     ctx.shadowBlur = 4;
                     ctx.fillText(ft.text, ft.x, ft.y);
@@ -1185,21 +1115,26 @@
                 }
             });
 
+            // Muzzle Flash Glow Effect
             if (flashIntensity > 0) {
                 ctx.save();
-                let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 3, muzzleFlashX, muzzleFlashY, 55);
-                gradient.addColorStop(0, 'rgba(255, 255, 255, ' + flashIntensity + ')');
-                gradient.addColorStop(0.2, 'rgba(244, 240, 138, ' + (flashIntensity * 0.95) + ')');
-                gradient.addColorStop(0.6, 'rgba(249, 115, 22, ' + (flashIntensity * 0.6) + ')');
-                gradient.addColorStop(1, 'rgba(220, 38, 38, 0)');
+                let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 10, muzzleFlashX, muzzleFlashY, 80);
+                gradient.addColorStop(0, `rgba(255, 255, 255, ${flashIntensity})`);
+                gradient.addColorStop(0.2, `rgba(250, 204, 21, ${flashIntensity * 0.9})`);
+                gradient.addColorStop(0.6, `rgba(239, 68, 68, ${flashIntensity * 0.5})`);
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                
+                // Add global compositing for glow effect
+                ctx.globalCompositeOperation = "screen";
                 ctx.fillStyle = gradient;
                 ctx.beginPath();
-                ctx.arc(muzzleFlashX, muzzleFlashY, 55, 0, Math.PI * 2);
+                ctx.arc(muzzleFlashX, muzzleFlashY, 80, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
-                flashIntensity -= 0.06 * deltaTime;
+                flashIntensity -= 0.08 * deltaTime;
             }
 
+            // Draw Weapon
             let gunBaseX = canvas.width - 45;
             let gunBaseY = canvas.height + 25; 
 
@@ -1212,42 +1147,34 @@
                 let currentGunWidth = 90 + (gunRecoilZ * 0.2);
                 let currentGunHeight = 225 + gunRecoilZ;
                 ctx.drawImage(ak47Img, -currentGunWidth / 2, -currentGunHeight + 50, currentGunWidth, currentGunHeight);
-            } else {
-                ctx.fillStyle = '#5c2d17';
-                ctx.fillRect(-10, -50, 20, 60); 
-                ctx.fillStyle = '#1e293b'; ctx.fillRect(-7, -130, 14, 100); 
-                ctx.fillStyle = '#475569'; ctx.fillRect(-5, -180, 10, 50);
-                ctx.fillStyle = '#ca8a04'; ctx.fillRect(-3, -190, 6, 12); 
             }
             ctx.restore();
             
+            // Draw Dynamic Crosshair
             ctx.save();
-            ctx.strokeStyle = isRageMode ? '#fbbf24' : '#f87171'; 
+            ctx.strokeStyle = crosshairColor;
             ctx.lineWidth = 2.5;
             ctx.translate(aimX, aimY);
             ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(-22, 0);
-            ctx.lineTo(22, 0); ctx.moveTo(0, -22); ctx.lineTo(0, 22); ctx.stroke();
-            ctx.fillStyle = isRageMode ? '#fbbf24' : '#ef4444';
-            ctx.beginPath();
-            ctx.arc(0, 0, 3, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.moveTo(-22, 0); ctx.lineTo(22, 0); ctx.moveTo(0, -22); ctx.lineTo(0, 22); ctx.stroke();
+            ctx.fillStyle = crosshairColor;
+            ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fill();
+            
+            // Shield Indicator on Crosshair
+            if (shieldActive) {
+                ctx.strokeStyle = "rgba(250, 204, 21, 0.6)";
+                ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.stroke();
+            }
             ctx.restore();
 
             animationId = requestAnimationFrame(update);
         }
-        
         animationId = requestAnimationFrame(update);
     }
 
-    function resetTarget(t) {
-        t.x = Math.random() * (canvas.width - 100) + 50;
-        t.y = Math.random() * (canvas.height - 160) + 50; 
-        if (t.sineWave) t.sineCounter = 0;
-        if (t.special === "bonus") t.ghostCounter = Math.random() * 5;
-    }
-
+    /* =========================================
+       PI NETWORK PAYMENTS LOGIC
+       ========================================= */
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
             document.getElementById('game-status').innerText = "⚠️ Open this game inside Pi Browser to initiate real ledger purchases.";
@@ -1255,7 +1182,7 @@
             return;
         }
 
-        document.getElementById('game-status').innerText = "⚡ Preparing secure handshake... (Ensure your Pi isn't locked up until July 2027!)";
+        document.getElementById('game-status').innerText = "⚡ Preparing secure handshake...";
         document.getElementById('game-status').style.color = "#fbbf24";
 
         const paymentData = {
@@ -1282,25 +1209,17 @@
 
     async function approvePaymentOnBackend(paymentId) {
         try {
-            await fetch('/api/approve', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paymentId: paymentId })
-            });
+            await fetch('/api/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId }) });
         } catch (err) { console.error(err); }
     }
 
     async function completePaymentOnBackend(paymentId, txid) {
         try {
-            const response = await fetch('/api/complete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paymentId: paymentId, txid: txid })
-            });
+            const response = await fetch('/api/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId, txid: txid }) });
             const result = await response.json();
             if (result.success) {
                 ammo += 30;
-                document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
+                document.getElementById('ammo-val').innerText = ammo;
                 document.getElementById('game-status').innerText = "🪙 1 Pi received successfully! Magazine reloaded. 🔋";
                 document.getElementById('game-status').style.color = "#4ade80";
                 playAdvancedSound('reload');
@@ -1312,11 +1231,7 @@
     async function onIncompletePaymentFound(payment) {
         if (payment && payment.identifier) {
             try {
-                await fetch('/api/complete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid })
-                });
+                await fetch('/api/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid }) });
             } catch (e) { console.error(e); }
         }
     }
