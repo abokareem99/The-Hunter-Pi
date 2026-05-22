@@ -411,6 +411,25 @@
     let audioCtx;
     let cachedTailBuffer = null; 
 
+    // --- الإضافات لحل المشاكل ---
+    
+    // تعريف دالة الاستدعاء لعمليات الدفع غير المكتملة
+    function onIncompletePaymentFound(payment) {
+        console.log("Incomplete payment found:", payment);
+    }
+
+    // تعريف دالة شراء الذخيرة (كمنطق مؤقت أو فعلي لاحقاً عبر Pi)
+    function buyAmmoWithPi() {
+        // يمكنك هنا لاحقاً ربطها بدالة الدفع في Pi SDK
+        ammo += 30;
+        document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
+        playAdvancedSound('reload');
+        document.getElementById('game-status').innerText = "✅ تم شحن 30 ذخيرة بنجاح!";
+        document.getElementById('game-status').style.color = "#4ade80";
+    }
+    
+    // ----------------------------
+
     function initAudio() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -661,16 +680,20 @@
                         isSdkInitialized = true;
                     }
                     setTimeout(() => {
-                        window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
-                        .then(function(auth) {
-                            playerPiUser = auth.user.username;
-                            currentPiUserId = auth.user.uid;
-                            playerWallet = auth.user.uid || "Pi_Network_User";
-                            handleLoginSuccess();
-                        })
-                        .catch((err) => {
+                        try {
+                            window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
+                            .then(function(auth) {
+                                playerPiUser = auth.user.username;
+                                currentPiUserId = auth.user.uid;
+                                playerWallet = auth.user.uid || "Pi_Network_User";
+                                handleLoginSuccess();
+                            })
+                            .catch((err) => {
+                                setupDevAccount();
+                            });
+                        } catch (innerErr) {
                             setupDevAccount();
-                        });
+                        }
                     }, 250);
                 } else {
                     setupDevAccount();
