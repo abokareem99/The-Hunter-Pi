@@ -249,7 +249,7 @@
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
         <div><span class="audio-indicator">🌌 Auto-Cleaning Ultra DSP WebAudio Subsystem</span></div>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
         
         <div class="controls-wrapper">
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
@@ -322,7 +322,6 @@
     let currentBgIndex = 0;
     let bgAlpha = 1.0; 
 
-    // Floating text array for hits
     let floatingTexts = [];
 
     // Predator Boss Logic
@@ -365,20 +364,25 @@
     function resetTarget(t) {
         t.x = Math.random() > 0.5 ? -40 : canvas.width + 40;
         t.y = Math.random() * (canvas.height - 100) + 20;
-        let speedMult = 1 + (totalHits * 0.02);
+        
+        // --- تحديث: تحديد سقف لمضاعف السرعة لمنع الاضطراب ---
+        let speedMult = Math.min(1 + (totalHits * 0.015), 3.0); 
+        
         if (t.x < 0) {
-            t.xSpeed = (Math.random() * 2 + 1.5) * speedMult;
+            t.xSpeed = (Math.random() * 1.5 + 1.5) * speedMult;
         } else {
-            t.xSpeed = -(Math.random() * 2 + 1.5) * speedMult;
+            t.xSpeed = -(Math.random() * 1.5 + 1.5) * speedMult;
         }
-        t.ySpeed = (Math.random() * 4 - 2) * speedMult;
+        
+        // --- تحديث: تقليل سرعة المحور العمودي لجعل الحركة مستقرة ---
+        t.ySpeed = (Math.random() * 2 - 1) * speedMult; 
         t.opacity = 1.0;
     }
 
     let targets = [
-        { id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, width: 44, height: 35, flap: 0, flapSpeed: 0.25, radius: 22, sineWave: false, opacity: 1.0, points: 10, special: "normal" },
-        { id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, width: 38, height: 30, flap: 1.5, flapSpeed: 0.35, radius: 19, sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast" },
-        { id: 3, type: "ghost_refiller", x: 400, y: 80, xSpeed: 4.0, ySpeed: -2.2, width: 46, height: 36, flap: 3.0, flapSpeed: 0.20, radius: 23, sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0 }
+        { id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.0, width: 44, height: 35, flap: 0, flapSpeed: 0.25, radius: 22, sineWave: false, opacity: 1.0, points: 10, special: "normal" },
+        { id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 0.8, width: 38, height: 30, flap: 1.5, flapSpeed: 0.35, radius: 19, sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast" },
+        { id: 3, type: "ghost_refiller", x: 400, y: 80, xSpeed: 4.0, ySpeed: -1.2, width: 46, height: 36, flap: 3.0, flapSpeed: 0.20, radius: 23, sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0 }
     ];
 
     let particles = []; 
@@ -410,25 +414,18 @@
 
     let audioCtx;
     let cachedTailBuffer = null; 
-
-    // --- الإضافات لحل المشاكل ---
     
-    // تعريف دالة الاستدعاء لعمليات الدفع غير المكتملة
     function onIncompletePaymentFound(payment) {
         console.log("Incomplete payment found:", payment);
     }
 
-    // تعريف دالة شراء الذخيرة (كمنطق مؤقت أو فعلي لاحقاً عبر Pi)
     function buyAmmoWithPi() {
-        // يمكنك هنا لاحقاً ربطها بدالة الدفع في Pi SDK
         ammo += 30;
         document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
         playAdvancedSound('reload');
         document.getElementById('game-status').innerText = "✅ تم شحن 30 ذخيرة بنجاح!";
         document.getElementById('game-status').style.color = "#4ade80";
     }
-    
-    // ----------------------------
 
     function initAudio() {
         if (!audioCtx) {
@@ -943,9 +940,10 @@
                     currentStatusText += "⭐ GHOST REFILL! +12 AMMO! ";
                 }
 
-                let maxAllowedSpeed = 9.0;
-                let speedIncrementX = (t.xSpeed > 0 ? 0.30 : -0.30);
-                let speedIncrementY = (t.ySpeed > 0 ? 0.26 : -0.26);
+                // --- تحديث: منع زيادة السرعة بشكل مبالغ فيه في كل إصابة ---
+                let maxAllowedSpeed = 6.0; 
+                let speedIncrementX = (t.xSpeed > 0 ? 0.15 : -0.15); 
+                let speedIncrementY = (t.ySpeed > 0 ? 0.10 : -0.10);
              
                 t.xSpeed += speedIncrementX;
                 t.ySpeed += speedIncrementY;
@@ -956,6 +954,31 @@
                 resetTarget(t);
             }
         });
+
+        // --- تحديث: نظام توليد الطيور الديناميكي لتكثيرها بشكل محدود ---
+        const MAX_BIRDS = 6; 
+        if (hitAny && totalHits > 0 && totalHits % 20 === 0 && targets.length < MAX_BIRDS) {
+            let newBird = {
+                id: targets.length + 1,
+                type: "clone",
+                x: -40,
+                y: Math.random() * (canvas.height - 100) + 20,
+                xSpeed: 2.2,
+                ySpeed: 0.8,
+                width: 40,
+                height: 32,
+                flap: 0,
+                flapSpeed: 0.25,
+                radius: 20,
+                sineWave: true, 
+                sineCounter: Math.random() * 10,
+                opacity: 1.0,
+                points: 15,
+                special: "normal"
+            };
+            targets.push(newBird);
+            currentStatusText += "🦅 طائر جديد انضم للسرب! ";
+        }
 
         // Check Boss hit
         if (boss.active && boss.enterWarning <= 0) {
@@ -1188,10 +1211,11 @@
             if (aimY > canvas.height) aimY = canvas.height;
 
             targets.forEach(t => {
+                // --- تحديث: تحسين حركة الـ Sine Wave لجعل الطيران انسيابياً وطبيعياً ---
                 if (t.sineWave) {
                     t.sineCounter += 0.08 * deltaTime;
                     t.x += t.xSpeed * deltaTime;
-                    t.y += (t.ySpeed + Math.sin(t.sineCounter) * 2.5) * deltaTime;
+                    t.y += (t.ySpeed + Math.sin(t.sineCounter) * 1.5) * deltaTime; 
                 } else if (t.special === "bonus") {
                     t.ghostCounter += 0.03 * deltaTime;
                     t.opacity = (Math.sin(t.ghostCounter) * 0.5) + 0.5; 
