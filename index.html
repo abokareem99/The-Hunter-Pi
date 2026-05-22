@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE HUNTER Arcade - 3 Birds Swarm Swish Edition 🔥</title>
+    <title>THE HUNTER Arcade - Rank Tiers Edition 🎖️</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -74,8 +74,7 @@
         .btn:hover { 
             transform: scale(1.02);
         }
-        .hidden { display: none;
-        }
+        .hidden { display: none; }
         
         .stats-bar {
             display: flex;
@@ -207,6 +206,19 @@
             border-radius: 20px;
             font-weight: bold;
         }
+
+        /* تنسيق خاص ومميز لعرض الرتبة الحالية */
+        .rank-badge {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid #38bdf8;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -223,13 +235,17 @@
     </div>
 
     <div id="game-section" class="hidden">
+        <!-- شريط الإحصائيات بعد إضافة الرتبة التنافسية والمظهر الملون لها -->
         <div class="stats-bar">
             <div>Hunter: <span id="player-name" style="color: #38bdf8;">...</span></div>
             <div>Hits: <span id="hits-val" style="color: #eab308;">0</span> 🎯</div>
             <div>Score: <span id="score-val" style="color: #4ade80;">0</span></div>
             <div>Ammo: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
             <div>Rage: <span id="rage-val" style="color: #ef4444;">0%</span> 😡</div>
-            <div>Tier Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown</span></div>
+            <div style="width: 100%; margin-top: 5px; display: flex; justify-content: center; gap: 10px; align-items: center;">
+                <div>Tier Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown</span></div>
+                <div>Rank: <span id="rank-display" class="rank-badge">Rookie 🛡️</span></div>
+            </div>
         </div>
 
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
@@ -253,12 +269,13 @@
                 <tr>
                     <th>RANK</th>
                     <th>HUNTER USERNAME</th>
+                    <th>TITLE 🎖️</th>
                     <th>HIGH SCORE 🎯</th>
                 </tr>
             </thead>
             <tbody id="leaderboard-body">
                 <tr>
-                    <td colspan="3" style="color: #94a3b8;">Authenticating Pi Network Ledger...</td>
+                    <td colspan="4" style="color: #94a3b8;">Authenticating Pi Network Ledger...</td>
                 </tr>
             </tbody>
         </table>
@@ -277,6 +294,17 @@
         "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=520&h=350&q=80", 
         "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"  
     ];
+
+    // مصفوفة الألقاب التنافسية بناءً على عدد الـ Hits الإجمالي للاعب
+    const RANK_TIERS = [
+        { minHits: 0,   name: "Rookie 🛡️",          color: "#94a3b8", bg: "#1e293b" },
+        { minHits: 15,  name: "Elite Hunter 🎯",    color: "#38bdf8", bg: "#0c4a6e" },
+        { minHits: 40,  name: "Flock General 🎖️",   color: "#a855f7", bg: "#4c1d95" },
+        { minHits: 80,  name: "Sharpshooter ⚡",    color: "#f43f5e", bg: "#881337" },
+        { minHits: 130, name: "AK GOD 🔥👑",        color: "#fbbf24", bg: "#78350f" }
+    ];
+
+    let currentRankTitle = "Rookie 🛡️";
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -372,7 +400,6 @@
     function initAudio() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
             const tailBufferSize = audioCtx.sampleRate * 0.4; 
             cachedTailBuffer = audioCtx.createBuffer(1, tailBufferSize, audioCtx.sampleRate);
             const tailData = cachedTailBuffer.getChannelData(0);
@@ -382,16 +409,12 @@
         }
     }
 
-    // المنظومة الحديثة ذاتية التدمير لجميع العقد الصوتية لمنع التعليق
     function playAdvancedSound(type) {
         if (!audioCtx) return;
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
-
-        // مصفوفة لتجميع العقد من أجل تدميرها وفصلها تماماً بعد انتهاء الصوت
         const nodesToCleanup = [];
-
         try {
             const now = audioCtx.currentTime;
 
@@ -399,7 +422,6 @@
                 const impulseOsc = audioCtx.createOscillator();
                 const impulseGain = audioCtx.createGain();
                 const lpImpulse = audioCtx.createBiquadFilter();
-                
                 nodesToCleanup.push(impulseOsc, impulseGain, lpImpulse);
 
                 impulseOsc.type = 'sawtooth';
@@ -421,7 +443,6 @@
                 tailNoise.buffer = cachedTailBuffer;
                 const tailFilter = audioCtx.createBiquadFilter();
                 const tailGain = audioCtx.createGain();
-                
                 nodesToCleanup.push(tailNoise, tailFilter, tailGain);
 
                 tailFilter.type = 'bandpass';
@@ -445,7 +466,6 @@
                 const mechOsc = audioCtx.createOscillator();
                 const mechGain = audioCtx.createGain();
                 const mechFilter = audioCtx.createBiquadFilter();
-                
                 nodesToCleanup.push(mechOsc, mechGain, mechFilter);
 
                 mechOsc.type = 'sawtooth';
@@ -462,18 +482,14 @@
                 mechOsc.start(now);
                 mechOsc.stop(now + 0.03);
 
-                // تنظيف كامل وجذري للعقد بعد 450 مللي ثانية لمنع تراكمها في الذاكرة الكاش للمتصفح
                 setTimeout(() => {
-                    nodesToCleanup.forEach(node => {
-                        try { node.disconnect(); } catch(e){}
-                    });
+                    nodesToCleanup.forEach(node => { try { node.disconnect(); } catch(e){} });
                 }, 450);
                 
             } else if (type === 'hit') {
                 const hitOsc = audioCtx.createOscillator();
                 const hitGain = audioCtx.createGain();
                 const lpFilter = audioCtx.createBiquadFilter();
-                
                 nodesToCleanup.push(hitOsc, hitGain, lpFilter);
 
                 hitOsc.type = 'square';
@@ -499,7 +515,6 @@
             } else if (type === 'empty') {
                 const emptyOsc = audioCtx.createOscillator();
                 const emptyGain = audioCtx.createGain();
-                
                 nodesToCleanup.push(emptyOsc, emptyGain);
 
                 emptyOsc.type = 'triangle';
@@ -521,7 +536,6 @@
             } else if (type === 'reload') {
                 const osc1 = audioCtx.createOscillator();
                 const gain1 = audioCtx.createGain();
-                
                 nodesToCleanup.push(osc1, gain1);
 
                 osc1.type = 'triangle';
@@ -538,7 +552,6 @@
                 const osc2 = audioCtx.createOscillator();
                 const gain2 = audioCtx.createGain();
                 const reloadFilter = audioCtx.createBiquadFilter();
-                
                 nodesToCleanup.push(osc2, gain2, reloadFilter);
 
                 osc2.type = 'sawtooth';
@@ -565,7 +578,6 @@
                 melody.forEach((freq, index) => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
-                    
                     nodesToCleanup.push(osc, gain);
 
                     osc.type = 'sine'; 
@@ -592,7 +604,6 @@
             previousBgImg = currentBgImg;
             bgAlpha = 0.0; 
         }
-        
         let img = new Image();
         img.src = BACKGROUNDS[index % BACKGROUNDS.length];
         img.crossOrigin = "anonymous";
@@ -635,7 +646,6 @@
                         window.Pi.init({ version: "2.0" });
                         isSdkInitialized = true;
                     }
-                    
                     setTimeout(() => {
                         window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
                         .then(function(auth) {
@@ -645,7 +655,6 @@
                             handleLoginSuccess();
                         })
                         .catch((err) => {
-                            console.error("Auth redirection:", err);
                             setupDevAccount();
                         });
                     }, 250);
@@ -680,6 +689,7 @@
                 document.getElementById('hits-val').innerText = totalHits;
                 
                 updateBirdColorTier();
+                updatePlayerRank();
             }
         } catch(e) {}
         
@@ -691,6 +701,24 @@
         setupJoystickListeners(); 
         loadLeaderboard();
         playAdvancedSound('reload');
+    }
+
+    // دالة تحديث اللقب التنافسي للاعب وتغيير شكله تلقائياً
+    function updatePlayerRank() {
+        let activeRank = RANK_TIERS[0];
+        for (let i = RANK_TIERS.length - 1; i >= 0; i--) {
+            if (totalHits >= RANK_TIERS[i].minHits) {
+                activeRank = RANK_TIERS[i];
+                break;
+            }
+        }
+
+        currentRankTitle = activeRank.name;
+        const rankDisplay = document.getElementById('rank-display');
+        rankDisplay.innerText = activeRank.name;
+        rankDisplay.style.color = activeRank.color;
+        rankDisplay.style.borderColor = activeRank.color;
+        rankDisplay.style.background = `linear-gradient(135deg, ${activeRank.bg}, #0f172a)`;
     }
 
     function updateBirdColorTier() {
@@ -706,7 +734,6 @@
                 let b = Math.floor((Math.sin(seed + offset + 4) * 0.5 + 0.5) * 220) + 35;
                 return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
             }
-            
             currentBirdStyle = {
                 name: `Mythic Swarm Gen [${currentTier + 1}]`,
                 primary: generateHexColor(0),
@@ -735,10 +762,12 @@
     async function updateSupabaseScore() {
         if (!playerPiUser) return;
         try {
+            // نقوم بإرسال اللقب التنافسي (Title) أيضاً لـ Supabase لتخزينه وعرضه
             const payload = { 
                 pi_username: playerPiUser, 
                 wallet_address: playerWallet,
                 high_score: score,
+                title: currentRankTitle, 
                 updated_at: new Date().toISOString()
             };
             await _supabaseClient.from(TABLE_NAME).upsert(payload, { onConflict: 'pi_username' });
@@ -748,9 +777,10 @@
 
     async function loadLeaderboard() {
         try {
+            // جلب الألقاب المخزنة من جدول Supabase لعرضها مباشرة بالصدارة
             let { data } = await _supabaseClient
                 .from(TABLE_NAME)
-                .select('pi_username, high_score')
+                .select('pi_username, high_score, title')
                 .order('high_score', { ascending: false })
                 .limit(5);
             const tbody = document.getElementById('leaderboard-body');
@@ -759,7 +789,14 @@
                 data.forEach((row, index) => {
                     const tr = document.createElement('tr');
                     if (row.pi_username === playerPiUser) tr.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
-                    tr.innerHTML = `<td>${index + 1}</td><td>${row.pi_username}</td><td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>`;
+                    
+                    let displayTitle = row.title || "Rookie 🛡️";
+                    tr.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${row.pi_username}</td>
+                        <td style="font-weight:bold; font-size:11px;">${displayTitle}</td>
+                        <td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>
+                    `;
                     tbody.appendChild(tr);
                 });
             }
@@ -884,20 +921,28 @@
             }
 
             if (currentStatusText === "") currentStatusText = "🎯 TARGETS SMASHED! ";
+            
             let oldStyleName = currentBirdStyle.name;
-            updateBirdColorTier();
+            let oldRankTitle = currentRankTitle;
 
-            if (currentBirdStyle.name !== oldStyleName) {
-                currentStatusText += `🔥 LEVEL UP: [${currentBirdStyle.name}]! (New Background Area)`;
+            updateBirdColorTier();
+            updatePlayerRank(); // فحص ترقية اللقب فوراً بعد الإصابة
+
+            if (currentRankTitle !== oldRankTitle) {
+                currentStatusText = `🎖️ تـرقـيـة جـديـدة: لقد أصبحت [ ${currentRankTitle} ] !!! ` + currentStatusText;
+                statusColor = "#a855f7";
+                playAdvancedSound('fanfare_bonus');
+                screenShake = 25;
+            } else if (currentBirdStyle.name !== oldStyleName) {
+                currentStatusText += `🔥 LEVEL UP: [${currentBirdStyle.name}]!`;
                 statusColor = "#38bdf8";
             } else {
                 let remaining = getNextTierRemainingHits();
-                currentStatusText += `| Next swarm & background in ${remaining} hits.`;
+                currentStatusText += `| Next swarm in ${remaining} hits.`;
             }
 
             if (ammoBonusEarned > 0 && !isRageMode) ammo += ammoBonusEarned;
             document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
-
             document.getElementById('game-status').innerText = currentStatusText;
             document.getElementById('game-status').style.color = statusColor;
 
@@ -935,7 +980,6 @@
                 deltaY = (deltaY / distance) * maxJoyDistance;
                 distance = maxJoyDistance;
             }
-
             joyKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
             joyMoveX = deltaX / maxJoyDistance;
             joyMoveY = deltaY / maxJoyDistance;
@@ -951,7 +995,6 @@
         joyContainer.addEventListener('mousedown', handleJoyStart);
         window.addEventListener('mousemove', handleJoyMove);
         window.addEventListener('mouseup', handleJoyEnd);
-
         joyContainer.addEventListener('touchstart', handleJoyStart, { passive: true });
         window.addEventListener('touchmove', handleJoyMove, { passive: false });
         window.addEventListener('touchend', handleJoyEnd);
@@ -984,12 +1027,10 @@
     function drawMirroredLoopBackground(image, opacityValue) {
         ctx.save();
         ctx.globalAlpha = opacityValue;
-        
         let normalizedX = bgX % (canvas.width * 2);
         if (normalizedX > 0) normalizedX -= (canvas.width * 2);
         
         ctx.drawImage(image, normalizedX, 0, canvas.width, canvas.height);
-        
         ctx.save();
         ctx.translate(normalizedX + canvas.width * 2, 0);
         ctx.scale(-1, 1);
@@ -997,7 +1038,6 @@
         ctx.restore();
         
         ctx.drawImage(image, normalizedX + canvas.width * 2, 0, canvas.width, canvas.height);
-        
         ctx.restore();
     }
 
@@ -1040,7 +1080,6 @@
             if (joyActive) {
                 smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
                 smoothJoyY += (joyMoveY - smoothJoyY) * 0.28 * deltaTime;
-
                 let aimSpeed = 5.8 * deltaTime; 
                 aimX += smoothJoyX * aimSpeed;
                 aimY += smoothJoyY * aimSpeed;
@@ -1204,7 +1243,6 @@
                 ctx.lineTo(-t.width/2 - 14, 11);
                 ctx.lineTo(-t.width/2, 4);
                 ctx.fill();
-
                 ctx.restore();
                 
                 if (t.opacity > 0.15) {
@@ -1280,7 +1318,6 @@
             document.getElementById('game-status').style.color = "#f87171";
             return;
         }
-
         document.getElementById('game-status').innerText = "⚡ Preparing secure handshake with Pi Blockchain Ledger...";
         document.getElementById('game-status').style.color = "#fbbf24";
 
