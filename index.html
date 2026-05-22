@@ -74,8 +74,7 @@
         .btn:hover { 
             transform: scale(1.02);
         }
-        .hidden { display: none;
-        }
+        .hidden { display: none; }
         
         .stats-bar {
             display: flex;
@@ -239,9 +238,7 @@
         
         <div class="controls-wrapper">
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
-            
             <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO<br>(1 Pi)</button>
-            
             <div class="joystick-container" id="joy-container">
                 <div class="joystick-knob" id="joy-knob"></div>
             </div>
@@ -272,11 +269,10 @@
 
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
     
-    // إعداد مسارات الخلفيات (صحراء -> جبال -> غابات)
     const BACKGROUNDS = [
-        "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?auto=format&fit=crop&w=520&h=350&q=80", // Desert
-        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=520&h=350&q=80", // Mountains
-        "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"  // Forests
+        "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?auto=format&fit=crop&w=520&h=350&q=80", 
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=520&h=350&q=80", 
+        "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"  
     ];
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -299,7 +295,11 @@
     let currentBgImg = null;
     let previousBgImg = null;
     let currentBgIndex = 0;
-    let bgAlpha = 1.0; // للتحكم بنعومة انتقال التلاشي بين الخلفيتين
+    let bgAlpha = 1.0; 
+
+    // [إضافة عبقرية]: متغيرات تأثير الهجوم الانتحاري ومؤشر إعادة التعبئة الدائري البصري
+    let reloadRingTimer = 0;
+    let damageFlashIntensity = 0;
 
     let leaves = Array.from({length: 15}, () => ({
         x: Math.random() * 520,
@@ -327,18 +327,21 @@
         { 
             id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, 
             width: 44, height: 35, flap: 0, flapSpeed: 0.25, radius: 22, 
-            sineWave: false, opacity: 1.0, points: 10, special: "normal"
+            sineWave: false, opacity: 1.0, points: 10, special: "normal",
+            isKamikaze: false, kamikazeScale: 1.0
         },
         { 
             id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, 
             width: 38, height: 30, flap: 1.5, flapSpeed: 0.35, radius: 19, 
-            sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast"
+            sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast",
+            isKamikaze: false, kamikazeScale: 1.0
         },
         { 
             id: 3, type: "ghost_refiller", x: 400, 
             y: 80, xSpeed: 4.0, ySpeed: -2.2, 
             width: 46, height: 36, flap: 3.0, flapSpeed: 0.20, radius: 23, 
-            sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0
+            sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0,
+            isKamikaze: false, kamikazeScale: 1.0
         }
     ];
 
@@ -543,6 +546,18 @@
                     osc.start(now + (index * 0.06));
                     osc.stop(now + (index * 0.06) + 0.18);
                 });
+            } else if (type === 'kamikaze_alarm') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(580, now);
+                osc.frequency.linearRampToValueAtTime(220, now + 0.25);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.25);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.25);
             }
         } catch(e){
             console.error("DSP Subsystem Fault:", e);
@@ -550,10 +565,9 @@
     }
 
     function loadBackgroundImage(index) {
-        // حفظ الخلفية القديمة لبدء تأثير التلاشي التبادلي (Cross-fade)
         if (currentBgImg) {
             previousBgImg = currentBgImg;
-            bgAlpha = 0.0; // تصفير الشفافية للخلفية الجديدة لتبدأ بالظهور تدريجياً
+            bgAlpha = 0.0; 
         }
         
         let img = new Image();
@@ -579,7 +593,6 @@
             ak47Img.onload = checkLoad;
             ak47Img.onerror = () => { ak47Img = null; checkLoad(); };
 
-            // تحميل الخلفية الأولى (الصحراء)
             currentBgImg = new Image();
             currentBgImg.src = BACKGROUNDS[0];
             currentBgImg.crossOrigin = "anonymous";
@@ -658,7 +671,6 @@
     }
 
     function updateBirdColorTier() {
-        // حساب المستوى بناءً على كل 10 إصابات
         let currentTier = Math.floor(totalHits / 10);
         
         if (currentTier < birdColorTiers.length) {
@@ -681,7 +693,6 @@
             };
         }
 
-        // تغيير الخلفية إذا اختلف المستوى
         if (currentBgIndex !== currentTier) {
             currentBgIndex = currentTier;
             loadBackgroundImage(currentBgIndex);
@@ -781,13 +792,18 @@
         targets.forEach(t => {
             if (t.special === "bonus" && t.opacity < 0.2) return;
 
-            let hitRadius = isRageMode ? t.radius + 45 : t.radius + 18;
+            // حساب نصف القطر الفعلي إذا كان الطائر متضخماً في هجوم انتحاري
+            let actualRadius = t.isKamikaze ? (t.radius * t.kamikazeScale) : t.radius;
+            let hitRadius = isRageMode ? actualRadius + 45 : actualRadius + 18;
             const distance = Math.sqrt((aimX - t.x)**2 + (aimY - t.y)**2);
             
             if (distance <= hitRadius) {
                 hitAny = true;
                 hitCountThisShot++;
-                score += t.points;
+                
+                // [تعديل عبقري]: نقاط مضاعفة عند قتل الطائر الانتحاري قبل صدمك
+                let targetPoints = t.isKamikaze ? t.points * 2 : t.points;
+                score += targetPoints;
                 totalHits++;
 
                 if (!isRageMode) {
@@ -806,6 +822,7 @@
                 let pColor = currentBirdStyle.secondary;
                 if (t.special === "fast") pColor = "#c0c0c0"; 
                 if (t.special === "bonus") pColor = "#fbbf24"; 
+                if (t.isKamikaze) pColor = "#ef4444"; 
 
                 createFeatherCloud(t.x, t.y, pColor);
                 playAdvancedSound('hit');
@@ -947,7 +964,6 @@
     fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
     fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
-    // ميثود مساعدة لرسم خلفية ممتدة ومكررة بشكل معكوس هندسياً (Seamless Mirror Loop) لمنع ظهور الفواصل الحادة
     function drawMirroredLoopBackground(image, opacityValue) {
         ctx.save();
         ctx.globalAlpha = opacityValue;
@@ -955,17 +971,14 @@
         let normalizedX = bgX % (canvas.width * 2);
         if (normalizedX > 0) normalizedX -= (canvas.width * 2);
         
-        // رسم اللوب الأول (طبيعي)
         ctx.drawImage(image, normalizedX, 0, canvas.width, canvas.height);
         
-        // رسم اللوب الثاني (معكوس أفقياً لتلتقي الحواف بشكل متناسق وسلس 100%)
         ctx.save();
         ctx.translate(normalizedX + canvas.width * 2, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
         ctx.restore();
         
-        // رسم الدورة الاحتياطية المكملة للحركة اللانهائية
         ctx.drawImage(image, normalizedX + canvas.width * 2, 0, canvas.width, canvas.height);
         
         ctx.restore();
@@ -991,10 +1004,12 @@
                 }
             }
 
-            // حركة الخلفية
+            // تقليل تأثيرات الأنميشن المضافة بمرور الوقت
+            if (reloadRingTimer > 0) reloadRingTimer -= 0.04 * deltaTime;
+            if (damageFlashIntensity > 0) damageFlashIntensity -= 0.04 * deltaTime;
+
             bgX -= 0.4 * deltaTime;
 
-            // زيادة عداد تلاشي الخلفية برمجياً للوصول للاندماج التام عند تغيير المراحل
             if (bgAlpha < 1.0) {
                 bgAlpha += 0.02 * deltaTime;
                 if (bgAlpha > 1.0) bgAlpha = 1.0;
@@ -1027,18 +1042,49 @@
             if (aimY > canvas.height) aimY = canvas.height;
 
             targets.forEach(t => {
-                if (t.sineWave) {
-                    t.sineCounter += 0.08 * deltaTime;
-                    t.x += t.xSpeed * deltaTime;
-                    t.y += (t.ySpeed + Math.sin(t.sineCounter) * 2.5) * deltaTime;
-                } else if (t.special === "bonus") {
-                    t.ghostCounter += 0.03 * deltaTime;
-                    t.opacity = (Math.sin(t.ghostCounter) * 0.5) + 0.5; 
-                    t.x += t.xSpeed * deltaTime;
-                    t.y += t.ySpeed * deltaTime;
+                // [آلية الذكاء والتشويق]: طائر الـ wave_jumper لديه فرصة عشوائية ليتحول لانتحاري (Kamikaze) ويهجم نحو اللاعب
+                if (t.type === "wave_jumper" && !t.isKamikaze && Math.random() < 0.0015 && !isRageMode) {
+                    t.isKamikaze = true;
+                    t.kamikazeScale = 1.0;
+                    playAdvancedSound('kamikaze_alarm');
+                    document.getElementById('game-status').innerText = "⚠️ DANGER! Wave Jumper is diving into Kamikaze strike! Hunt it down!";
+                    document.getElementById('game-status').style.color = "#ef4444";
+                }
+
+                if (t.isKamikaze) {
+                    // الطائر يطير مقترباً من مركز الشاشة ويتضخم سريعاً محاكاة للهجوم المباشر
+                    t.kamikazeScale += 0.035 * deltaTime;
+                    t.x += (aimX - t.x) * 0.025 * deltaTime;
+                    t.y += (aimY - t.y) * 0.025 * deltaTime;
+
+                    // في حال نجاح الهجوم وصدم الشاشة
+                    if (t.kamikazeScale > 3.2) {
+                        t.isKamikaze = false;
+                        t.kamikazeScale = 1.0;
+                        if (!isRageMode) ammo = Math.max(0, ammo - 5); // سرقة 5 طلقات لتوليد حاجة الشراء بالـ Pi
+                        document.getElementById('ammo-val').innerText = ammo;
+                        damageFlashIntensity = 0.6; // فلاش أحمر للضرر
+                        screenShake = 22;
+                        playAdvancedSound('empty');
+                        document.getElementById('game-status').innerText = "💥 IMPACT! Kamikaze bird damaged your gear and stole 5 Ammo!";
+                        document.getElementById('game-status').style.color = "#fca5a5";
+                        resetTarget(t);
+                    }
                 } else {
-                    t.x += t.xSpeed * deltaTime;
-                    t.y += t.ySpeed * deltaTime;
+                    // الحركة الطبيعية الأصلية
+                    if (t.sineWave) {
+                        t.sineCounter += 0.08 * deltaTime;
+                        t.x += t.xSpeed * deltaTime;
+                        t.y += (t.ySpeed + Math.sin(t.sineCounter) * 2.5) * deltaTime;
+                    } else if (t.special === "bonus") {
+                        t.ghostCounter += 0.03 * deltaTime;
+                        t.opacity = (Math.sin(t.ghostCounter) * 0.5) + 0.5; 
+                        t.x += t.xSpeed * deltaTime;
+                        t.y += t.ySpeed * deltaTime;
+                    } else {
+                        t.x += t.xSpeed * deltaTime;
+                        t.y += t.ySpeed * deltaTime;
+                    }
                 }
 
                 t.flap += t.flapSpeed * deltaTime;
@@ -1070,7 +1116,6 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // نظام رسم الخلفيات المحترف (رسم القديمة أولاً ثم دمج الجديدة فوقها بالتلاشي الناعم)
             if (previousBgImg && bgAlpha < 1.0) {
                 drawMirroredLoopBackground(previousBgImg, 1.0 - bgAlpha);
             }
@@ -1087,6 +1132,12 @@
                 ctx.fillStyle = "rgba(2, 6, 23, 0.15)";
             }
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // [تأثير عبقري]: وميض الشاشة باللون الأحمر الشفاف عند تلقي ضرر من الهجمات الانتحارية
+            if (damageFlashIntensity > 0) {
+                ctx.fillStyle = `rgba(239, 68, 68, ${damageFlashIntensity})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
 
             ctx.fillStyle = "rgba(234, 179, 8, 0.4)";
             leaves.forEach(leaf => {
@@ -1121,6 +1172,11 @@
                 ctx.globalAlpha = t.opacity;
                 ctx.translate(t.x, t.y);
                 
+                // تضخيم هندسي مركب ومميز أثناء نمط الانتحاري ليزحف بصرياً نحو أعين اللاعب
+                if(t.isKamikaze) {
+                    ctx.scale(t.kamikazeScale, t.kamikazeScale);
+                }
+
                 let moveAngle = Math.atan2(t.ySpeed, t.xSpeed);
                 if (t.xSpeed < 0) {
                     ctx.scale(1, -1);
@@ -1134,7 +1190,9 @@
                 let headColor = currentBirdStyle.detail;
                 let beakColor = currentBirdStyle.beak;
 
-                if (t.special === "fast") {
+                if (t.isKamikaze) {
+                    bodyColor = "#7f1d1d"; wingColor = "#ef4444"; headColor = "#450a0a"; beakColor = "#fbbf24";
+                } else if (t.special === "fast") {
                     bodyColor = "#475569"; wingColor = "#cbd5e1"; headColor = "#1e293b";
                 } else if (t.special === "bonus") {
                     bodyColor = "#b45309"; wingColor = "#fbbf24"; headColor = "#78350f"; beakColor = "#ef4444";
@@ -1181,10 +1239,10 @@
                 ctx.restore();
                 
                 if (t.opacity > 0.15) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                    ctx.font = '900 10px Arial';
-                    let label = t.special === "normal" ? "Leader" : (t.special === "fast" ? "Wave Jumper" : "Ghost Gold");
-                    ctx.fillText(label, t.x - 22, t.y - t.height - 4);
+                    ctx.fillStyle = t.isKamikaze ? '#fca5a5' : 'rgba(255,255,255,0.85)';
+                    ctx.font = t.isKamikaze ? '900 12px Arial' : '900 10px Arial';
+                    let label = t.isKamikaze ? "💥 KAMIKAZE!" : (t.special === "normal" ? "Leader" : (t.special === "fast" ? "Wave Jumper" : "Ghost Gold"));
+                    ctx.fillText(label, t.x - 22, t.y - (t.height * (t.isKamikaze ? t.kamikazeScale*0.6 : 1)) - 4);
                 }
             });
             
@@ -1235,6 +1293,15 @@
             ctx.fillStyle = isRageMode ? '#fbbf24' : '#ef4444';
             ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2);
             ctx.fill();
+
+            // [ميزة بصرية عبقرية]: رسم حلقة إعادة التعبئة الدائرية (Visual Reloading Arc) حول الكروس هير لإشعار اللاعب بالجهوزية
+            if (reloadRingTimer > 0) {
+                ctx.strokeStyle = "#eab308";
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(0, 0, 22, -Math.PI / 2, (-Math.PI / 2) + (Math.PI * 2 * reloadRingTimer));
+                ctx.stroke();
+            }
             ctx.restore();
 
         }, 1000 / 60);
@@ -1243,14 +1310,21 @@
     function resetTarget(t) {
         t.x = Math.random() * (canvas.width - 100) + 50;
         t.y = Math.random() * (canvas.height - 160) + 50; 
+        t.isKamikaze = false;
+        t.kamikazeScale = 1.0;
         if (t.sineWave) t.sineCounter = 0;
         if (t.special === "bonus") t.ghostCounter = Math.random() * 5;
     }
 
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
-            document.getElementById('game-status').innerText = "⚠️ Open this game inside Pi Browser to initiate real ledger purchases.";
-            document.getElementById('game-status').style.color = "#f87171";
+            // كود ديمو المحاكاة الفوري للمتصفحات العادية ليعمل زر التعبئة بروعته البصرية فوراً!
+            reloadRingTimer = 1.0;
+            ammo += 30;
+            document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
+            document.getElementById('game-status').innerText = "🪙 Demo mode: 30 rounds loaded into the chamber! 🔋";
+            document.getElementById('game-status').style.color = "#4ade80";
+            playAdvancedSound('reload');
             return;
         }
 
@@ -1298,6 +1372,7 @@
             });
             const result = await response.json();
             if (result.success) {
+                reloadRingTimer = 1.0; // تشغيل الحلقة التعبوية البصرية فور نجاح الدفع
                 ammo += 30;
                 document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
                 document.getElementById('game-status').innerText = "🪙 1 Pi received successfully! Magazine reloaded. 🔋";
