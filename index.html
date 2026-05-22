@@ -233,7 +233,7 @@
         </div>
 
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
-        <div><span class="audio-indicator">🌌 Tri-Target Swarm System & Dynamic Backgrounds</span></div>
+        <div><span class="audio-indicator">🌌 Auto-Cleaning Ultra DSP WebAudio Subsystem</span></div>
  
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
         
@@ -273,9 +273,9 @@
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
     
     const BACKGROUNDS = [
-        "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?auto=format&fit=crop&w=520&h=350&q=80", // Desert
-        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=520&h=350&q=80", // Mountains
-        "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"  // Forests
+        "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?auto=format&fit=crop&w=520&h=350&q=80", 
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=520&h=350&q=80", 
+        "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"  
     ];
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -288,12 +288,10 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
 
-    // Rage Mode Variables
     let rageMeter = 0;
     let isRageMode = false;
     let rageTimeLeft = 0;
 
-    // Advanced Background Cross-Fade & Mirror Loop System
     let bgX = 0;
     let currentBgImg = null;
     let previousBgImg = null;
@@ -368,7 +366,6 @@
     let gunRecoilY = 0;
     let gunRecoilAngle = 0;
 
-    // المغيرات المحدثة لمنع تعليق الصوت وإغلاقه التلقائي من المتصفح
     let audioCtx;
     let cachedTailBuffer = null; 
 
@@ -376,8 +373,7 @@
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             
-            // توليد الـ Buffer عشوائياً مرة واحدة في البداية لتوفير استهلاك المعالج والذاكرة
-            const tailBufferSize = audioCtx.sampleRate * 0.55; 
+            const tailBufferSize = audioCtx.sampleRate * 0.4; 
             cachedTailBuffer = audioCtx.createBuffer(1, tailBufferSize, audioCtx.sampleRate);
             const tailData = cachedTailBuffer.getChannelData(0);
             for (let i = 0; i < tailBufferSize; i++) {
@@ -386,171 +382,208 @@
         }
     }
 
+    // المنظومة الحديثة ذاتية التدمير لجميع العقد الصوتية لمنع التعليق
     function playAdvancedSound(type) {
         if (!audioCtx) return;
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
 
+        // مصفوفة لتجميع العقد من أجل تدميرها وفصلها تماماً بعد انتهاء الصوت
+        const nodesToCleanup = [];
+
         try {
             const now = audioCtx.currentTime;
+
             if (type === 'shoot') {
                 const impulseOsc = audioCtx.createOscillator();
                 const impulseGain = audioCtx.createGain();
+                const lpImpulse = audioCtx.createBiquadFilter();
+                
+                nodesToCleanup.push(impulseOsc, impulseGain, lpImpulse);
+
                 impulseOsc.type = 'sawtooth';
-                impulseOsc.frequency.setValueAtTime(175, now);
-                impulseOsc.frequency.exponentialRampToValueAtTime(35, now + 0.1); 
+                impulseOsc.frequency.setValueAtTime(170, now);
+                impulseOsc.frequency.exponentialRampToValueAtTime(30, now + 0.08); 
                 
                 impulseGain.gain.setValueAtTime(0.001, now);
-                impulseGain.gain.linearRampToValueAtTime(3.5, now + 0.001);
-                impulseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                impulseGain.gain.linearRampToValueAtTime(2.5, now + 0.001);
+                impulseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
                 
-                const lpImpulse = audioCtx.createBiquadFilter();
                 lpImpulse.type = 'lowpass';
-                lpImpulse.frequency.setValueAtTime(650, now); 
+                lpImpulse.frequency.setValueAtTime(600, now); 
                 
                 impulseOsc.connect(lpImpulse);
                 lpImpulse.connect(impulseGain);
+                impulseGain.connect(audioCtx.destination);
                 
-                // سحب الصدى الجاهز مسبقاً من الذاكرة لضمان سلاسة الأداء وعدم تقطيع الصوت
                 const tailNoise = audioCtx.createBufferSource();
                 tailNoise.buffer = cachedTailBuffer;
-                
                 const tailFilter = audioCtx.createBiquadFilter();
-                tailFilter.type = 'bandpass';
-                tailFilter.frequency.setValueAtTime(550, now);
-                tailFilter.frequency.exponentialRampToValueAtTime(140, now + 0.5);
-                tailFilter.Q.setValueAtTime(1.5, now);
-                
                 const tailGain = audioCtx.createGain();
+                
+                nodesToCleanup.push(tailNoise, tailFilter, tailGain);
+
+                tailFilter.type = 'bandpass';
+                tailFilter.frequency.setValueAtTime(500, now);
+                tailFilter.frequency.exponentialRampToValueAtTime(130, now + 0.35);
+                tailFilter.Q.setValueAtTime(1.2, now);
+                
                 tailGain.gain.setValueAtTime(0.001, now);
-                tailGain.gain.linearRampToValueAtTime(2.2, now + 0.004); 
-                tailGain.gain.exponentialRampToValueAtTime(0.001, now + 0.52); 
+                tailGain.gain.linearRampToValueAtTime(1.8, now + 0.004); 
+                tailGain.gain.exponentialRampToValueAtTime(0.001, now + 0.38); 
 
                 tailNoise.connect(tailFilter);
                 tailFilter.connect(tailGain);
-                
-                const delay = audioCtx.createDelay();
-                delay.delayTime.value = 0.15;
-                const feedback = audioCtx.createGain();
-                feedback.gain.value = 0.25;
-                delay.connect(feedback);
-                feedback.connect(delay);
-                delay.connect(audioCtx.destination);
-
-                impulseGain.connect(audioCtx.destination);
-                impulseGain.connect(delay); 
                 tailGain.connect(audioCtx.destination);
-                tailGain.connect(delay); 
                 
                 impulseOsc.start(now);
-                impulseOsc.stop(now + 0.13);
+                impulseOsc.stop(now + 0.1);
                 tailNoise.start(now);
-                tailNoise.stop(now + 0.52);
+                tailNoise.stop(now + 0.38);
 
                 const mechOsc = audioCtx.createOscillator();
                 const mechGain = audioCtx.createGain();
-                mechOsc.type = 'sawtooth';
-                mechOsc.frequency.setValueAtTime(1100, now);
-                
                 const mechFilter = audioCtx.createBiquadFilter();
+                
+                nodesToCleanup.push(mechOsc, mechGain, mechFilter);
+
+                mechOsc.type = 'sawtooth';
+                mechOsc.frequency.setValueAtTime(1000, now);
                 mechFilter.type = 'highpass';
                 mechFilter.frequency.setValueAtTime(1500, now);
-
-                mechGain.gain.setValueAtTime(0.6, now); 
-                mechGain.gain.linearRampToValueAtTime(0.001, now + 0.04);
+                mechGain.gain.setValueAtTime(0.4, now); 
+                mechGain.gain.linearRampToValueAtTime(0.001, now + 0.03);
                 
                 mechOsc.connect(mechFilter);
                 mechFilter.connect(mechGain);
                 mechGain.connect(audioCtx.destination);
                 
                 mechOsc.start(now);
-                mechOsc.stop(now + 0.04);
+                mechOsc.stop(now + 0.03);
+
+                // تنظيف كامل وجذري للعقد بعد 450 مللي ثانية لمنع تراكمها في الذاكرة الكاش للمتصفح
+                setTimeout(() => {
+                    nodesToCleanup.forEach(node => {
+                        try { node.disconnect(); } catch(e){}
+                    });
+                }, 450);
                 
             } else if (type === 'hit') {
                 const hitOsc = audioCtx.createOscillator();
                 const hitGain = audioCtx.createGain();
-                hitOsc.type = 'square';
-                hitOsc.frequency.setValueAtTime(600, now);
-                hitOsc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
-                
                 const lpFilter = audioCtx.createBiquadFilter();
-                lpFilter.type = 'lowpass';
-                lpFilter.frequency.setValueAtTime(800, now);
+                
+                nodesToCleanup.push(hitOsc, hitGain, lpFilter);
 
-                hitGain.gain.setValueAtTime(0.9, now);
-                hitGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                hitOsc.type = 'square';
+                hitOsc.frequency.setValueAtTime(550, now);
+                hitOsc.frequency.exponentialRampToValueAtTime(70, now + 0.12);
+                
+                lpFilter.type = 'lowpass';
+                lpFilter.frequency.setValueAtTime(750, now);
+                hitGain.gain.setValueAtTime(0.7, now);
+                hitGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
                 
                 hitOsc.connect(lpFilter);
                 lpFilter.connect(hitGain);
                 hitGain.connect(audioCtx.destination);
+                
                 hitOsc.start(now);
-                hitOsc.stop(now + 0.15);
+                hitOsc.stop(now + 0.12);
+
+                setTimeout(() => {
+                    nodesToCleanup.forEach(node => { try { node.disconnect(); } catch(e){} });
+                }, 200);
                 
             } else if (type === 'empty') {
                 const emptyOsc = audioCtx.createOscillator();
                 const emptyGain = audioCtx.createGain();
-                emptyOsc.type = 'triangle';
-                emptyOsc.frequency.setValueAtTime(950, now);
-                emptyOsc.frequency.setValueAtTime(380, now + 0.015);
                 
-                emptyGain.gain.setValueAtTime(0.4, now);
+                nodesToCleanup.push(emptyOsc, emptyGain);
+
+                emptyOsc.type = 'triangle';
+                emptyOsc.frequency.setValueAtTime(900, now);
+                emptyOsc.frequency.setValueAtTime(350, now + 0.015);
+                emptyGain.gain.setValueAtTime(0.3, now);
                 emptyGain.gain.linearRampToValueAtTime(0.001, now + 0.025);
                 
                 emptyOsc.connect(emptyGain);
                 emptyGain.connect(audioCtx.destination);
+                
                 emptyOsc.start(now);
                 emptyOsc.stop(now + 0.025);
+
+                setTimeout(() => {
+                    nodesToCleanup.forEach(node => { try { node.disconnect(); } catch(e){} });
+                }, 100);
                 
             } else if (type === 'reload') {
                 const osc1 = audioCtx.createOscillator();
                 const gain1 = audioCtx.createGain();
+                
+                nodesToCleanup.push(osc1, gain1);
+
                 osc1.type = 'triangle';
-                osc1.frequency.setValueAtTime(420, now);
-                osc1.frequency.linearRampToValueAtTime(700, now + 0.06);
-                gain1.gain.setValueAtTime(0.3, now);
-                gain1.gain.linearRampToValueAtTime(0.001, now + 0.06);
+                osc1.frequency.setValueAtTime(400, now);
+                osc1.frequency.linearRampToValueAtTime(650, now + 0.05);
+                gain1.gain.setValueAtTime(0.25, now);
+                gain1.gain.linearRampToValueAtTime(0.001, now + 0.05);
                 osc1.connect(gain1);
                 gain1.connect(audioCtx.destination);
                 osc1.start(now);
-                osc1.stop(now + 0.06);
+                osc1.stop(now + 0.05);
 
-                const delay = 0.16;
+                const delayTime = 0.14;
                 const osc2 = audioCtx.createOscillator();
                 const gain2 = audioCtx.createGain();
-                osc2.type = 'sawtooth';
-                osc2.frequency.setValueAtTime(250, now + delay);
-                osc2.frequency.exponentialRampToValueAtTime(1150, now + delay + 0.08);
-                
                 const reloadFilter = audioCtx.createBiquadFilter();
+                
+                nodesToCleanup.push(osc2, gain2, reloadFilter);
+
+                osc2.type = 'sawtooth';
+                osc2.frequency.setValueAtTime(220, now + delayTime);
+                osc2.frequency.exponentialRampToValueAtTime(1100, now + delayTime + 0.07);
                 reloadFilter.type = 'lowpass';
-                reloadFilter.frequency.value = 1500;
-                gain2.gain.setValueAtTime(0.35, now + delay);
-                gain2.gain.linearRampToValueAtTime(0.001, now + delay + 0.08);
+                reloadFilter.frequency.value = 1400;
+                gain2.gain.setValueAtTime(0.3, now + delayTime);
+                gain2.gain.linearRampToValueAtTime(0.001, now + delayTime + 0.07);
                 
                 osc2.connect(reloadFilter);
                 reloadFilter.connect(gain2);
                 gain2.connect(audioCtx.destination);
-                osc2.start(now + delay);
-                osc2.stop(now + delay + 0.08);
+                
+                osc2.start(now + delayTime);
+                osc2.stop(now + delayTime + 0.07);
+
+                setTimeout(() => {
+                    nodesToCleanup.forEach(node => { try { node.disconnect(); } catch(e){} });
+                }, 350);
                 
             } else if (type === 'fanfare_bonus') {
                 const melody = [329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
                 melody.forEach((freq, index) => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
+                    
+                    nodesToCleanup.push(osc, gain);
+
                     osc.type = 'sine'; 
-                    osc.frequency.setValueAtTime(freq, now + (index * 0.06));
-                    gain.gain.setValueAtTime(0.25, now + (index * 0.06));
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.06) + 0.18);
+                    osc.frequency.setValueAtTime(freq, now + (index * 0.05));
+                    gain.gain.setValueAtTime(0.2, now + (index * 0.05));
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.05) + 0.15);
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
-                    osc.start(now + (index * 0.06));
-                    osc.stop(now + (index * 0.06) + 0.18);
+                    osc.start(now + (index * 0.05));
+                    osc.stop(now + (index * 0.05) + 0.15);
                 });
+
+                setTimeout(() => {
+                    nodesToCleanup.forEach(node => { try { node.disconnect(); } catch(e){} });
+                }, 600);
             }
         } catch(e){
-            console.error("DSP Subsystem Fault:", e);
+            console.error("DSP Subsystem Fault Handled Safely:", e);
         }
     }
 
