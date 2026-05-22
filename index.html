@@ -156,7 +156,12 @@
             position: absolute;
             box-shadow: 0 3px 10px rgba(0,0,0,0.6);
             cursor: pointer;
-            transition: transform 0.05s ease;
+            /* تمت إزالة الـ transition لتفادي التقطيع أثناء السحب */
+        }
+        
+        /* كلاس جديد للأنيميشن الارتدادي عند إفلات العصا فقط */
+        .joystick-knob.release-anim {
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .btn-ammo {
@@ -285,7 +290,6 @@
     let isRageMode = false;
     let rageTimeLeft = 0;
 
-    // === متغيرات المحرك البصري الجديد والبيئة الخلفية ===
     let bgX = 0;
     let leaves = Array.from({length: 15}, () => ({
         x: Math.random() * 520,
@@ -327,7 +331,7 @@
     ];
     
     let particles = []; 
-    let floatingTexts = []; // إضافة مصفوفة النصوص العائمة للإنجازات
+    let floatingTexts = []; 
     let flashIntensity = 0;
     let muzzleFlashX = 0;
     let muzzleFlashY = 0;
@@ -347,7 +351,7 @@
 
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
-    let animationId; // استبدال gameInterval
+    let animationId; 
     let ak47Img = null;
     let forestBgImg = null; 
 
@@ -411,7 +415,6 @@
                 tailNoise.connect(tailFilter);
                 tailFilter.connect(tailGain);
                 
-                // Echo Node
                 const delay = audioCtx.createDelay();
                 delay.delayTime.value = 0.15;
                 const feedback = audioCtx.createGain();
@@ -776,7 +779,6 @@
                 score += t.points;
                 totalHits++;
                 
-                // إضافة النص العائم للمكاسب
                 floatingTexts.push({
                     x: t.x,
                     y: t.y,
@@ -875,13 +877,19 @@
         }
     }
 
+    // === التصحيح الجذري لحركة الجويستيك ===
     function setupJoystickListeners() {
         const joyContainer = document.getElementById('joy-container');
         const joyKnob = document.getElementById('joy-knob');
 
         function handleJoyStart(e) {
+            // منع سلوك الشاشة الافتراضي أثناء بدء اللمس
+            if (e.cancelable && e.type === 'touchstart') e.preventDefault(); 
             initAudio();
             joyActive = true;
+            // إزالة الأنيميشن الارتدادي لضمان سرعة اللصق بالإصبع
+            joyKnob.classList.remove('release-anim'); 
+            
             const touch = e.touches ? e.touches[0] : e;
             const rect = joyContainer.getBoundingClientRect();
             joyStartX = rect.left + rect.width / 2;
@@ -890,6 +898,9 @@
 
         function handleJoyMove(e) {
             if (!joyActive) return;
+            // الأهم: منع سحب الشاشة (Scrolling) أثناء التمرير
+            if (e.cancelable) e.preventDefault(); 
+            
             const touch = e.touches ? e.touches[0] : e;
             
             let deltaX = touch.clientX - joyStartX;
@@ -908,16 +919,19 @@
 
         function handleJoyEnd() {
             joyActive = false;
+            // تفعيل الأنيميشن الارتدادي لعودة العصا بمرونة 
+            joyKnob.classList.add('release-anim'); 
             joyKnob.style.transform = 'translate(0px, 0px)';
             joyMoveX = 0;
             joyMoveY = 0;
         }
 
+        // مستمعات الأحداث للموس واللمس (تفعيل passive: false مهم لمنع المتصفح من التدخل)
         joyContainer.addEventListener('mousedown', handleJoyStart);
         window.addEventListener('mousemove', handleJoyMove);
         window.addEventListener('mouseup', handleJoyEnd);
 
-        joyContainer.addEventListener('touchstart', handleJoyStart, { passive: true });
+        joyContainer.addEventListener('touchstart', handleJoyStart, { passive: false });
         window.addEventListener('touchmove', handleJoyMove, { passive: false });
         window.addEventListener('touchend', handleJoyEnd);
     }
@@ -947,7 +961,6 @@
     fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
     fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
-    // === حلقة اللعبة الأساسية المحدثة بالمحرك البصري السلس باستخدام requestAnimationFrame ===
     function startGameLoop() {
         if(animationId) cancelAnimationFrame(animationId);
         lastTime = performance.now();
@@ -1155,7 +1168,6 @@
                 }
             });
             
-            // رسم نصوص الإنجازات العائمة
             floatingTexts.forEach((ft, index) => {
                 ft.y -= 1.5 * deltaTime;
                 ft.alpha -= 0.02 * deltaTime;
