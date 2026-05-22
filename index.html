@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE HUNTER Arcade - World Shift Edition 🔥</title>
+    <title>THE HUNTER Arcade - Fix Edition 🔥</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -56,7 +56,7 @@
             border-radius: 16px;
             border: 3px solid #38bdf8;
             box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
-            background-image: url('https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-logo.png'); 
+            background-image: url('https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-logo.png?v=fixed_avatar'); 
             background-size: cover;
             background-position: center;
         }
@@ -308,9 +308,10 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
-    // استعادة روابط الأصول الأصلية الخاصة بك بشكل صارم
-    const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
-    const BG_FOREST_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-background.png"; 
+    // إضافة أرقام عشوائية لكسر الكاش (Cache-Busting) وإجبار المتصفح على جلب التحديث فوراً
+    const cacheBuster = "?v=" + Date.now();
+    const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png" + cacheBuster;
+    const BG_FOREST_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-background.png" + cacheBuster; 
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -322,7 +323,7 @@
     let totalHits = 0; 
     let shotsFired = 0;
     let comboCount = 0;
-    let sequenceHits = 0; // عداد نظام طلقات الهدية الفورية بعد 10 إصابات
+    let sequenceHits = 0; // عداد الضربات المتتالية للحصول على الهدية (10 ضربات ناجحة)
     
     let playerPiUser = "";
     let playerWallet = ""; 
@@ -771,11 +772,10 @@
                 hitCountThisShot++;
                 score += t.points;
                 totalHits++;
-                sequenceHits++; // زيادة عداد الإصابات المتتالية بنجاح هنا
+                sequenceHits++; // زيادة عداد الإصابات بنجاح هنا بشكل تراكمي مستقل
                 
                 showFloatingText(t.x, t.y, `+${t.points}`, t.special === "bonus" || t.special === "golden_boss" ? '#fbbf24' : '#4ade80');
 
-                // جلب ألوان الطيور للبيئة الحالية
                 let pColor = ENVIRONMENTS[currentEnvIndex].birdColors.wing;
                 if (t.special === "golden_boss") pColor = "#facc15"; 
 
@@ -792,16 +792,16 @@
             }
         });
 
-        // تشغيل نظام طلقات الهدية الفورية بعد 10 إصابات متتالية بنجاح
+        // تشغيل نظام طلقات الهدية الفورية الصارم (إضافة 10 طلقات فوراً)
         if (hitAny && sequenceHits >= 10) {
             ammo += 10;
             document.getElementById('ammo-val').innerText = shieldActive ? "🛡️" : ammo;
-            showFloatingText(260, 150, "🎁 FREE GIFT +10 AMMO!", "#38bdf8", 24);
+            showFloatingText(260, 150, "🎁 GIFT AMMO +10 ACTIVATED!", "#38bdf8", 24);
             playAdvancedSound('fanfare_bonus');
-            sequenceHits = 0; // إعادة تعيين العداد فوراً بعد التسليم لكي يبدأ من جديد
+            sequenceHits = 0; // إعادة ضبط العداد لتبدأ دورة جديدة فوراً
         }
 
-        // التحكم في لون التصويب ديناميكياً بناءً على الدقة العامة
+        // دقة التصويب والألوان
         let accuracy = (totalHits / shotsFired) * 100;
         document.getElementById('acc-val').innerText = Math.round(accuracy) + "%";
         if (accuracy > 80 && shotsFired > 5) crosshairColor = "#06b6d4"; 
@@ -829,7 +829,7 @@
             updateSupabaseScore();
         } else {
             comboCount = 0; 
-            sequenceHits = 0; // تصفير العداد فوراً عند تضييع أي طلقة للحفاظ على التحدي
+            sequenceHits = 0; // تصفير العداد عند إهدار الطلقة لضمان التحدي
             if (!shieldActive) {
                 document.getElementById('game-status').innerText = "💨 SHOT MISSED! Sequence Reset.";
                 document.getElementById('game-status').style.color = "#fbbf24";
@@ -936,13 +936,13 @@
                 }
             }
 
-            // حركة ثابتة ومستمرة للخلفية الأفقية لمنع التجميد أو الاختفاء
+            // حركة الخلفية الأفقية المستمرة دون تجميد
             bgX -= 0.5 * deltaTime;
             if (Math.abs(bgX) >= canvas.width) {
                 bgX = 0;
             }
 
-            // تحديث جزيئات البيئة
+            // جزيئات الطقس والبيئة
             envParticles.forEach(p => {
                 let currentEnv = ENVIRONMENTS[currentEnvIndex];
                 if (currentEnv.pType === "snow") {
@@ -1010,12 +1010,11 @@
                 if (t.y >= maxYBorder) { t.y = maxYBorder; t.ySpeed = -Math.abs(t.ySpeed); }
             });
             
-            // ارتداد السلاح
+            // ارتداد السلاح واهتزاز الشاشة
             gunRecoilZ *= Math.pow(0.83, deltaTime);
             gunRecoilY *= Math.pow(0.80, deltaTime);
             gunRecoilAngle *= Math.pow(0.78, deltaTime);
 
-            // اهتزاز الشاشة
             if (screenShake > 0) {
                 const dx = (Math.random() - 0.5) * screenShake;
                 const dy = (Math.random() - 0.5) * screenShake;
@@ -1030,7 +1029,7 @@
             // RENDERING CANVAS
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // إصلاح كود رسم وتثبيت صور الخلفية الأصلية الخاصة بمشروعك بشكل ممتد وكامل
+            // رسم صورتك الأصلية المكررة بشكل كامل ومباشر لمنع حدوث شاشات سوداء أو تجميد
             if (forestBgImg && forestBgImg.complete) {
                 ctx.drawImage(forestBgImg, bgX, 0, canvas.width, canvas.height);
                 ctx.drawImage(forestBgImg, bgX + canvas.width, 0, canvas.width, canvas.height);
@@ -1039,11 +1038,11 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
             
-            // تأثير بيئات التنقل المتغيرة فوق الخلفية الأصلية
+            // إضافة الصبغة المتغيرة للعوالم فوق الخلفية الأصلية مباشرة
             ctx.fillStyle = ENVIRONMENTS[currentEnvIndex].bgTint;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // رسم جزيئات الطقس والبيئات المتقدمة
+            // رسم جزيئات الطقس
             ctx.fillStyle = ENVIRONMENTS[currentEnvIndex].pColor;
             envParticles.forEach(p => {
                 ctx.beginPath();
@@ -1051,7 +1050,7 @@
                 ctx.fill();
             });
             
-            // جزيئات انفجار الريش الملون
+            // ريش الطيور المنفجر
             particles.forEach((p, index) => {
                 p.x += p.vx * deltaTime; 
                 p.y += p.vy * deltaTime; 
@@ -1073,7 +1072,7 @@
                 }
             });
             
-            // رسم الطيور بألوانها الاحترافية المتغيرة حسب البيئة المستهدفة
+            // رسم الطيور بألوانها المتغيرة
             targets.forEach(t => {
                 ctx.save();
                 ctx.globalAlpha = t.opacity;
@@ -1119,7 +1118,7 @@
                 ctx.restore();
             });
             
-            // النصوص والدرجات العائمة على الشاشة
+            // النصوص العائمة
             floatingTexts.forEach((ft, index) => {
                 ft.y -= 1.5 * deltaTime;
                 ft.alpha -= 0.02 * deltaTime;
@@ -1155,7 +1154,7 @@
                 flashIntensity -= 0.08 * deltaTime;
             }
 
-            // رسم سلاح الـ AK-47 الاحترافي
+            // رسم سلاح الـ AK-47
             let gunBaseX = canvas.width - 45;
             let gunBaseY = canvas.height + 25; 
 
