@@ -120,9 +120,9 @@
             color: white;
             border: 2px solid #fca5a5;
             border-radius: 50%;
-            width: 95px;
-            height: 95px;
-            font-size: 18px;
+            width: 75px;
+            height: 75px;
+            font-size: 14px;
             font-weight: 900;
             cursor: pointer;
             box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
@@ -135,8 +135,8 @@
         }
 
         .joystick-container {
-            width: 95px;
-            height: 95px;
+            width: 75px;
+            height: 75px;
             background: radial-gradient(circle, #1e293b 40%, #0f172a 100%);
             border: 3px solid #38bdf8;
             border-radius: 50%;
@@ -148,8 +148,8 @@
             touch-action: none;
         }
         .joystick-knob {
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             background: linear-gradient(135deg, #0284c7, #0369a1);
             border: 2px solid #38bdf8;
             border-radius: 50%;
@@ -164,14 +164,14 @@
             background-image: linear-gradient(135deg, #eab308, #ca8a04); 
             color: #0f172a; 
             font-size: 13px; 
-            padding: 14px 8px; 
+            padding: 8px 8px; 
             font-weight: 900;
             border-radius: 14px;
             border: none;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
             letter-spacing: 0.2px;
-            height: 70px;
+            height: 75px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -207,7 +207,6 @@
             font-weight: bold;
         }
 
-        /* تنسيق خاص ومميز لعرض الرتبة الحالية */
         .rank-badge {
             background: linear-gradient(135deg, #1e293b, #0f172a);
             border: 1px solid #38bdf8;
@@ -235,7 +234,6 @@
     </div>
 
     <div id="game-section" class="hidden">
-        <!-- شريط الإحصائيات بعد إضافة الرتبة التنافسية والمظهر الملون لها -->
         <div class="stats-bar">
             <div>Hunter: <span id="player-name" style="color: #38bdf8;">...</span></div>
             <div>Hits: <span id="hits-val" style="color: #eab308;">0</span> 🎯</div>
@@ -295,7 +293,6 @@
         "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"  
     ];
 
-    // مصفوفة الألقاب التنافسية بناءً على عدد الـ Hits الإجمالي للاعب
     const RANK_TIERS = [
         { minHits: 0,   name: "Rookie 🛡️",          color: "#94a3b8", bg: "#1e293b" },
         { minHits: 15,  name: "Elite Hunter 🎯",    color: "#38bdf8", bg: "#0c4a6e" },
@@ -305,7 +302,6 @@
     ];
 
     let currentRankTitle = "Rookie 🛡️";
-
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let score = 0;
@@ -349,22 +345,9 @@
     let currentBirdStyle = birdColorTiers[0];
 
     let targets = [
-        { 
-            id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, 
-            width: 44, height: 35, flap: 0, flapSpeed: 0.25, radius: 22, 
-            sineWave: false, opacity: 1.0, points: 10, special: "normal"
-        },
-        { 
-            id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, 
-            width: 38, height: 30, flap: 1.5, flapSpeed: 0.35, radius: 19, 
-            sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast"
-        },
-        { 
-            id: 3, type: "ghost_refiller", x: 400, 
-            y: 80, xSpeed: 4.0, ySpeed: -2.2, 
-            width: 46, height: 36, flap: 3.0, flapSpeed: 0.20, radius: 23, 
-            sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0
-        }
+        { id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, width: 44, height: 35, flap: 0, flapSpeed: 0.25, radius: 22, sineWave: false, opacity: 1.0, points: 10, special: "normal" },
+        { id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, width: 38, height: 30, flap: 1.5, flapSpeed: 0.35, radius: 19, sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast" },
+        { id: 3, type: "ghost_refiller", x: 400, y: 80, xSpeed: 4.0, ySpeed: -2.2, width: 46, height: 36, flap: 3.0, flapSpeed: 0.20, radius: 23, sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0 }
     ];
 
     let particles = []; 
@@ -382,7 +365,7 @@
     let joyMoveY = 0;
     let smoothJoyX = 0; 
     let smoothJoyY = 0; 
-    const maxJoyDistance = 35;
+    const maxJoyDistance = 25; 
     let lastTime = performance.now(); 
 
     const canvas = document.getElementById('hunting-canvas');
@@ -703,7 +686,6 @@
         playAdvancedSound('reload');
     }
 
-    // دالة تحديث اللقب التنافسي للاعب وتغيير شكله تلقائياً
     function updatePlayerRank() {
         let activeRank = RANK_TIERS[0];
         for (let i = RANK_TIERS.length - 1; i >= 0; i--) {
@@ -762,7 +744,6 @@
     async function updateSupabaseScore() {
         if (!playerPiUser) return;
         try {
-            // نقوم بإرسال اللقب التنافسي (Title) أيضاً لـ Supabase لتخزينه وعرضه
             const payload = { 
                 pi_username: playerPiUser, 
                 wallet_address: playerWallet,
@@ -777,7 +758,6 @@
 
     async function loadLeaderboard() {
         try {
-            // جلب الألقاب المخزنة من جدول Supabase لعرضها مباشرة بالصدارة
             let { data } = await _supabaseClient
                 .from(TABLE_NAME)
                 .select('pi_username, high_score, title')
@@ -926,7 +906,7 @@
             let oldRankTitle = currentRankTitle;
 
             updateBirdColorTier();
-            updatePlayerRank(); // فحص ترقية اللقب فوراً بعد الإصابة
+            updatePlayerRank();
 
             if (currentRankTitle !== oldRankTitle) {
                 currentStatusText = `🎖️ تـرقـيـة جـديـدة: لقد أصبحت [ ${currentRankTitle} ] !!! ` + currentStatusText;
