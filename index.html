@@ -294,10 +294,12 @@
     let isRageMode = false;
     let rageTimeLeft = 0;
 
-    // Background & Engine Variables
+    // Advanced Background Cross-Fade & Mirror Loop System
     let bgX = 0;
     let currentBgImg = null;
+    let previousBgImg = null;
     let currentBgIndex = 0;
+    let bgAlpha = 1.0; // للتحكم بنعومة انتقال التلاشي بين الخلفيتين
 
     let leaves = Array.from({length: 15}, () => ({
         x: Math.random() * 520,
@@ -548,6 +550,12 @@
     }
 
     function loadBackgroundImage(index) {
+        // حفظ الخلفية القديمة لبدء تأثير التلاشي التبادلي (Cross-fade)
+        if (currentBgImg) {
+            previousBgImg = currentBgImg;
+            bgAlpha = 0.0; // تصفير الشفافية للخلفية الجديدة لتبدأ بالظهور تدريجياً
+        }
+        
         let img = new Image();
         img.src = BACKGROUNDS[index % BACKGROUNDS.length];
         img.crossOrigin = "anonymous";
@@ -939,6 +947,30 @@
     fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
     fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
+    // ميثود مساعدة لرسم خلفية ممتدة ومكررة بشكل معكوس هندسياً (Seamless Mirror Loop) لمنع ظهور الفواصل الحادة
+    function drawMirroredLoopBackground(image, opacityValue) {
+        ctx.save();
+        ctx.globalAlpha = opacityValue;
+        
+        let normalizedX = bgX % (canvas.width * 2);
+        if (normalizedX > 0) normalizedX -= (canvas.width * 2);
+        
+        // رسم اللوب الأول (طبيعي)
+        ctx.drawImage(image, normalizedX, 0, canvas.width, canvas.height);
+        
+        // رسم اللوب الثاني (معكوس أفقياً لتلتقي الحواف بشكل متناسق وسلس 100%)
+        ctx.save();
+        ctx.translate(normalizedX + canvas.width * 2, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+        
+        // رسم الدورة الاحتياطية المكملة للحركة اللانهائية
+        ctx.drawImage(image, normalizedX + canvas.width * 2, 0, canvas.width, canvas.height);
+        
+        ctx.restore();
+    }
+
     function startGameLoop() {
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(() => {
@@ -959,7 +991,14 @@
                 }
             }
 
-            bgX -= 0.25 * deltaTime;
+            // حركة الخلفية
+            bgX -= 0.4 * deltaTime;
+
+            // زيادة عداد تلاشي الخلفية برمجياً للوصول للاندماج التام عند تغيير المراحل
+            if (bgAlpha < 1.0) {
+                bgAlpha += 0.02 * deltaTime;
+                if (bgAlpha > 1.0) bgAlpha = 1.0;
+            }
 
             leaves.forEach(leaf => {
                 leaf.y += leaf.speed * deltaTime;
@@ -1031,10 +1070,12 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // رسم الخلفية المتغيرة
+            // نظام رسم الخلفيات المحترف (رسم القديمة أولاً ثم دمج الجديدة فوقها بالتلاشي الناعم)
+            if (previousBgImg && bgAlpha < 1.0) {
+                drawMirroredLoopBackground(previousBgImg, 1.0 - bgAlpha);
+            }
             if (currentBgImg) {
-                ctx.drawImage(currentBgImg, bgX % canvas.width, 0, canvas.width, canvas.height);
-                ctx.drawImage(currentBgImg, (bgX % canvas.width) + canvas.width, 0, canvas.width, canvas.height);
+                drawMirroredLoopBackground(currentBgImg, bgAlpha);
             } else {
                 ctx.fillStyle = '#070b19';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
