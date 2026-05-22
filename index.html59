@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>THE HUNTER Arcade - 3 Birds Swarm Swish Edition 🔥</title>
+    
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #020617; 
+            color: #ffffff;
+            text-align: center;
+            margin: 0;
+            padding: 5px; 
+            touch-action: none;
+            user-select: none;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 540px;
+            margin: 2px auto;  
+            background: rgba(15, 23, 42, 0.98);
+            padding: 12px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.9);
+            border: 1px solid #475569;
+            transition: transform 0.04s cubic-bezier(0.1, 0.8, 0.3, 1);
+        }
+        h1 { 
+            color: #38bdf8;
+            margin-top: 2px;
+            margin-bottom: 8px; 
+            font-size: 26px;
+            letter-spacing: 1px;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.9);
+        }
+        .welcome-card {
+            background: #0f172a;
+            border-radius: 18px;
+            padding: 30px 15px; 
+            border: 2px solid #38bdf8;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+            margin-top: 10px;
+        }
+        .hunter-avatar {
+            width: 170px;
+            height: 170px;
+            margin: 0 auto 20px auto;
+            border-radius: 16px;
+            border: 3px solid #38bdf8;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+            background-image: url('https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-logo.png'); 
+            background-size: cover;
+            background-position: center;
+        }
+        .btn {
+            background-image: linear-gradient(135deg, #38bdf8, #0284c7);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 19px;
+            font-weight: bold;
+            border-radius: 35px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 5px 18px rgba(56, 189, 248, 0.4);
+            display: inline-block;
+            width: 85%;
+        }
+        .btn:hover { 
+            transform: scale(1.02);
+        }
+        .hidden { display: none;
+        }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 10px;
+            border-radius: 14px;
+            margin-bottom: 8px; 
+            font-weight: bold;
+            border: 1px solid #334155;
+            font-size: 11px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        #hunting-canvas {
+            border: 3px solid #38bdf8;
+            border-radius: 16px;
+            cursor: crosshair; 
+            width: 100%;
+            height: auto;
+            touch-action: none;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+            background-color: #070b19;
+            display: block;
+        }
+        
+        .controls-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            gap: 10px;
+            direction: ltr; 
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 18px;
+            border: 1px solid #1e293b;
+        }
+
+        .btn-shoot {
+            background-image: linear-gradient(135deg, #ef4444, #dc2626, #991b1b);
+            color: white;
+            border: 2px solid #fca5a5;
+            border-radius: 50%;
+            width: 95px;
+            height: 95px;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+            transition: transform 0.05s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-shoot:active {
+            transform: scale(0.85);
+            background-image: linear-gradient(135deg, #991b1b, #451a03);
+        }
+
+        .joystick-container {
+            width: 95px;
+            height: 95px;
+            background: radial-gradient(circle, #1e293b 40%, #0f172a 100%);
+            border: 3px solid #38bdf8;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3), inset 0 2px 8px rgba(0,0,0,0.8);
+            touch-action: none;
+        }
+        .joystick-knob {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            border: 2px solid #38bdf8;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+            cursor: pointer;
+            transition: transform 0.05s ease;
+        }
+
+        .btn-ammo {
+            flex: 1;
+            background-image: linear-gradient(135deg, #eab308, #ca8a04); 
+            color: #0f172a; 
+            font-size: 13px; 
+            padding: 14px 8px; 
+            font-weight: 900;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+            letter-spacing: 0.2px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            margin-top: 15px;
+            border-collapse: collapse;
+            background: #0f172a;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 10px;
+            border-bottom: 1px solid #1e293b;
+            font-size: 13px;
+        }
+        .leaderboard-table th { 
+            background-color: #1e293b;
+            color: #38bdf8; 
+        }
+        
+        .audio-indicator {
+            font-size: 11px;
+            color: #38bdf8;
+            margin-top: 3px;
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.15);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="game-container">
+    <h1>🎮 THE HUNTER</h1>
+
+    <div id="auth-section">
+        <div class="welcome-card">
+            <div class="hunter-avatar"></div>
+            <p>Welcome Abu Kareem!<br>Log in to deploy your custom cinematic AK-47 assault rifle 🔥</p>
+            <button class="btn" id="btn-login" onclick="initAndLoginWithPi()">FREE ACCESS & START HUNTING 🚀</button>
+        </div>
+    </div>
+
+    <div id="game-section" class="hidden">
+        <div class="stats-bar">
+            <div>Hunter: <span id="player-name" style="color: #38bdf8;">...</span></div>
+            <div>Hits: <span id="hits-val" style="color: #eab308;">0</span> 🎯</div>
+            <div>Score: <span id="score-val" style="color: #4ade80;">0</span></div>
+            <div>Ammo: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
+            <div>Rage: <span id="rage-val" style="color: #ef4444;">0%</span> 😡</div>
+            <div>Tier Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown</span></div>
+        </div>
+
+        <canvas id="hunting-canvas" width="520" height="350"></canvas>
+        <div><span class="audio-indicator">🌌 Tri-Target Swarm System & Dynamic Combo Multipliers Loaded</span></div>
+ 
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
+        
+        <div class="controls-wrapper">
+            <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
+            
+            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO<br>(1 Pi)</button>
+            
+            <div class="joystick-container" id="joy-container">
+                <div class="joystick-knob" id="joy-knob"></div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38bdf8; font-size: 16px;">🏆 GLOBAL LEADERBOARD</h3>
+        <table class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>RANK</th>
+                    <th>HUNTER USERNAME</th>
+                    <th>HIGH SCORE 🎯</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+                <tr>
+                    <td colspan="3" style="color: #94a3b8;">Authenticating Pi Network Ledger...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://xolwuawlnruvzqowxxbh.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
+    const TABLE_NAME = "hunter_game_scores"; 
+
+    const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
+    const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"; 
+
+    const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let score = 0;
+    let ammo = 30;
+    let totalHits = 0; 
+    let playerPiUser = "";
+    let playerWallet = ""; 
+    let currentPiUserId = "";
+    let isSdkInitialized = false;
+
+    // Rage Mode Variables
+    let rageMeter = 0;
+    let isRageMode = false;
+    let rageTimeLeft = 0;
+
+    // === متغيرات المحرك البصري الجديد والبيئة الخلفية ===
+    let bgX = 0;
+    let leaves = Array.from({length: 15}, () => ({
+        x: Math.random() * 520,
+        y: Math.random() * 350,
+        size: Math.random() * 3 + 2,
+        speed: Math.random() * 1.2 + 0.4,
+        sway: Math.random() * 0.04
+    }));
+
+    const birdColorTiers = [
+        { name: "Classic Trio Tier", primary: "#543011", secondary: "#eab308", detail: "#3a1f05", beak: "#f97316" }, 
+        { name: "Forest Emerald Pack", primary: "#115e59", secondary: "#10b981", detail: "#064e3b", beak: "#f43f5e" },  
+        { name: "Neon Cyber Squad", primary: "#0369a1", secondary: "#06b6d4", detail: "#0c4a6e", beak: "#fbbf24" },      
+        { name: "Royal Purple Swarm", primary: "#6b21a8", secondary: "#a855f7", detail: "#4c1d95", beak: "#22c55e" },    
+        { name: "Cosmic Amber Legion 🌟", primary: "#b45309", secondary: "#fbbf24", detail: "#78350f", beak: "#ef4444" },  
+        { name: "Magma Crimson Rush 🔥", primary: "#991b1b", secondary: "#ef4444", detail: "#450a0a", beak: "#ffffff" },  
+        { name: "Prism Rainbow Flock 🌈", primary: "#db2777", secondary: "#3b82f6", detail: "#4f46e5", beak: "#eab308" },  
+        { name: "Cyber Shadow Division 🥷", primary: "#1e293b", secondary: "#475569", detail: "#0f172a", beak: "#38bdf8" },  
+        { name: "GODLIKE GOLD SWARM 👑", primary: "#d97706", secondary: "#fef08a", detail: "#78350f", beak: "#f97316" }   
+    ];
+
+    let currentBirdStyle = birdColorTiers[0];
+
+    let targets = [
+        { 
+            id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, 
+            width: 44, height: 35, flap: 0, flapSpeed: 0.25, radius: 22, 
+            sineWave: false, opacity: 1.0, points: 10, special: "normal"
+        },
+        { 
+            id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, 
+            width: 38, height: 30, flap: 1.5, flapSpeed: 0.35, radius: 19, 
+            sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast"
+        },
+        { 
+            id: 3, type: "ghost_refiller", x: 400, 
+            y: 80, xSpeed: 4.0, ySpeed: -2.2, 
+            width: 46, height: 36, flap: 3.0, flapSpeed: 0.20, radius: 23, 
+            sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0
+        }
+    ];
+
+    let particles = []; 
+    let flashIntensity = 0;
+    let muzzleFlashX = 0;
+    let muzzleFlashY = 0;
+    let screenShake = 0;
+    let aimX = 260;
+    let aimY = 175;
+
+    let joyActive = false;
+    let joyStartX = 0;
+    let joyStartY = 0;
+    let joyMoveX = 0;
+    let joyMoveY = 0;
+    let smoothJoyX = 0; 
+    let smoothJoyY = 0; 
+    const maxJoyDistance = 35;
+    let lastTime = performance.now(); 
+
+    const canvas = document.getElementById('hunting-canvas');
+    const ctx = canvas.getContext('2d');
+    let gameInterval;
+    let ak47Img = null;
+    let forestBgImg = null; 
+
+    let gunRecoilZ = 0;
+    let gunRecoilY = 0;
+    let gunRecoilAngle = 0;
+
+    let audioCtx;
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    function playAdvancedSound(type) {
+        if (!audioCtx) return;
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        try {
+            const now = audioCtx.currentTime;
+            if (type === 'shoot') {
+                const impulseOsc = audioCtx.createOscillator();
+                const impulseGain = audioCtx.createGain();
+                impulseOsc.type = 'sawtooth';
+                impulseOsc.frequency.setValueAtTime(175, now);
+                impulseOsc.frequency.exponentialRampToValueAtTime(35, now + 0.1); 
+                
+                impulseGain.gain.setValueAtTime(0.001, now);
+                impulseGain.gain.linearRampToValueAtTime(3.5, now + 0.001);
+                impulseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                
+                const lpImpulse = audioCtx.createBiquadFilter();
+                lpImpulse.type = 'lowpass';
+                lpImpulse.frequency.setValueAtTime(650, now); 
+                
+                impulseOsc.connect(lpImpulse);
+                lpImpulse.connect(impulseGain);
+                
+                const tailBufferSize = audioCtx.sampleRate * 0.55; 
+                const tailBuffer = audioCtx.createBuffer(1, tailBufferSize, audioCtx.sampleRate);
+                const tailData = tailBuffer.getChannelData(0);
+                for (let i = 0; i < tailBufferSize; i++) {
+                    tailData[i] = Math.random() * 2 - 1;
+                }
+                const tailNoise = audioCtx.createBufferSource();
+                tailNoise.buffer = tailBuffer;
+                
+                const tailFilter = audioCtx.createBiquadFilter();
+                tailFilter.type = 'bandpass';
+                tailFilter.frequency.setValueAtTime(550, now);
+                tailFilter.frequency.exponentialRampToValueAtTime(140, now + 0.5);
+                tailFilter.Q.setValueAtTime(1.5, now);
+                
+                const tailGain = audioCtx.createGain();
+                tailGain.gain.setValueAtTime(0.001, now);
+                tailGain.gain.linearRampToValueAtTime(2.2, now + 0.004); 
+                tailGain.gain.exponentialRampToValueAtTime(0.001, now + 0.52); 
+
+                tailNoise.connect(tailFilter);
+                tailFilter.connect(tailGain);
+                
+                // Echo Node
+                const delay = audioCtx.createDelay();
+                delay.delayTime.value = 0.15;
+                const feedback = audioCtx.createGain();
+                feedback.gain.value = 0.25;
+                delay.connect(feedback);
+                feedback.connect(delay);
+                delay.connect(audioCtx.destination);
+
+                impulseGain.connect(audioCtx.destination);
+                impulseGain.connect(delay); // Connect to echo
+                tailGain.connect(audioCtx.destination);
+                tailGain.connect(delay); // Connect to echo
+                
+                impulseOsc.start(now);
+                impulseOsc.stop(now + 0.13);
+                tailNoise.start(now);
+                tailNoise.stop(now + 0.52);
+
+                const mechOsc = audioCtx.createOscillator();
+                const mechGain = audioCtx.createGain();
+                mechOsc.type = 'sawtooth';
+                mechOsc.frequency.setValueAtTime(1100, now);
+                
+                const mechFilter = audioCtx.createBiquadFilter();
+                mechFilter.type = 'highpass';
+                mechFilter.frequency.setValueAtTime(1500, now);
+
+                mechGain.gain.setValueAtTime(0.6, now); 
+                mechGain.gain.linearRampToValueAtTime(0.001, now + 0.04);
+                
+                mechOsc.connect(mechFilter);
+                mechFilter.connect(mechGain);
+                mechGain.connect(audioCtx.destination);
+                
+                mechOsc.start(now);
+                mechOsc.stop(now + 0.04);
+                
+            } else if (type === 'hit') {
+                // Enhanced Impact Sound
+                const hitOsc = audioCtx.createOscillator();
+                const hitGain = audioCtx.createGain();
+                hitOsc.type = 'square';
+                hitOsc.frequency.setValueAtTime(600, now);
+                hitOsc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+                
+                const lpFilter = audioCtx.createBiquadFilter();
+                lpFilter.type = 'lowpass';
+                lpFilter.frequency.setValueAtTime(800, now);
+
+                hitGain.gain.setValueAtTime(0.9, now);
+                hitGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                
+                hitOsc.connect(lpFilter);
+                lpFilter.connect(hitGain);
+                hitGain.connect(audioCtx.destination);
+                hitOsc.start(now);
+                hitOsc.stop(now + 0.15);
+                
+            } else if (type === 'empty') {
+                const emptyOsc = audioCtx.createOscillator();
+                const emptyGain = audioCtx.createGain();
+                emptyOsc.type = 'triangle';
+                emptyOsc.frequency.setValueAtTime(950, now);
+                emptyOsc.frequency.setValueAtTime(380, now + 0.015);
+                
+                emptyGain.gain.setValueAtTime(0.4, now);
+                emptyGain.gain.linearRampToValueAtTime(0.001, now + 0.025);
+                
+                emptyOsc.connect(emptyGain);
+                emptyGain.connect(audioCtx.destination);
+                emptyOsc.start(now);
+                emptyOsc.stop(now + 0.025);
+                
+            } else if (type === 'reload') {
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.type = 'triangle';
+                osc1.frequency.setValueAtTime(420, now);
+                osc1.frequency.linearRampToValueAtTime(700, now + 0.06);
+                gain1.gain.setValueAtTime(0.3, now);
+                gain1.gain.linearRampToValueAtTime(0.001, now + 0.06);
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.06);
+
+                const delay = 0.16;
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.type = 'sawtooth';
+                osc2.frequency.setValueAtTime(250, now + delay);
+                osc2.frequency.exponentialRampToValueAtTime(1150, now + delay + 0.08);
+                
+                const reloadFilter = audioCtx.createBiquadFilter();
+                reloadFilter.type = 'lowpass';
+                reloadFilter.frequency.value = 1500;
+                gain2.gain.setValueAtTime(0.35, now + delay);
+                gain2.gain.linearRampToValueAtTime(0.001, now + delay + 0.08);
+                
+                osc2.connect(reloadFilter);
+                reloadFilter.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.start(now + delay);
+                osc2.stop(now + delay + 0.08);
+                
+            } else if (type === 'fanfare_bonus') {
+                const melody = [329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+                melody.forEach((freq, index) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine'; 
+                    osc.frequency.setValueAtTime(freq, now + (index * 0.06));
+                    gain.gain.setValueAtTime(0.25, now + (index * 0.06));
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.06) + 0.18);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + (index * 0.06));
+                    osc.stop(now + (index * 0.06) + 0.18);
+                });
+            }
+        } catch(e){
+            console.error("DSP Subsystem Fault Protection:", e);
+        }
+    }
+
+    function preloadAssets() {
+        return new Promise((resolve) => {
+            let loadedCount = 0;
+            const totalAssets = 2;
+
+            function checkLoad() {
+                loadedCount++;
+                if (loadedCount === totalAssets) resolve(true);
+            }
+
+            ak47Img = new Image();
+            ak47Img.src = AK47_IMAGE_URL;
+            ak47Img.crossOrigin = "anonymous";
+            ak47Img.onload = checkLoad;
+            ak47Img.onerror = () => { ak47Img = null; checkLoad(); };
+
+            forestBgImg = new Image();
+            forestBgImg.src = BG_FOREST_URL;
+            forestBgImg.crossOrigin = "anonymous";
+            forestBgImg.onload = checkLoad;
+            forestBgImg.onerror = () => { forestBgImg = null; checkLoad(); };
+        });
+    }
+
+    function initAndLoginWithPi() {
+        initAudio();
+        const loginBtn = document.getElementById('btn-login');
+        loginBtn.innerText = "Synchronizing Components... 🔄";
+        preloadAssets().then(() => {
+            try {
+                if (typeof Pi !== 'undefined' && window.Pi) {
+                    if (!isSdkInitialized) {
+                        window.Pi.init({ version: "2.0" });
+                        isSdkInitialized = true;
+                    }
+                    
+                    setTimeout(() => {
+                        window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
+                        .then(function(auth) {
+                            playerPiUser = auth.user.username;
+                            currentPiUserId = auth.user.uid;
+                            playerWallet = auth.user.uid || "Pi_Network_User";
+                            handleLoginSuccess();
+                        })
+                        .catch((err) => {
+                            console.error("Authentication redirection:", err);
+                            setupDevAccount();
+                        });
+                    }, 250);
+                } else {
+                    setupDevAccount();
+                }
+            } catch (e) {
+                setupDevAccount();
+            }
+        });
+    }
+
+    function setupDevAccount() {
+        playerPiUser = "Abokareem999";
+        currentPiUserId = "DEV_UID_ABUKAREEM_OFFICIAL";
+        playerWallet = "GCOHCVV66Y7UX3KB36V4B7NS5W"; 
+        handleLoginSuccess();
+    }
+
+    async function handleLoginSuccess() {
+        document.getElementById('player-name').innerText = playerPiUser;
+        try {
+            let { data } = await _supabaseClient
+                .from(TABLE_NAME)
+                .select('high_score')
+                .eq('pi_username', playerPiUser)
+                .maybeSingle();
+            if (data) { 
+                score = data.high_score || 0; 
+                document.getElementById('score-val').innerText = score;
+                totalHits = Math.floor(score / 10);
+                document.getElementById('hits-val').innerText = totalHits;
+                
+                updateBirdColorTier();
+            }
+        } catch(e) {}
+        
+        updateSupabaseScore();
+        document.getElementById('auth-section').className = 'hidden';
+        document.getElementById('game-section').className = '';
+        lastTime = performance.now(); 
+        startGameLoop();
+        setupJoystickListeners(); 
+        loadLeaderboard();
+        playAdvancedSound('reload');
+    }
+
+    function updateBirdColorTier() {
+        let currentTier = 0;
+        let cumulativeThreshold = 0;
+        
+        while (true) {
+            let step = 10 + (currentTier * 10);
+            if (totalHits >= cumulativeThreshold + step) {
+                cumulativeThreshold += step;
+                currentTier++;
+            } else {
+                break;
+            }
+        }
+        
+        if (currentTier < birdColorTiers.length) {
+            currentBirdStyle = birdColorTiers[currentTier];
+        } else {
+            let seed = currentTier * 13579;
+            function generateHexColor(offset) {
+                let r = Math.floor((Math.sin(seed + offset) * 0.5 + 0.5) * 220) + 35;
+                let g = Math.floor((Math.sin(seed + offset + 2) * 0.5 + 0.5) * 220) + 35;
+                let b = Math.floor((Math.sin(seed + offset + 4) * 0.5 + 0.5) * 220) + 35;
+                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+            }
+            
+            currentBirdStyle = {
+                name: `Mythic Swarm Gen [${currentTier + 1}]`,
+                primary: generateHexColor(0),
+                secondary: generateHexColor(15),
+                detail: generateHexColor(30),
+                beak: "#ffffff"
+            };
+        }
+        
+        const colorDisplay = document.getElementById('color-name-display');
+        colorDisplay.innerText = currentBirdStyle.name;
+        colorDisplay.style.color = currentBirdStyle.secondary;
+    }
+
+    function getNextTierRemainingHits() {
+        let currentTier = 0;
+        let cumulativeThreshold = 0;
+        
+        while (true) {
+            let step = 10 + (currentTier * 10);
+            if (totalHits >= cumulativeThreshold + step) {
+                cumulativeThreshold += step;
+                currentTier++;
+            } else {
+                let nextThreshold = cumulativeThreshold + step;
+                return nextThreshold - totalHits;
+            }
+        }
+    }
+
+    async function updateSupabaseScore() {
+        if (!playerPiUser) return;
+        try {
+            const payload = { 
+                pi_username: playerPiUser, 
+                wallet_address: playerWallet,
+                high_score: score,
+                updated_at: new Date().toISOString()
+            };
+            await _supabaseClient.from(TABLE_NAME).upsert(payload, { onConflict: 'pi_username' });
+            loadLeaderboard();
+        } catch (err) {}
+    }
+
+    async function loadLeaderboard() {
+        try {
+            let { data } = await _supabaseClient
+                .from(TABLE_NAME)
+                .select('pi_username, high_score')
+                .order('high_score', { ascending: false })
+                .limit(5);
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = "";
+            if (data && data.length > 0) {
+                data.forEach((row, index) => {
+                    const tr = document.createElement('tr');
+                    if (row.pi_username === playerPiUser) tr.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
+                    tr.innerHTML = `<td>${index + 1}</td><td>${row.pi_username}</td><td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>`;
+                    tbody.appendChild(tr);
+                });
+            }
+        } catch (err) {}
+    }
+
+    function createFeatherCloud(x, y, customColor) {
+        let pColor = customColor || currentBirdStyle.secondary;
+        for (let i = 0; i < 25; i++) {
+            particles.push({
+                x: x, 
+                y: y,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.8) * 7, 
+                radius: Math.random() * 4 + 1.5,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.3,
+                alpha: 1,
+                color: Math.random() > 0.4 ? pColor : 'rgba(239, 68, 68, 0.8)'
+            });
+        }
+    }
+
+    function executeShot() {
+        if (ammo <= 0 && !isRageMode) {
+            playAdvancedSound('empty');
+            document.getElementById('game-status').innerText = "❌ OUT OF AMMO! Refill using your Pi Wallet.";
+            document.getElementById('game-status').style.color = "#f87171";
+            return;
+        }
+        
+        if (!isRageMode) ammo--; 
+        document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
+        
+        playAdvancedSound('shoot');
+        flashIntensity = 0.8; 
+        screenShake = 14;     
+
+        gunRecoilZ = -55;     
+        gunRecoilY = -38;     
+        gunRecoilAngle = (Math.random() - 0.5) * 0.22;
+        let gunBaseX = canvas.width - 40;
+        let gunBaseY = canvas.height + 20;
+        let rot = Math.atan2(aimY - gunBaseY, aimX - gunBaseX);
+        muzzleFlashX = gunBaseX + Math.cos(rot) * 150;
+        muzzleFlashY = gunBaseY + Math.sin(rot) * 150;
+        
+        let hitAny = false;
+        let hitCountThisShot = 0;
+        let ammoBonusEarned = 0;
+        let currentStatusText = "";
+
+        targets.forEach(t => {
+            if (t.special === "bonus" && t.opacity < 0.2) return;
+
+            // Rage mode gives a wider hit radius!
+            let hitRadius = isRageMode ? t.radius + 45 : t.radius + 18;
+            const distance = Math.sqrt((aimX - t.x)**2 + (aimY - t.y)**2);
+            
+            if (distance <= hitRadius) {
+                hitAny = true;
+                hitCountThisShot++;
+                score += t.points;
+                totalHits++;
+
+                // Rage Meter Logic
+                if (!isRageMode) {
+                    rageMeter++;
+                    document.getElementById('rage-val').innerText = (rageMeter * 10) + "%";
+                    if (rageMeter >= 10) {
+                        isRageMode = true;
+                        rageTimeLeft = 300; // 300 frames (~5 seconds at 60fps)
+                        rageMeter = 0;
+                        document.getElementById('rage-val').innerText = "MAX!";
+                        currentStatusText = "🔥 RAGE MODE ACTIVATED! INFINITE AMMO! 🔥 " + currentStatusText;
+                        playAdvancedSound('fanfare_bonus');
+                    }
+                }
+
+                let pColor = currentBirdStyle.secondary;
+                if (t.special === "fast") pColor = "#c0c0c0"; 
+                if (t.special === "bonus") pColor = "#fbbf24"; 
+
+                createFeatherCloud(t.x, t.y, pColor);
+                playAdvancedSound('hit');
+
+                if (t.special === "bonus") {
+                    ammoBonusEarned += 12; 
+                    currentStatusText += "⭐ GHOST REFILL! +12 AMMO! ";
+                }
+
+                let maxAllowedSpeed = 9.0;
+                let speedIncrementX = (t.xSpeed > 0 ? 0.30 : -0.30);
+                let speedIncrementY = (t.ySpeed > 0 ? 0.26 : -0.26);
+             
+                t.xSpeed += speedIncrementX;
+                t.ySpeed += speedIncrementY;
+                
+                if (Math.abs(t.xSpeed) > maxAllowedSpeed) t.xSpeed = Math.sign(t.xSpeed) * maxAllowedSpeed;
+                if (Math.abs(t.ySpeed) > maxAllowedSpeed) t.ySpeed = Math.sign(t.ySpeed) * maxAllowedSpeed;
+
+                resetTarget(t);
+            }
+        });
+
+        if (hitAny) {
+            if (hitCountThisShot > 1) {
+                let comboBonus = hitCountThisShot * 15;
+                score += comboBonus;
+                currentStatusText = `🔥 SWARM COMBO x${hitCountThisShot}! +${comboBonus} BONUS PTS! ` + currentStatusText;
+                playAdvancedSound('fanfare_bonus');
+                screenShake = 22;
+            }
+
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('hits-val').innerText = totalHits;
+            let statusColor = isRageMode ? "#ef4444" : "#4ade80";
+
+            if (totalHits > 0 && totalHits % 10 === 0) {
+                if (!isRageMode) ammo += 50; 
+                playAdvancedSound('fanfare_bonus');
+                currentStatusText += "🎁 INVENTORY BOX! +50 AMMO! ";
+                statusColor = "#eab308";
+            }
+
+            if (currentStatusText === "") currentStatusText = "🎯 TARGETS SMASHED! ";
+            let oldStyleName = currentBirdStyle.name;
+            updateBirdColorTier();
+
+            if (currentBirdStyle.name !== oldStyleName) {
+                currentStatusText += `🔥 LEVEL UP: [${currentBirdStyle.name}]!`;
+                statusColor = "#38bdf8";
+            } else {
+                let remaining = getNextTierRemainingHits();
+                currentStatusText += `| Next swarm tier in ${remaining} hits.`;
+            }
+
+            if (ammoBonusEarned > 0 && !isRageMode) ammo += ammoBonusEarned;
+            document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
+
+            document.getElementById('game-status').innerText = currentStatusText;
+            document.getElementById('game-status').style.color = statusColor;
+
+            updateSupabaseScore();
+        } else {
+            if (!isRageMode) {
+                document.getElementById('game-status').innerText = "💨 SHOT MISSED! Adjust your AK-47 trajectory.";
+                document.getElementById('game-status').style.color = "#fbbf24";
+            }
+        }
+    }
+
+    function setupJoystickListeners() {
+        const joyContainer = document.getElementById('joy-container');
+        const joyKnob = document.getElementById('joy-knob');
+
+        function handleJoyStart(e) {
+            initAudio();
+            joyActive = true;
+            const touch = e.touches ? e.touches[0] : e;
+            const rect = joyContainer.getBoundingClientRect();
+            joyStartX = rect.left + rect.width / 2;
+            joyStartY = rect.top + rect.height / 2;
+        }
+
+        function handleJoyMove(e) {
+            if (!joyActive) return;
+            const touch = e.touches ? e.touches[0] : e;
+            
+            let deltaX = touch.clientX - joyStartX;
+            let deltaY = touch.clientY - joyStartY;
+            let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            if (distance > maxJoyDistance) {
+                deltaX = (deltaX / distance) * maxJoyDistance;
+                deltaY = (deltaY / distance) * maxJoyDistance;
+                distance = maxJoyDistance;
+            }
+
+            joyKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            joyMoveX = deltaX / maxJoyDistance;
+            joyMoveY = deltaY / maxJoyDistance;
+        }
+
+        function handleJoyEnd() {
+            joyActive = false;
+            joyKnob.style.transform = 'translate(0px, 0px)';
+            joyMoveX = 0;
+            joyMoveY = 0;
+        }
+
+        joyContainer.addEventListener('mousedown', handleJoyStart);
+        window.addEventListener('mousemove', handleJoyMove);
+        window.addEventListener('mouseup', handleJoyEnd);
+
+        joyContainer.addEventListener('touchstart', handleJoyStart, { passive: true });
+        window.addEventListener('touchmove', handleJoyMove, { passive: false });
+        window.addEventListener('touchend', handleJoyEnd);
+    }
+
+    function handleCanvasPointer(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        aimX = (clientX - rect.left) * (canvas.width / rect.width);
+        aimY = (clientY - rect.top) * (canvas.height / rect.height);
+        if (aimX < 0) aimX = 0;
+        if (aimX > canvas.width) aimX = canvas.width;
+        if (aimY < 0) aimY = 0;
+        if (aimY > canvas.height) aimY = canvas.height;
+    }
+
+    canvas.addEventListener('mousemove', (e) => { handleCanvasPointer(e.clientX, e.clientY); });
+    canvas.addEventListener('mousedown', (e) => { handleCanvasPointer(e.clientX, e.clientY); });
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
+    });
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
+    });
+    const fireTriggerBtn = document.getElementById('fire-trigger');
+    fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
+    fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
+
+    // === حلقة اللعبة الأساسية المحدثة بالمحرك البصري المتكامل والآمن ===
+    function startGameLoop() {
+        if(gameInterval) clearInterval(gameInterval);
+        gameInterval = setInterval(() => {
+            let currentTime = performance.now();
+            let deltaTime = (currentTime - lastTime) / 16.666; 
+            lastTime = currentTime;
+
+            if (deltaTime > 3) deltaTime = 3; 
+
+            // تحديث حالة الغضب (Rage Mode Timer)
+            if (isRageMode) {
+                rageTimeLeft -= deltaTime;
+                if (rageTimeLeft <= 0) {
+                    isRageMode = false;
+                    document.getElementById('rage-val').innerText = "0%";
+                    document.getElementById('ammo-val').innerText = ammo;
+                    document.getElementById('game-status').innerText = "🧊 الغضب انتهى! عدنا للوضع الطبيعي.";
+                    document.getElementById('game-status').style.color = "#38bdf8";
+                }
+            }
+
+            // تحديث حركة الخلفية
+            bgX -= 0.25 * deltaTime;
+
+            // تحديث محرك جزيئات أوراق الشجر
+            leaves.forEach(leaf => {
+                leaf.y += leaf.speed * deltaTime;
+                leaf.x += Math.sin(leaf.y * 0.02) * 0.4 * deltaTime;
+                if (leaf.y > canvas.height) {
+                    leaf.y = -10;
+                    leaf.x = Math.random() * canvas.width;
+                }
+            });
+
+            if (joyActive) {
+                smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
+                smoothJoyY += (joyMoveY - smoothJoyY) * 0.28 * deltaTime;
+
+                let aimSpeed = 5.8 * deltaTime; 
+                aimX += smoothJoyX * aimSpeed;
+                aimY += smoothJoyY * aimSpeed;
+            } else {
+                smoothJoyX += (0 - smoothJoyX) * 0.25 * deltaTime;
+                smoothJoyY += (0 - smoothJoyY) * 0.25 * deltaTime;
+            }
+
+            if (aimX < 0) aimX = 0;
+            if (aimX > canvas.width) aimX = canvas.width;
+            if (aimY < 0) aimY = 0;
+            if (aimY > canvas.height) aimY = canvas.height;
+
+            targets.forEach(t => {
+                if (t.sineWave) {
+                    t.sineCounter += 0.08 * deltaTime;
+                    t.x += t.xSpeed * deltaTime;
+                    t.y += (t.ySpeed + Math.sin(t.sineCounter) * 2.5) * deltaTime;
+                } else if (t.special === "bonus") {
+                    t.ghostCounter += 0.03 * deltaTime;
+                    t.opacity = (Math.sin(t.ghostCounter) * 0.5) + 0.5; 
+                    t.x += t.xSpeed * deltaTime;
+                    t.y += t.ySpeed * deltaTime;
+                } else {
+                    t.x += t.xSpeed * deltaTime;
+                    t.y += t.ySpeed * deltaTime;
+                }
+
+                t.flap += t.flapSpeed * deltaTime;
+
+                let minBorder = 22;
+                let maxXBorder = canvas.width - minBorder;
+                let maxYBorder = canvas.height - 25;
+
+                if (t.x <= minBorder) { t.x = minBorder; t.xSpeed = Math.abs(t.xSpeed); }
+                if (t.x >= maxXBorder) { t.x = maxXBorder; t.xSpeed = -Math.abs(t.xSpeed); }
+                if (t.y <= minBorder) { t.y = minBorder; t.ySpeed = Math.abs(t.ySpeed); }
+                if (t.y >= maxYBorder) { t.y = maxYBorder; t.ySpeed = -Math.abs(t.ySpeed); }
+            });
+            
+            gunRecoilZ *= Math.pow(0.83, deltaTime);
+            gunRecoilY *= Math.pow(0.80, deltaTime);
+            gunRecoilAngle *= Math.pow(0.78, deltaTime);
+
+            if (screenShake > 0) {
+                const dx = (Math.random() - 0.5) * screenShake;
+                const dy = (Math.random() - 0.5) * screenShake;
+                document.getElementById('game-container').style.transform = `translate(${dx}px, ${dy}px)`;
+                screenShake *= Math.pow(0.85, deltaTime);
+                if (screenShake < 0.2) {
+                    screenShake = 0;
+                    document.getElementById('game-container').style.transform = 'none';
+                }
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 1. رسم خلفية الغابة بطبقتين
+            if (forestBgImg) {
+                ctx.drawImage(forestBgImg, bgX % canvas.width, 0, canvas.width, canvas.height);
+                ctx.drawImage(forestBgImg, (bgX % canvas.width) + canvas.width, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = '#070b19';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // 2. إضافة تأثير الضباب السينمائي أو لون الغضب (Rage Tint)
+            if (isRageMode) {
+                ctx.fillStyle = "rgba(220, 38, 38, 0.25)"; // تأثير أحمر للغضب
+            } else {
+                ctx.fillStyle = "rgba(2, 6, 23, 0.15)";
+            }
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 3. رسم جزئيات البيئة الحية 
+            ctx.fillStyle = "rgba(234, 179, 8, 0.4)";
+            leaves.forEach(leaf => {
+                ctx.beginPath();
+                ctx.arc(leaf.x, leaf.y, leaf.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            particles.forEach((p, index) => {
+                p.x += p.vx * deltaTime; 
+                p.y += p.vy * deltaTime; 
+                p.vy += 0.18 * deltaTime; 
+                p.rotation += p.rotationSpeed * deltaTime;
+                p.alpha -= 0.025 * deltaTime;
+                if (p.alpha <= 0) { 
+                    particles.splice(index, 1); 
+                } else {
+                    ctx.save();
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fillStyle = p.color;
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation);
+                    ctx.beginPath(); 
+                    ctx.ellipse(0, 0, p.radius * 2, p.radius, 0, 0, Math.PI * 2); 
+                    ctx.fill();
+                    ctx.restore();
+                }
+            });
+            
+            targets.forEach(t => {
+                ctx.save();
+                ctx.globalAlpha = t.opacity;
+                ctx.translate(t.x, t.y);
+                
+                let moveAngle = Math.atan2(t.ySpeed, t.xSpeed);
+                if (t.xSpeed < 0) {
+                    ctx.scale(1, -1);
+                    ctx.rotate(-moveAngle + Math.PI);
+                } else {
+                    ctx.rotate(moveAngle);
+                }
+                
+                let bodyColor = currentBirdStyle.primary;
+                let wingColor = currentBirdStyle.secondary;
+                let headColor = currentBirdStyle.detail;
+                let beakColor = currentBirdStyle.beak;
+
+                if (t.special === "fast") {
+                    bodyColor = "#475569"; wingColor = "#cbd5e1"; headColor = "#1e293b";
+                } else if (t.special === "bonus") {
+                    bodyColor = "#b45309"; wingColor = "#fbbf24"; headColor = "#78350f"; beakColor = "#ef4444";
+                }
+                
+                ctx.fillStyle = bodyColor;
+                ctx.beginPath(); 
+                ctx.ellipse(0, 0, t.width/2, t.height/2, 0, 0, Math.PI*2); 
+                ctx.fill();
+                
+                let wingFlapOffset = Math.sin(t.flap) * (t.height / 1.3);
+                ctx.fillStyle = wingColor;
+                ctx.beginPath(); 
+                ctx.ellipse(-2, - wingFlapOffset / 2, 9, t.height/2 + Math.abs(wingFlapOffset)/2, 0.2, 0, Math.PI*2); 
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(-2, + wingFlapOffset / 2, 9, t.height/2 + Math.abs(wingFlapOffset)/2, -0.2, 0, Math.PI*2); 
+                ctx.fill();
+
+                ctx.fillStyle = headColor;
+                ctx.beginPath();
+                ctx.arc(t.width/2 - 2, -3, 9, 0, Math.PI*2); ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(t.width/2 + 1, -5, 2, 0, Math.PI*2); ctx.fill();
+                
+                ctx.fillStyle = beakColor;
+                ctx.beginPath();
+                ctx.moveTo(t.width/2 + 5, -6); 
+                ctx.lineTo(t.width/2 + 17, -3); 
+                ctx.lineTo(t.width/2 + 5, 2); 
+                ctx.fill();
+
+                ctx.fillStyle = headColor;
+                ctx.beginPath();
+                ctx.moveTo(-t.width/2, -4);
+                ctx.lineTo(-t.width/2 - 14, -11);
+                ctx.lineTo(-t.width/2 - 11, 0);
+                ctx.lineTo(-t.width/2 - 14, 11);
+                ctx.lineTo(-t.width/2, 4);
+                ctx.fill();
+
+                ctx.restore();
+                
+                if (t.opacity > 0.15) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                    ctx.font = '900 10px Arial';
+                    let label = t.special === "normal" ? "Leader" : (t.special === "fast" ? "Wave Jumper" : "Ghost Gold");
+                    ctx.fillText(label, t.x - 22, t.y - t.height - 4);
+                }
+            });
+            
+            if (flashIntensity > 0) {
+                ctx.save();
+                let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 3, muzzleFlashX, muzzleFlashY, 55);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, ' + flashIntensity + ')');
+                gradient.addColorStop(0.2, 'rgba(244, 240, 138, ' + (flashIntensity * 0.95) + ')');
+                gradient.addColorStop(0.6, 'rgba(249, 115, 22, ' + (flashIntensity * 0.6) + ')');
+                gradient.addColorStop(1, 'rgba(220, 38, 38, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(muzzleFlashX, muzzleFlashY, 55, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                flashIntensity -= 0.06 * deltaTime;
+            }
+
+            let gunBaseX = canvas.width - 45;
+            let gunBaseY = canvas.height + 25; 
+
+            ctx.save();
+            ctx.translate(gunBaseX, gunBaseY + gunRecoilY);
+            let gunRotation = Math.atan2(aimY - gunBaseY, aimX - gunBaseX) + Math.PI / 2 + gunRecoilAngle;
+            ctx.rotate(gunRotation);
+            
+            if (ak47Img && ak47Img.complete && ak47Img.naturalWidth !== 0) {
+                let currentGunWidth = 90 + (gunRecoilZ * 0.2);
+                let currentGunHeight = 225 + gunRecoilZ;
+                ctx.drawImage(ak47Img, -currentGunWidth / 2, -currentGunHeight + 50, currentGunWidth, currentGunHeight);
+            } else {
+                ctx.fillStyle = '#5c2d17';
+                ctx.fillRect(-10, -50, 20, 60); 
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(-7, -130, 14, 100); 
+                ctx.fillStyle = '#475569'; ctx.fillRect(-5, -180, 10, 50);
+                ctx.fillStyle = '#ca8a04'; ctx.fillRect(-3, -190, 6, 12); 
+            }
+            ctx.restore();
+            
+            ctx.save();
+            // تغيير لون المؤشر في حالة الغضب
+            ctx.strokeStyle = isRageMode ? '#fbbf24' : '#f87171'; 
+            ctx.lineWidth = 2.5;
+            ctx.translate(aimX, aimY);
+            ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(-22, 0);
+            ctx.lineTo(22, 0); ctx.moveTo(0, -22); ctx.lineTo(0, 22); ctx.stroke();
+            ctx.fillStyle = isRageMode ? '#fbbf24' : '#ef4444';
+            ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+        }, 1000 / 60);
+    }
+
+    function resetTarget(t) {
+        t.x = Math.random() * (canvas.width - 100) + 50;
+        t.y = Math.random() * (canvas.height - 160) + 50; 
+        if (t.sineWave) t.sineCounter = 0;
+        if (t.special === "bonus") t.ghostCounter = Math.random() * 5;
+    }
+
+    function buyAmmoWithPi() {
+        if (typeof Pi === 'undefined' || !window.Pi) {
+            document.getElementById('game-status').innerText = "⚠️ Open this game inside Pi Browser to initiate real ledger purchases.";
+            document.getElementById('game-status').style.color = "#f87171";
+            return;
+        }
+
+        document.getElementById('game-status').innerText = "⚡ Preparing secure handshake with Pi Blockchain Ledger...";
+        document.getElementById('game-status').style.color = "#fbbf24";
+
+        const paymentData = {
+            amount: 1.0, 
+            memo: "Refill AK-47 Ammo Magazine (30 Rounds) - The Hunter Arcade",
+            metadata: { item_code: "ak47_ammo_box_30", buyer: playerPiUser || "unknown_player" },
+            uid: currentPiUserId || ""
+        };
+
+        const callbacks = {
+            onReadyForServerApproval: function(paymentId) { approvePaymentOnBackend(paymentId); },
+            onReadyForServerCompletion: function(paymentId, txid) { completePaymentOnBackend(paymentId, txid); },
+            onCancel: function(paymentId) {
+                document.getElementById('game-status').innerText = "❌ Payment aborted by the user.";
+                document.getElementById('game-status').style.color = "#f87171";
+            },
+            onError: function(error, payment) {
+                document.getElementById('game-status').innerText = "⚠️ Processing fault within Pi Wallet subsystem.";
+                document.getElementById('game-status').style.color = "#f87171";
+            }
+        };
+        Pi.createPayment(paymentData, callbacks);
+    }
+
+    async function approvePaymentOnBackend(paymentId) {
+        try {
+            await fetch('/api/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentId: paymentId })
+            });
+        } catch (err) { console.error(err); }
+    }
+
+    async function completePaymentOnBackend(paymentId, txid) {
+        try {
+            const response = await fetch('/api/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentId: paymentId, txid: txid })
+            });
+            const result = await response.json();
+            if (result.success) {
+                ammo += 30;
+                document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
+                document.getElementById('game-status').innerText = "🪙 1 Pi received successfully! Magazine reloaded. 🔋";
+                document.getElementById('game-status').style.color = "#4ade80";
+                playAdvancedSound('reload');
+                updateSupabaseScore();
+            }
+        } catch (err) { console.error(err); }
+    }
+    
+    async function onIncompletePaymentFound(payment) {
+        if (payment && payment.identifier) {
+            try {
+                await fetch('/api/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid })
+                });
+            } catch (e) { console.error(e); }
+        }
+    }
+</script>
+</body>
+</html>
