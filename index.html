@@ -266,9 +266,9 @@
             <div id="shield-overlay"></div>
         </div>
         
-        <div><span class="audio-indicator">🌌 Dynamic World Shift & Golden Bird Enabled</span></div>
+        <div><span class="audio-indicator">🌌 Dynamic World Shift & 10-Hit Free Ammo Enabled</span></div>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Survive the Swarm! Environments will shift as you hunt. 🚀</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">Survive the Swarm! Environments & Bird Colors will shift as you hunt. 🚀</p>
         
         <div class="controls-wrapper">
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
@@ -308,8 +308,9 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHd1YXdsbnJ1dnpxb3d4eGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMzgyNjEsImV4cCI6MjA5MjgxNDI2MX0.9ZbncYpfTr3qpFWZ-7yx8M_jf4MHpHzdp_mcuICS28w";
     const TABLE_NAME = "hunter_game_scores"; 
 
+    // استعادة الروابط الأصلية الخاصة بك
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
-    const BG_FOREST_URL = "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"; 
+    const BG_FOREST_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/hunter-background.png"; 
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -321,6 +322,7 @@
     let totalHits = 0; 
     let shotsFired = 0;
     let comboCount = 0;
+    let sequenceHits = 0; // عداد الإصابات المتتالية للحصول على الهدية
     
     let playerPiUser = "";
     let playerWallet = ""; 
@@ -330,8 +332,6 @@
     // Shield System (Golden Boss Reward)
     let shieldActive = false;
     let shieldTimeLeft = 0;
-    let isRageMode = false;
-    let rageTimeLeft = 0;
 
     // Canvas Settings
     const canvas = document.getElementById('hunting-canvas');
@@ -371,13 +371,26 @@
     const maxJoyDistance = 35;
 
     /* =========================================
-       ENVIRONMENT (WORLD SHIFT) SYSTEM
+       ENVIRONMENT & BIRD COLOR SYSTEM
        ========================================= */
+    // تخصيص ألوان الطيور ديناميكياً لتتغير بناءً على البيئة الحالية المكتشفة
     const ENVIRONMENTS = [
-        { id: 0, name: "Forest", bgTint: "rgba(15, 23, 42, 0.4)", pColor: "#22c55e", pType: "leaf" },
-        { id: 1, name: "Desert", bgTint: "rgba(120, 53, 15, 0.6)", pColor: "#f59e0b", pType: "sand" },
-        { id: 2, name: "Snow Peak", bgTint: "rgba(226, 232, 240, 0.6)", pColor: "#ffffff", pType: "snow" },
-        { id: 3, name: "Volcano", bgTint: "rgba(69, 10, 10, 0.7)", pColor: "#ef4444", pType: "ember" }
+        { 
+            id: 0, name: "Forest", bgTint: "rgba(15, 23, 42, 0.2)", pColor: "#22c55e", pType: "leaf",
+            birdColors: { body: "#543011", wing: "#eab308", head: "#3a1f05", beak: "#f97316" }
+        },
+        { 
+            id: 1, name: "Desert", bgTint: "rgba(120, 53, 15, 0.4)", pColor: "#f59e0b", pType: "sand",
+            birdColors: { body: "#b45309", wing: "#fcd34d", head: "#78350f", beak: "#ea580c" }
+        },
+        { 
+            id: 2, name: "Snow Peak", bgTint: "rgba(226, 232, 240, 0.4)", pColor: "#ffffff", pType: "snow",
+            birdColors: { body: "#475569", wing: "#94a3b8", head: "#1e293b", beak: "#38bdf8" }
+        },
+        { 
+            id: 3, name: "Volcano", bgTint: "rgba(69, 10, 10, 0.5)", pColor: "#ef4444", pType: "ember",
+            birdColors: { body: "#1e1b4b", wing: "#f43f5e", head: "#4c1d95", beak: "#fbbf24" }
+        }
     ];
     let currentEnvIndex = 0;
     let bgX = 0;
@@ -420,12 +433,6 @@
     /* =========================================
        BIRD TARGETS SYSTEM
        ========================================= */
-    const birdColorTiers = [
-        { name: "Classic Trio Tier", primary: "#543011", secondary: "#eab308", detail: "#3a1f05", beak: "#f97316" }, 
-        { name: "Forest Emerald", primary: "#115e59", secondary: "#10b981", detail: "#064e3b", beak: "#f43f5e" }
-    ];
-    let currentBirdStyle = birdColorTiers[0];
-
     let targets = [
         { id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, width: 44, height: 35, flap: 0, flapSpeed: 0.25, radius: 22, sineWave: false, opacity: 1.0, points: 10, special: "normal" },
         { id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, width: 38, height: 30, flap: 1.5, flapSpeed: 0.35, radius: 19, sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast" },
@@ -433,7 +440,6 @@
     ];
 
     function spawnGoldenBird() {
-        // Spawn every 30 hits if it doesn't already exist
         let goldenExists = targets.find(t => t.special === "golden_boss");
         if (totalHits > 0 && totalHits % 30 === 0 && !goldenExists) {
             targets.push({
@@ -448,7 +454,7 @@
     }
 
     /* =========================================
-       AUDIO SYNTHESIS SUBSYSTEM (Web Audio API)
+       AUDIO SYNTHESIS SUBSYSTEM
        ========================================= */
     let audioCtx;
     function initAudio() {
@@ -464,7 +470,6 @@
             const now = audioCtx.currentTime;
             
             if (type === 'shoot') {
-                // Realistic gunshot synth
                 const impulseOsc = audioCtx.createOscillator();
                 const impulseGain = audioCtx.createGain();
                 impulseOsc.type = 'sawtooth';
@@ -564,7 +569,7 @@
     }
 
     /* =========================================
-       INITIALIZATION & LOGIN (PI SDK)
+       INITIALIZATION & ASSETS PRELOAD
        ========================================= */
     function preloadAssets() {
         return new Promise((resolve) => {
@@ -610,7 +615,6 @@
                             handleLoginSuccess();
                         })
                         .catch((err) => {
-                            console.error("Auth redirect:", err);
                             setupDevAccount();
                         });
                     }, 250);
@@ -624,7 +628,7 @@
     }
 
     function setupDevAccount() {
-        playerPiUser = "Abu Kareem"; // Set to user's requested name
+        playerPiUser = "Abu Kareem"; 
         currentPiUserId = "DEV_UID_ABUKAREEM_OFFICIAL";
         playerWallet = "GCOHCVV66Y7UX3KB36V4B7NS5W"; 
         handleLoginSuccess();
@@ -659,7 +663,7 @@
     }
 
     /* =========================================
-       LEADERBOARD LOGIC
+       SUPABASE & LEADERBOARD LOGIC
        ========================================= */
     async function updateSupabaseScore() {
         if (!playerPiUser) return;
@@ -719,7 +723,7 @@
 
     function activateShield() {
         shieldActive = true;
-        shieldTimeLeft = 10; // 10 seconds of shield
+        shieldTimeLeft = 10; 
         document.getElementById('shield-overlay').style.display = 'block';
     }
 
@@ -728,6 +732,7 @@
             playAdvancedSound('empty');
             document.getElementById('game-status').innerText = "❌ OUT OF AMMO! Refill using your Pi Wallet.";
             document.getElementById('game-status').style.color = "#f87171";
+            sequenceHits = 0; // كسر السلسلة عند محاولة إطلاق النار بدون ذخيرة
             return;
         }
         
@@ -737,13 +742,11 @@
         
         playAdvancedSound('shoot');
         
-        // Muzzle Flash
+        // Muzzle Flash & Screen Shake
         flashIntensity = 1.0; 
-        
-        // Dynamic Screen Shake (scales with combo)
         screenShake = 12 + (comboCount * 3);     
 
-        // Recoil Logic
+        // Recoil Physics
         gunRecoilZ = -55;     
         gunRecoilY = -38;
         gunRecoilAngle = (Math.random() - 0.5) * 0.22;
@@ -769,11 +772,12 @@
                 hitCountThisShot++;
                 score += t.points;
                 totalHits++;
+                sequenceHits++; // زيادة عداد الإصابات المتتالية لهدية الطلقات
                 
                 showFloatingText(t.x, t.y, `+${t.points}`, t.special === "bonus" || t.special === "golden_boss" ? '#fbbf24' : '#4ade80');
 
-                let pColor = "#eab308";
-                if (t.special === "fast") pColor = "#c0c0c0"; 
+                // جلب ألوان الطيور للبيئة الحالية
+                let pColor = ENVIRONMENTS[currentEnvIndex].birdColors.wing;
                 if (t.special === "golden_boss") pColor = "#facc15"; 
 
                 createFeatherCloud(t.x, t.y, pColor);
@@ -782,7 +786,6 @@
                 if (t.special === "golden_boss") {
                     activateShield();
                     currentStatusText = "👑 GOLDEN BOSS SLAIN! SHIELD ACTIVATED (10s)! ";
-                    // Remove boss after hit
                     targets = targets.filter(target => target.id !== 99);
                 } else {
                     resetTarget(t);
@@ -790,11 +793,20 @@
             }
         });
 
-        // Crosshair dynamic coloring logic
+        // ميزة طلقات الهدية الفورية بعد 10 إصابات متتالية
+        if (sequenceHits >= 10) {
+            ammo += 10;
+            document.getElementById('ammo-val').innerText = shieldActive ? "🛡️" : ammo;
+            showFloatingText(260, 150, "🎁 FREE +10 AMMO!", "#38bdf8", 22);
+            playAdvancedSound('fanfare_bonus');
+            sequenceHits = 0; // إعادة تعيين العداد بعد تسليم الهدية
+        }
+
+        // التحكم في لون التصويب ديناميكياً بناءً على الدقة العامة
         let accuracy = (totalHits / shotsFired) * 100;
         document.getElementById('acc-val').innerText = Math.round(accuracy) + "%";
-        if (accuracy > 80 && shotsFired > 5) crosshairColor = "#06b6d4"; // Neon Cyan
-        else crosshairColor = "#ef4444"; // Default Red
+        if (accuracy > 80 && shotsFired > 5) crosshairColor = "#06b6d4"; 
+        else crosshairColor = "#ef4444"; 
 
         if (hitAny) {
             comboCount++;
@@ -811,15 +823,16 @@
             checkWorldShift();
             spawnGoldenBird();
 
-            if (currentStatusText === "") currentStatusText = `🎯 TARGET HIT! Combo x${comboCount}`;
+            if (currentStatusText === "") currentStatusText = `🎯 TARGET HIT! Sequence: ${sequenceHits}/10 to Free Ammo`;
             document.getElementById('game-status').innerText = currentStatusText;
             document.getElementById('game-status').style.color = "#4ade80";
 
             updateSupabaseScore();
         } else {
-            comboCount = 0; // Reset combo
+            comboCount = 0; 
+            sequenceHits = 0; // تصفير عداد الإصابات المتتالية عند الخطأ أو التفويت فورا
             if (!shieldActive) {
-                document.getElementById('game-status').innerText = "💨 SHOT MISSED! Focus your aim.";
+                document.getElementById('game-status').innerText = "💨 SHOT MISSED! Sequence Reset.";
                 document.getElementById('game-status').style.color = "#fbbf24";
             }
         }
@@ -833,7 +846,7 @@
     }
 
     /* =========================================
-       INPUT & CONTROLS
+       INPUT & CONTROLS (JOYSTICK)
        ========================================= */
     function setupJoystickListeners() {
         const joyContainer = document.getElementById('joy-container');
@@ -914,9 +927,8 @@
             lastTime = currentTime;
             if (deltaTime > 3) deltaTime = 3; 
 
-            // Shield Timer Logic
             if (shieldActive) {
-                shieldTimeLeft -= (deltaTime * 0.016); // roughly seconds
+                shieldTimeLeft -= (deltaTime * 0.016);
                 if (shieldTimeLeft <= 0) {
                     shieldActive = false;
                     document.getElementById('shield-overlay').style.display = 'none';
@@ -927,7 +939,7 @@
 
             bgX -= 0.25 * deltaTime;
 
-            // Update Environment Particles
+            // تحديث جزيئات البيئة
             envParticles.forEach(p => {
                 let currentEnv = ENVIRONMENTS[currentEnvIndex];
                 if (currentEnv.pType === "snow") {
@@ -939,7 +951,7 @@
                 } else if (currentEnv.pType === "ember") {
                     p.y -= p.speedY * 1.5 * deltaTime;
                     p.x += Math.sin(p.y * 0.02) * deltaTime;
-                } else { // Leaf
+                } else { 
                     p.y += p.speedY * 0.8 * deltaTime;
                     p.x += Math.sin(p.y * 0.02) * 0.5 * deltaTime;
                 }
@@ -950,7 +962,7 @@
                 }
             });
             
-            // Joystick Smooth Aiming
+            // Joystick Aiming
             if (joyActive) {
                 smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
                 smoothJoyY += (joyMoveY - smoothJoyY) * 0.28 * deltaTime;
@@ -967,7 +979,7 @@
             if (aimY < 0) aimY = 0;
             if (aimY > canvas.height) aimY = canvas.height;
 
-            // Target Physics
+            // حركة الطيور
             targets.forEach(t => {
                 if (t.sineWave) {
                     t.sineCounter += (t.special === "golden_boss" ? 0.15 : 0.08) * deltaTime;
@@ -995,12 +1007,12 @@
                 if (t.y >= maxYBorder) { t.y = maxYBorder; t.ySpeed = -Math.abs(t.ySpeed); }
             });
             
-            // Recoil Recovery
+            // ارتداد السلاح
             gunRecoilZ *= Math.pow(0.83, deltaTime);
             gunRecoilY *= Math.pow(0.80, deltaTime);
             gunRecoilAngle *= Math.pow(0.78, deltaTime);
 
-            // Screen Shake
+            // اهتزاز الشاشة المتقدم
             if (screenShake > 0) {
                 const dx = (Math.random() - 0.5) * screenShake;
                 const dy = (Math.random() - 0.5) * screenShake;
@@ -1015,17 +1027,17 @@
             // RENDERING
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Draw Background Image
+            // رسم الخلفية الأصلية الخاصة بك
             if (forestBgImg) {
                 ctx.drawImage(forestBgImg, bgX % canvas.width, 0, canvas.width, canvas.height);
                 ctx.drawImage(forestBgImg, (bgX % canvas.width) + canvas.width, 0, canvas.width, canvas.height);
             }
             
-            // Apply Environment Overlay Tint
+            // تأثير تظليل البيئة الحالية فوق الخلفية
             ctx.fillStyle = ENVIRONMENTS[currentEnvIndex].bgTint;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Draw Environment Particles
+            // رسم الجزيئات البيئية
             ctx.fillStyle = ENVIRONMENTS[currentEnvIndex].pColor;
             envParticles.forEach(p => {
                 ctx.beginPath();
@@ -1033,7 +1045,7 @@
                 ctx.fill();
             });
             
-            // Hit Particles
+            // جزيئات الريش المتطاير
             particles.forEach((p, index) => {
                 p.x += p.vx * deltaTime; 
                 p.y += p.vy * deltaTime; 
@@ -1055,7 +1067,7 @@
                 }
             });
             
-            // Draw Targets
+            // رسم الطيور بألوانها المتغيرة حسب البيئة
             targets.forEach(t => {
                 ctx.save();
                 ctx.globalAlpha = t.opacity;
@@ -1069,14 +1081,20 @@
                     ctx.rotate(moveAngle);
                 }
                 
-                let bodyColor = "#543011";
-                let wingColor = "#eab308";
-                let headColor = "#3a1f05";
-                let beakColor = "#f97316";
+                // جلب نظام ألوان البيئة الحالية للطيور العادية
+                let envColors = ENVIRONMENTS[currentEnvIndex].birdColors;
+                let bodyColor = envColors.body;
+                let wingColor = envColors.wing;
+                let headColor = envColors.head;
+                let beakColor = envColors.beak;
 
-                if (t.special === "fast") { bodyColor = "#475569"; wingColor = "#cbd5e1"; headColor = "#1e293b"; } 
-                else if (t.special === "bonus") { bodyColor = "#b45309"; wingColor = "#fbbf24"; headColor = "#78350f"; beakColor = "#ef4444"; }
-                else if (t.special === "golden_boss") { bodyColor = "#facc15"; wingColor = "#ffffff"; headColor = "#eab308"; beakColor = "#ef4444"; }
+                // تمييز الطائر الذهبي فقط بلون ثابت مبهر
+                if (t.special === "golden_boss") { 
+                    bodyColor = "#facc15"; 
+                    wingColor = "#ffffff"; 
+                    headColor = "#eab308"; 
+                    beakColor = "#ef4444"; 
+                }
                 
                 ctx.fillStyle = bodyColor;
                 ctx.beginPath(); ctx.ellipse(0, 0, t.width/2, t.height/2, 0, 0, Math.PI*2); ctx.fill();
@@ -1097,7 +1115,7 @@
                 ctx.restore();
             });
             
-            // Floating Text
+            // النصوص العائمة على الشاشة
             floatingTexts.forEach((ft, index) => {
                 ft.y -= 1.5 * deltaTime;
                 ft.alpha -= 0.02 * deltaTime;
@@ -1115,7 +1133,7 @@
                 }
             });
 
-            // Muzzle Flash Glow Effect
+            // وميض الفوهة المتقدم (Muzzle Flash)
             if (flashIntensity > 0) {
                 ctx.save();
                 let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 10, muzzleFlashX, muzzleFlashY, 80);
@@ -1124,7 +1142,6 @@
                 gradient.addColorStop(0.6, `rgba(239, 68, 68, ${flashIntensity * 0.5})`);
                 gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
                 
-                // Add global compositing for glow effect
                 ctx.globalCompositeOperation = "screen";
                 ctx.fillStyle = gradient;
                 ctx.beginPath();
@@ -1134,7 +1151,7 @@
                 flashIntensity -= 0.08 * deltaTime;
             }
 
-            // Draw Weapon
+            // رسم السلاح (AK-47)
             let gunBaseX = canvas.width - 45;
             let gunBaseY = canvas.height + 25; 
 
@@ -1150,7 +1167,7 @@
             }
             ctx.restore();
             
-            // Draw Dynamic Crosshair
+            // رسم مؤشر التصويب الديناميكي المتغير الألوان
             ctx.save();
             ctx.strokeStyle = crosshairColor;
             ctx.lineWidth = 2.5;
@@ -1160,7 +1177,6 @@
             ctx.fillStyle = crosshairColor;
             ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fill();
             
-            // Shield Indicator on Crosshair
             if (shieldActive) {
                 ctx.strokeStyle = "rgba(250, 204, 21, 0.6)";
                 ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.stroke();
