@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE HUNTER Arcade - 3 Birds Swarm Swish Edition 🔥</title>
+    <title>THE HUNTER Arcade - Master Edition 🔥</title>
     
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -71,11 +71,8 @@
             display: inline-block;
             width: 85%;
         }
-        .btn:hover { 
-            transform: scale(1.02);
-        }
-        .hidden { display: none;
-        }
+        .btn:hover { transform: scale(1.02); }
+        .hidden { display: none; }
         
         .stats-bar {
             display: flex;
@@ -192,10 +189,7 @@
             border-bottom: 1px solid #1e293b;
             font-size: 13px;
         }
-        .leaderboard-table th { 
-            background-color: #1e293b;
-            color: #38bdf8; 
-        }
+        .leaderboard-table th { background-color: #1e293b; color: #38bdf8; }
         
         .audio-indicator {
             font-size: 11px;
@@ -207,6 +201,18 @@
             border-radius: 20px;
             font-weight: bold;
         }
+        
+        .rank-badge {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid #38bdf8;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -217,7 +223,7 @@
     <div id="auth-section">
         <div class="welcome-card">
             <div class="hunter-avatar"></div>
-            <p>Welcome Abu Kareem!<br>Log in to deploy your custom cinematic AK-47 assault rifle 🔥</p>
+            <p>Welcome Hunter!<br>Log in to deploy your custom cinematic AK-47 assault rifle 🔥</p>
             <button class="btn" id="btn-login" onclick="initAndLoginWithPi()">FREE ACCESS & START HUNTING 🚀</button>
         </div>
     </div>
@@ -229,7 +235,11 @@
             <div>Score: <span id="score-val" style="color: #4ade80;">0</span></div>
             <div>Ammo: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
             <div>Rage: <span id="rage-val" style="color: #ef4444;">0%</span> 😡</div>
-            <div>Tier Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown</span></div>
+            
+            <div style="width: 100%; margin-top: 5px; display: flex; justify-content: center; gap: 10px; align-items: center;">
+                <div>Tier Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown</span></div>
+                <div>Rank: <span id="rank-display" class="rank-badge">Rookie 🛡️</span></div>
+            </div>
         </div>
 
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
@@ -239,9 +249,7 @@
         
         <div class="controls-wrapper">
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
-            
             <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO<br>(1 Pi)</button>
-            
             <div class="joystick-container" id="joy-container">
                 <div class="joystick-knob" id="joy-knob"></div>
             </div>
@@ -253,12 +261,13 @@
                 <tr>
                     <th>RANK</th>
                     <th>HUNTER USERNAME</th>
+                    <th>TITLE 🎖️</th>
                     <th>HIGH SCORE 🎯</th>
                 </tr>
             </thead>
             <tbody id="leaderboard-body">
                 <tr>
-                    <td colspan="3" style="color: #94a3b8;">Authenticating Pi Network Ledger...</td>
+                    <td colspan="4" style="color: #94a3b8;">Authenticating Pi Network Ledger...</td>
                 </tr>
             </tbody>
         </table>
@@ -271,35 +280,46 @@
     const TABLE_NAME = "hunter_game_scores"; 
 
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
-    
-    // إعداد مسارات الخلفيات (صحراء -> جبال -> غابات)
     const BACKGROUNDS = [
-        "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?auto=format&fit=crop&w=520&h=350&q=80", // Desert
-        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=520&h=350&q=80", // Mountains
-        "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"  // Forests
+        "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?auto=format&fit=crop&w=520&h=350&q=80", 
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=520&h=350&q=80", 
+        "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"  
+    ];
+
+    const RANK_TIERS = [
+        { minHits: 0,   name: "Rookie 🛡️",          color: "#94a3b8", bg: "#1e293b" },
+        { minHits: 15,  name: "Elite Hunter 🎯",    color: "#38bdf8", bg: "#0c4a6e" },
+        { minHits: 40,  name: "Flock General 🎖️",   color: "#a855f7", bg: "#4c1d95" },
+        { minHits: 80,  name: "Sharpshooter ⚡",    color: "#f43f5e", bg: "#881337" },
+        { minHits: 130, name: "AK GOD 🔥👑",        color: "#fbbf24", bg: "#78350f" }
     ];
 
     const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let score = 0;
     let ammo = 30;
-    let totalHits = 0; 
+    let totalHits = 0;
+    let currentRankTitle = "Rookie 🛡️";
     let playerPiUser = "";
     let playerWallet = ""; 
     let currentPiUserId = "";
     let isSdkInitialized = false;
 
-    // Rage Mode Variables
     let rageMeter = 0;
     let isRageMode = false;
     let rageTimeLeft = 0;
 
-    // Advanced Background Cross-Fade & Mirror Loop System
     let bgX = 0;
     let currentBgImg = null;
     let previousBgImg = null;
     let currentBgIndex = 0;
-    let bgAlpha = 1.0; // للتحكم بنعومة انتقال التلاشي بين الخلفيتين
+    let bgAlpha = 1.0;
+
+    let floatingTexts = [];
+    let bossSpawnHits = 0;
+    let boss = {
+        active: false, hp: 0, maxHp: 5, x: -100, y: -100, lastX: -100, lastY: -100, radius: 35, timer: 0, enterWarning: 0
+    };
 
     let leaves = Array.from({length: 15}, () => ({
         x: Math.random() * 520,
@@ -324,22 +344,9 @@
     let currentBirdStyle = birdColorTiers[0];
 
     let targets = [
-        { 
-            id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, 
-            width: 44, height: 35, flap: 0, flapSpeed: 0.25, radius: 22, 
-            sineWave: false, opacity: 1.0, points: 10, special: "normal"
-        },
-        { 
-            id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, 
-            width: 38, height: 30, flap: 1.5, flapSpeed: 0.35, radius: 19, 
-            sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast"
-        },
-        { 
-            id: 3, type: "ghost_refiller", x: 400, 
-            y: 80, xSpeed: 4.0, ySpeed: -2.2, 
-            width: 46, height: 36, flap: 3.0, flapSpeed: 0.20, radius: 23, 
-            sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0
-        }
+        { id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, width: 44, height: 35, flap: 0, flapSpeed: 0.25, radius: 22, sineWave: false, opacity: 1.0, points: 10, special: "normal" },
+        { id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, width: 38, height: 30, flap: 1.5, flapSpeed: 0.35, radius: 19, sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast" },
+        { id: 3, type: "ghost_refiller", x: 400, y: 80, xSpeed: 4.0, ySpeed: -2.2, width: 46, height: 36, flap: 3.0, flapSpeed: 0.20, radius: 23, sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0 }
     ];
 
     let particles = []; 
@@ -347,6 +354,7 @@
     let muzzleFlashX = 0;
     let muzzleFlashY = 0;
     let screenShake = 0;
+    
     let aimX = 260;
     let aimY = 175;
 
@@ -364,12 +372,12 @@
     const ctx = canvas.getContext('2d');
     let gameInterval;
     let ak47Img = null;
-
     let gunRecoilZ = 0;
     let gunRecoilY = 0;
     let gunRecoilAngle = 0;
 
     let audioCtx;
+
     function initAudio() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -378,9 +386,7 @@
 
     function playAdvancedSound(type) {
         if (!audioCtx) return;
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
 
         try {
             const now = audioCtx.currentTime;
@@ -401,13 +407,11 @@
                 
                 impulseOsc.connect(lpImpulse);
                 lpImpulse.connect(impulseGain);
-                
+
                 const tailBufferSize = audioCtx.sampleRate * 0.55; 
                 const tailBuffer = audioCtx.createBuffer(1, tailBufferSize, audioCtx.sampleRate);
                 const tailData = tailBuffer.getChannelData(0);
-                for (let i = 0; i < tailBufferSize; i++) {
-                    tailData[i] = Math.random() * 2 - 1;
-                }
+                for (let i = 0; i < tailBufferSize; i++) { tailData[i] = Math.random() * 2 - 1; }
                 const tailNoise = audioCtx.createBufferSource();
                 tailNoise.buffer = tailBuffer;
                 
@@ -520,6 +524,7 @@
                 const reloadFilter = audioCtx.createBiquadFilter();
                 reloadFilter.type = 'lowpass';
                 reloadFilter.frequency.value = 1500;
+                
                 gain2.gain.setValueAtTime(0.35, now + delay);
                 gain2.gain.linearRampToValueAtTime(0.001, now + delay + 0.08);
                 
@@ -550,10 +555,9 @@
     }
 
     function loadBackgroundImage(index) {
-        // حفظ الخلفية القديمة لبدء تأثير التلاشي التبادلي (Cross-fade)
         if (currentBgImg) {
             previousBgImg = currentBgImg;
-            bgAlpha = 0.0; // تصفير الشفافية للخلفية الجديدة لتبدأ بالظهور تدريجياً
+            bgAlpha = 0.0; 
         }
         
         let img = new Image();
@@ -579,7 +583,6 @@
             ak47Img.onload = checkLoad;
             ak47Img.onerror = () => { ak47Img = null; checkLoad(); };
 
-            // تحميل الخلفية الأولى (الصحراء)
             currentBgImg = new Image();
             currentBgImg.src = BACKGROUNDS[0];
             currentBgImg.crossOrigin = "anonymous";
@@ -637,6 +640,7 @@
                 .select('high_score')
                 .eq('pi_username', playerPiUser)
                 .maybeSingle();
+            
             if (data) { 
                 score = data.high_score || 0; 
                 document.getElementById('score-val').innerText = score;
@@ -644,6 +648,7 @@
                 document.getElementById('hits-val').innerText = totalHits;
                 
                 updateBirdColorTier();
+                updatePlayerRank();
             }
         } catch(e) {}
         
@@ -657,10 +662,25 @@
         playAdvancedSound('reload');
     }
 
+    function updatePlayerRank() {
+        let activeRank = RANK_TIERS[0];
+        for (let i = RANK_TIERS.length - 1; i >= 0; i--) {
+            if (totalHits >= RANK_TIERS[i].minHits) {
+                activeRank = RANK_TIERS[i];
+                break;
+            }
+        }
+
+        currentRankTitle = activeRank.name;
+        const rankDisplay = document.getElementById('rank-display');
+        rankDisplay.innerText = activeRank.name;
+        rankDisplay.style.color = activeRank.color;
+        rankDisplay.style.borderColor = activeRank.color;
+        rankDisplay.style.background = `linear-gradient(135deg, ${activeRank.bg}, #0f172a)`;
+    }
+
     function updateBirdColorTier() {
-        // حساب المستوى بناءً على كل 10 إصابات
         let currentTier = Math.floor(totalHits / 10);
-        
         if (currentTier < birdColorTiers.length) {
             currentBirdStyle = birdColorTiers[currentTier];
         } else {
@@ -681,7 +701,6 @@
             };
         }
 
-        // تغيير الخلفية إذا اختلف المستوى
         if (currentBgIndex !== currentTier) {
             currentBgIndex = currentTier;
             loadBackgroundImage(currentBgIndex);
@@ -705,6 +724,7 @@
                 pi_username: playerPiUser, 
                 wallet_address: playerWallet,
                 high_score: score,
+                title: currentRankTitle, 
                 updated_at: new Date().toISOString()
             };
             await _supabaseClient.from(TABLE_NAME).upsert(payload, { onConflict: 'pi_username' });
@@ -716,16 +736,24 @@
         try {
             let { data } = await _supabaseClient
                 .from(TABLE_NAME)
-                .select('pi_username, high_score')
+                .select('pi_username, high_score, title')
                 .order('high_score', { ascending: false })
                 .limit(5);
+                
             const tbody = document.getElementById('leaderboard-body');
             tbody.innerHTML = "";
             if (data && data.length > 0) {
                 data.forEach((row, index) => {
                     const tr = document.createElement('tr');
                     if (row.pi_username === playerPiUser) tr.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
-                    tr.innerHTML = `<td>${index + 1}</td><td>${row.pi_username}</td><td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>`;
+                    
+                    let displayTitle = row.title || "Rookie 🛡️";
+                    tr.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${row.pi_username}</td>
+                        <td style="font-weight:bold; font-size:11px;">${displayTitle}</td>
+                        <td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>
+                    `;
                     tbody.appendChild(tr);
                 });
             }
@@ -736,10 +764,8 @@
         let pColor = customColor || currentBirdStyle.secondary;
         for (let i = 0; i < 25; i++) {
             particles.push({
-                x: x, 
-                y: y,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.8) * 7, 
+                x: x, y: y,
+                vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.8) * 7, 
                 radius: Math.random() * 4 + 1.5,
                 rotation: Math.random() * Math.PI * 2,
                 rotationSpeed: (Math.random() - 0.5) * 0.3,
@@ -747,6 +773,26 @@
                 color: Math.random() > 0.4 ? pColor : 'rgba(239, 68, 68, 0.8)'
             });
         }
+    }
+
+    function createFloatingText(x, y, text, color, isCrit = false) {
+        floatingTexts.push({ x, y, text, color, life: 1.0, isCrit, vy: -1.5 });
+    }
+
+    function spawnBoss() {
+        boss.active = true;
+        boss.hp = 5;
+        boss.maxHp = 5;
+        boss.x = canvas.width / 2;
+        boss.y = -50;
+        boss.lastX = canvas.width / 2;
+        boss.lastY = -50;
+        boss.timer = 0;
+        boss.enterWarning = 3.0; 
+        boss.radius = 35;
+        playAdvancedSound('fanfare_bonus');
+        document.getElementById('game-status').innerText = "⚠️ تحذير: النسر الجارح الظلامي قادم! (يحتاج 5 طلقات متتالية) ⚠️";
+        document.getElementById('game-status').style.color = "#ef4444";
     }
 
     function executeShot() {
@@ -757,7 +803,7 @@
             return;
         }
         
-        if (!isRageMode) ammo--; 
+        if (!isRageMode) ammo--;
         document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
         
         playAdvancedSound('shoot');
@@ -765,7 +811,7 @@
         screenShake = 14;     
 
         gunRecoilZ = -55;     
-        gunRecoilY = -38;     
+        gunRecoilY = -38;
         gunRecoilAngle = (Math.random() - 0.5) * 0.22;
         let gunBaseX = canvas.width - 40;
         let gunBaseY = canvas.height + 20;
@@ -800,6 +846,7 @@
                         document.getElementById('rage-val').innerText = "MAX!";
                         currentStatusText = "🔥 RAGE MODE ACTIVATED! INFINITE AMMO! 🔥 " + currentStatusText;
                         playAdvancedSound('fanfare_bonus');
+                        createFloatingText(canvas.width/2, canvas.height/2, "RAGE MODE!", "#ef4444", true);
                     }
                 }
 
@@ -809,16 +856,16 @@
 
                 createFeatherCloud(t.x, t.y, pColor);
                 playAdvancedSound('hit');
-
+                createFloatingText(t.x, t.y, "+" + t.points, pColor, false);
+                
                 if (t.special === "bonus") {
-                    ammoBonusEarned += 12; 
+                    ammoBonusEarned += 12;
                     currentStatusText += "⭐ GHOST REFILL! +12 AMMO! ";
                 }
 
                 let maxAllowedSpeed = 9.0;
                 let speedIncrementX = (t.xSpeed > 0 ? 0.30 : -0.30);
                 let speedIncrementY = (t.ySpeed > 0 ? 0.26 : -0.26);
-             
                 t.xSpeed += speedIncrementX;
                 t.ySpeed += speedIncrementY;
                 
@@ -829,6 +876,45 @@
             }
         });
 
+        // Dynamic Bird Generation System
+        const MAX_BIRDS = 6;
+        if (hitAny && totalHits > 0 && totalHits % 20 === 0 && targets.length < MAX_BIRDS) {
+            let newBird = {
+                id: targets.length + 1, type: "clone", x: -40, y: Math.random() * (canvas.height - 100) + 20,
+                xSpeed: 2.2, ySpeed: 0.8, width: 40, height: 32, flap: 0, flapSpeed: 0.25, radius: 20,
+                sineWave: true, sineCounter: Math.random() * 10, opacity: 1.0, points: 15, special: "normal"
+            };
+            targets.push(newBird);
+            currentStatusText += "🦅 طائر جديد انضم للسرب! ";
+        }
+
+        // Check Boss hit
+        if (boss.active && boss.enterWarning <= 0) {
+            let bossHitRadius = isRageMode ? boss.radius + 45 : boss.radius + 15;
+            const dist = Math.sqrt((aimX - boss.x)**2 + (aimY - boss.y)**2);
+            if (dist <= bossHitRadius) {
+                boss.hp--;
+                hitAny = true;
+                createFeatherCloud(boss.x, boss.y, "#ef4444");
+                playAdvancedSound('hit');
+                screenShake = 15;
+                if (boss.hp <= 0) {
+                    boss.active = false;
+                    score += 300;
+                    totalHits += 5;
+                    if (!isRageMode) ammo += 30;
+                    createFloatingText(boss.x, boss.y, "+300 BOSS KILL!", "#fbbf24", true);
+                    screenShake = 35;
+                    playAdvancedSound('fanfare_bonus');
+                    document.getElementById('game-status').innerText = "👑 أسطوري! تم تدمير النسر الجارح! +300 نقطة و +30 ذخيرة! 👑";
+                    document.getElementById('game-status').style.color = "#fbbf24";
+                    for(let i=0; i<3; i++) createFeatherCloud(boss.x + (Math.random()*40-20), boss.y + (Math.random()*40-20), "#000");
+                } else {
+                    createFloatingText(boss.x, boss.y, "CRITICAL HIT!", "#ef4444", true);
+                }
+            }
+        }
+
         if (hitAny) {
             if (hitCountThisShot > 1) {
                 let comboBonus = hitCountThisShot * 15;
@@ -836,29 +922,46 @@
                 currentStatusText = `🔥 SWARM COMBO x${hitCountThisShot}! +${comboBonus} BONUS PTS! ` + currentStatusText;
                 playAdvancedSound('fanfare_bonus');
                 screenShake = 22;
+                createFloatingText(canvas.width/2, canvas.height/2 + 30, `COMBO x${hitCountThisShot}!`, "#a855f7", true);
             }
 
             document.getElementById('score-val').innerText = score;
             document.getElementById('hits-val').innerText = totalHits;
             let statusColor = isRageMode ? "#ef4444" : "#4ade80";
 
-            if (totalHits > 0 && totalHits % 10 === 0) {
-                if (!isRageMode) ammo += 50; 
+            if (totalHits > 0 && totalHits % 10 === 0 && !boss.active) {
+                if (!isRageMode) ammo += 50;
                 playAdvancedSound('fanfare_bonus');
                 currentStatusText += "🎁 INVENTORY BOX! +50 AMMO! ";
                 statusColor = "#eab308";
+                createFloatingText(canvas.width/2, 50, "+50 AMMO BONUS!", "#eab308", true);
+            }
+
+            let currentBossTier = Math.floor(totalHits / 25);
+            if (currentBossTier > bossSpawnHits && currentBossTier > 0 && !boss.active) {
+                bossSpawnHits = currentBossTier;
+                spawnBoss();
             }
 
             if (currentStatusText === "") currentStatusText = "🎯 TARGETS SMASHED! ";
+            
             let oldStyleName = currentBirdStyle.name;
-            updateBirdColorTier();
+            let oldRankTitle = currentRankTitle;
 
-            if (currentBirdStyle.name !== oldStyleName) {
-                currentStatusText += `🔥 LEVEL UP: [${currentBirdStyle.name}]! (New Background Area)`;
+            updateBirdColorTier();
+            updatePlayerRank();
+
+            if (currentRankTitle !== oldRankTitle) {
+                currentStatusText = `🎖️ تـرقـيـة جـديـدة: لقد أصبحت [ ${currentRankTitle} ] !!! ` + currentStatusText;
+                statusColor = "#a855f7";
+                playAdvancedSound('fanfare_bonus');
+                screenShake = 25;
+            } else if (currentBirdStyle.name !== oldStyleName) {
+                currentStatusText += `🔥 LEVEL UP: [${currentBirdStyle.name}]!`;
                 statusColor = "#38bdf8";
-            } else {
+            } else if (!boss.active) {
                 let remaining = getNextTierRemainingHits();
-                currentStatusText += `| Next swarm & background in ${remaining} hits.`;
+                currentStatusText += `| Next swarm in ${remaining} hits.`;
             }
 
             if (ammoBonusEarned > 0 && !isRageMode) ammo += ammoBonusEarned;
@@ -896,6 +999,7 @@
             let deltaX = touch.clientX - joyStartX;
             let deltaY = touch.clientY - joyStartY;
             let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
             if (distance > maxJoyDistance) {
                 deltaX = (deltaX / distance) * maxJoyDistance;
                 deltaY = (deltaY / distance) * maxJoyDistance;
@@ -943,31 +1047,26 @@
         e.preventDefault();
         if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
     });
+    
     const fireTriggerBtn = document.getElementById('fire-trigger');
     fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
     fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
 
-    // ميثود مساعدة لرسم خلفية ممتدة ومكررة بشكل معكوس هندسياً (Seamless Mirror Loop) لمنع ظهور الفواصل الحادة
     function drawMirroredLoopBackground(image, opacityValue) {
         ctx.save();
         ctx.globalAlpha = opacityValue;
         
         let normalizedX = bgX % (canvas.width * 2);
         if (normalizedX > 0) normalizedX -= (canvas.width * 2);
-        
-        // رسم اللوب الأول (طبيعي)
         ctx.drawImage(image, normalizedX, 0, canvas.width, canvas.height);
         
-        // رسم اللوب الثاني (معكوس أفقياً لتلتقي الحواف بشكل متناسق وسلس 100%)
         ctx.save();
         ctx.translate(normalizedX + canvas.width * 2, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
         ctx.restore();
         
-        // رسم الدورة الاحتياطية المكملة للحركة اللانهائية
         ctx.drawImage(image, normalizedX + canvas.width * 2, 0, canvas.width, canvas.height);
-        
         ctx.restore();
     }
 
@@ -991,10 +1090,8 @@
                 }
             }
 
-            // حركة الخلفية
             bgX -= 0.4 * deltaTime;
 
-            // زيادة عداد تلاشي الخلفية برمجياً للوصول للاندماج التام عند تغيير المراحل
             if (bgAlpha < 1.0) {
                 bgAlpha += 0.02 * deltaTime;
                 if (bgAlpha > 1.0) bgAlpha = 1.0;
@@ -1012,7 +1109,6 @@
             if (joyActive) {
                 smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
                 smoothJoyY += (joyMoveY - smoothJoyY) * 0.28 * deltaTime;
-
                 let aimSpeed = 5.8 * deltaTime; 
                 aimX += smoothJoyX * aimSpeed;
                 aimY += smoothJoyY * aimSpeed;
@@ -1069,8 +1165,7 @@
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // نظام رسم الخلفيات المحترف (رسم القديمة أولاً ثم دمج الجديدة فوقها بالتلاشي الناعم)
+
             if (previousBgImg && bgAlpha < 1.0) {
                 drawMirroredLoopBackground(previousBgImg, 1.0 - bgAlpha);
             }
@@ -1082,12 +1177,12 @@
             }
 
             if (isRageMode) {
-                ctx.fillStyle = "rgba(220, 38, 38, 0.25)"; 
+                ctx.fillStyle = "rgba(220, 38, 38, 0.25)";
             } else {
                 ctx.fillStyle = "rgba(2, 6, 23, 0.15)";
             }
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+            
             ctx.fillStyle = "rgba(234, 179, 8, 0.4)";
             leaves.forEach(leaf => {
                 ctx.beginPath();
@@ -1101,6 +1196,7 @@
                 p.vy += 0.18 * deltaTime; 
                 p.rotation += p.rotationSpeed * deltaTime;
                 p.alpha -= 0.025 * deltaTime;
+                
                 if (p.alpha <= 0) { 
                     particles.splice(index, 1); 
                 } else {
@@ -1187,7 +1283,93 @@
                     ctx.fillText(label, t.x - 22, t.y - t.height - 4);
                 }
             });
-            
+
+            if (boss.active) {
+                boss.timer += deltaTime * 0.05;
+                if (boss.enterWarning > 0) {
+                    boss.enterWarning -= deltaTime * 0.016;
+                    ctx.save();
+                    ctx.fillStyle = "rgba(239, 68, 68, " + (Math.abs(Math.sin(boss.timer * 4))) + ")";
+                    ctx.font = "900 28px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText("⚠️ PREDATOR BOSS INCOMING ⚠️", canvas.width/2, canvas.height/2);
+                    ctx.restore();
+                } else {
+                    boss.lastX = boss.x;
+                    boss.lastY = boss.y;
+                    boss.x = canvas.width/2 + Math.sin(boss.timer * 0.8) * (canvas.width/2 - 60);
+                    boss.y = canvas.height/3 + Math.sin(boss.timer * 1.6) * (canvas.height/4 - 40);
+
+                    ctx.save();
+                    ctx.translate(boss.x, boss.y);
+                    let bMoveAngle = Math.atan2(boss.y - boss.lastY, boss.x - boss.lastX);
+                    if (boss.x - boss.lastX < 0) {
+                        ctx.scale(1, -1);
+                        ctx.rotate(-bMoveAngle + Math.PI);
+                    } else {
+                        ctx.rotate(bMoveAngle);
+                    }
+
+                    let bBodyColor = "#0f172a";
+                    let bWingColor = "#ef4444";
+                    let bHeadColor = "#020617";
+                    let bBeakColor = "#f87171";
+
+                    let tW = 85; let tH = 60;
+                    ctx.fillStyle = bBodyColor;
+                    ctx.beginPath(); ctx.ellipse(0, 0, tW/2, tH/2, 0, 0, Math.PI*2); ctx.fill();
+                    let bWingFlapOffset = Math.sin(boss.timer * 12) * (tH / 1.1);
+                    ctx.fillStyle = bWingColor;
+                    ctx.beginPath();
+                    ctx.ellipse(-6, -bWingFlapOffset/2, 18, tH/2 + Math.abs(bWingFlapOffset)/2, 0.4, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.ellipse(-6, bWingFlapOffset/2, 18, tH/2 + Math.abs(bWingFlapOffset)/2, -0.4, 0, Math.PI*2);
+                    ctx.fill();
+
+                    ctx.fillStyle = bHeadColor;
+                    ctx.beginPath(); ctx.arc(tW/2 - 4, -5, 16, 0, Math.PI*2); ctx.fill();
+
+                    ctx.fillStyle = '#ff0000'; 
+                    ctx.beginPath();
+                    ctx.arc(tW/2 + 4, -8, 4, 0, Math.PI*2); ctx.fill();
+                    ctx.shadowColor = "#ff0000";
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(tW/2 + 4, -8, 2, 0, Math.PI*2); ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    ctx.fillStyle = bBeakColor;
+                    ctx.beginPath(); ctx.moveTo(tW/2 + 10, -10);
+                    ctx.lineTo(tW/2 + 35, -5); ctx.lineTo(tW/2 + 10, 6); ctx.fill();
+
+                    ctx.fillStyle = bHeadColor;
+                    ctx.beginPath(); ctx.moveTo(-tW/2, -8); ctx.lineTo(-tW/2 - 25, -20);
+                    ctx.lineTo(-tW/2 - 18, 0); ctx.lineTo(-tW/2 - 25, 20); ctx.lineTo(-tW/2, 8); ctx.fill();
+                    ctx.restore();
+
+                    ctx.fillStyle = "#333";
+                    ctx.fillRect(boss.x - 30, boss.y - 50, 60, 8);
+                    ctx.fillStyle = "#ef4444";
+                    ctx.fillRect(boss.x - 30, boss.y - 50, 60 * (boss.hp / boss.maxHp), 8);
+                }
+            }
+
+            floatingTexts.forEach((ft, i) => {
+                ft.y += ft.vy * deltaTime;
+                ft.life -= 0.02 * deltaTime;
+                if (ft.life <= 0) floatingTexts.splice(i, 1);
+                else {
+                    ctx.save();
+                    ctx.globalAlpha = ft.life;
+                    ctx.fillStyle = ft.color;
+                    ctx.font = ft.isCrit ? "900 24px Arial" : "bold 16px Arial";
+                    ctx.textAlign = "center";
+                    ctx.shadowColor = "black";
+                    ctx.shadowBlur = 4;
+                    ctx.fillText(ft.text, ft.x, ft.y);
+                    ctx.restore();
+                }
+            });
+
             if (flashIntensity > 0) {
                 ctx.save();
                 let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 3, muzzleFlashX, muzzleFlashY, 55);
@@ -1228,7 +1410,8 @@
             ctx.strokeStyle = isRageMode ? '#fbbf24' : '#f87171'; 
             ctx.lineWidth = 2.5;
             ctx.translate(aimX, aimY);
-            ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(-22, 0);
             ctx.lineTo(22, 0); ctx.moveTo(0, -22); ctx.lineTo(0, 22); ctx.stroke();
@@ -1236,7 +1419,7 @@
             ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
-
+            
         }, 1000 / 60);
     }
 
@@ -1297,6 +1480,7 @@
                 body: JSON.stringify({ paymentId: paymentId, txid: txid })
             });
             const result = await response.json();
+            
             if (result.success) {
                 ammo += 30;
                 document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
