@@ -21,7 +21,7 @@
             overflow-x: hidden;
         }
         .container {
-            max-width: 540px;
+            max-width: 750px; /* تم زيادة العرض للوضع الأفقي */
             margin: 2px auto;  
             background: rgba(15, 23, 42, 0.98);
             padding: 12px;
@@ -71,10 +71,8 @@
             display: inline-block;
             width: 85%;
         }
-        .btn:hover { transform: scale(1.02);
-        }
-        .hidden { display: none;
-        }
+        .btn:hover { transform: scale(1.02); }
+        .hidden { display: none; }
         
         .stats-bar {
             display: flex;
@@ -85,11 +83,19 @@
             margin-bottom: 8px; 
             font-weight: bold;
             border: 1px solid #334155;
-            font-size: 11px;
+            font-size: 13px; /* تم تكبير الخط قليلاً ليتناسب مع الشاشة العرضية */
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
             flex-wrap: wrap;
             gap: 5px;
         }
+
+        .canvas-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
         #hunting-canvas {
             border: 3px solid #38bdf8;
             border-radius: 16px;
@@ -100,9 +106,30 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.8);
             background-color: #070b19;
             display: block;
-            position: relative;
         }
         
+        /* تصميم زر الإيقاف الجديد في أعلى الشاشة */
+        .btn-pause {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(15, 23, 42, 0.85);
+            color: #fff;
+            border: 2px solid #38bdf8;
+            border-radius: 12px;
+            width: 50px;
+            height: 50px;
+            font-size: 22px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            transition: 0.2s;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-pause:active { transform: scale(0.9); }
+
         .controls-wrapper {
             display: flex;
             justify-content: space-between;
@@ -164,7 +191,7 @@
             flex: 1;
             background-image: linear-gradient(135deg, #eab308, #ca8a04); 
             color: #0f172a; 
-            font-size: 13px; 
+            font-size: 14px; 
             padding: 14px 8px; 
             font-weight: 900;
             border-radius: 14px;
@@ -177,20 +204,6 @@
             align-items: center;
             justify-content: center;
         }
-        
-        .btn-pause {
-            background: #1e293b;
-            color: #fff;
-            border: 2px solid #38bdf8;
-            border-radius: 12px;
-            padding: 10px 15px;
-            font-size: 22px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            transition: 0.2s;
-            height: 70px;
-        }
-        .btn-pause:active { transform: scale(0.9); }
 
         .leaderboard-table {
             width: 100%;
@@ -206,16 +219,15 @@
             border-bottom: 1px solid #1e293b;
             font-size: 13px;
         }
-        .leaderboard-table th { background-color: #1e293b;
-            color: #38bdf8; }
+        .leaderboard-table th { background-color: #1e293b; color: #38bdf8; }
         
         .audio-indicator {
-            font-size: 11px;
+            font-size: 12px;
             color: #38bdf8;
-            margin-top: 3px;
+            margin-top: 5px;
             display: inline-block;
             background: rgba(56, 189, 248, 0.15);
-            padding: 3px 10px;
+            padding: 5px 12px;
             border-radius: 20px;
             font-weight: bold;
         }
@@ -237,11 +249,11 @@
             margin-top: 8px; 
             display: flex; 
             justify-content: center; 
-            gap: 15px; 
+            gap: 20px; 
             align-items: center; 
             border-top: 1px dashed #475569; 
             padding-top: 8px;
-            font-size: 13px;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -266,26 +278,28 @@
             <div>Ammo: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
             <div>Rage: <span id="rage-val" style="color: #ef4444;">0%</span> 😡</div>
         
-            <div style="width: 100%; margin-top: 5px; display: flex; justify-content: center; gap: 10px; align-items: center;">
+            <div style="width: 100%; margin-top: 5px; display: flex; justify-content: center; gap: 15px; align-items: center;">
                 <div>Tier Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown</span></div>
                 <div>Rank: <span id="rank-display" class="rank-badge">Rookie 🛡️</span></div>
             </div>
             
-            <!-- Level & Timer System -->
             <div class="level-bar">
-                <div>Level: <span id="level-val" style="color: #c084fc; font-weight: 900; font-size: 15px;">1</span> 🏆</div>
+                <div>Level: <span id="level-val" style="color: #c084fc; font-weight: 900; font-size: 16px;">1</span> 🏆</div>
                 <div>Target: <span id="target-val" style="color: #60a5fa; font-weight: bold;">0/5</span> 🦅</div>
-                <div>Time: <span id="time-val" style="color: #ef4444; font-size: 16px; font-weight: 900;">30.0</span>s ⏳</div>
+                <div>Time: <span id="time-val" style="color: #ef4444; font-size: 18px; font-weight: 900;">30.0</span>s ⏳</div>
             </div>
         </div>
 
-        <canvas id="hunting-canvas" width="520" height="350"></canvas>
+        <div class="canvas-wrapper">
+            <canvas id="hunting-canvas" width="700" height="350"></canvas>
+            <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸️</button>
+        </div>
+        
         <div><span class="audio-indicator">🌌 Tri-Target Swarm System & Dynamic Backgrounds</span></div>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 14px; margin: 8px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
         
         <div class="controls-wrapper">
-            <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸️</button>
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
             <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO<br>(1 Pi)</button>
             <div class="joystick-container" id="joy-container">
@@ -293,7 +307,7 @@
             </div>
         </div>
 
-        <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38bdf8; font-size: 16px;">🏆 GLOBAL LEADERBOARD</h3>
+        <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38bdf8; font-size: 18px;">🏆 GLOBAL LEADERBOARD</h3>
         <table class="leaderboard-table">
             <thead>
                 <tr>
@@ -318,10 +332,12 @@
     const TABLE_NAME = "hunter_game_scores"; 
 
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
+    
+    // تم تحديث أبعاد الصور الخلفية لتلائم الشاشة العرضية الجديدة
     const BACKGROUNDS = [
-        "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?auto=format&fit=crop&w=520&h=350&q=80", 
-        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=520&h=350&q=80", 
-        "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=520&h=350&q=80"  
+        "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?auto=format&fit=crop&w=750&h=350&q=80", 
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=750&h=350&q=80", 
+        "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=750&h=350&q=80"  
     ];
     const RANK_TIERS = [
         { minHits: 0,   name: "Rookie 🛡️",          color: "#94a3b8", bg: "#1e293b" },
@@ -341,7 +357,6 @@
     let currentPiUserId = "";
     let isSdkInitialized = false;
 
-    // Challenge & Stage System Variables
     let currentLevel = 1;
     let levelBirdsKilled = 0;
     let birdsTarget = 5;
@@ -364,13 +379,16 @@
     let boss = {
         active: false, hp: 0, maxHp: 5, x: -100, y: -100, lastX: -100, lastY: -100, radius: 35, timer: 0, enterWarning: 0
     };
+    
+    // تم تعديل إحداثيات الأوراق المتساقطة لتشمل العرض الجديد (700)
     let leaves = Array.from({length: 15}, () => ({
-        x: Math.random() * 520,
+        x: Math.random() * 700,
         y: Math.random() * 350,
         size: Math.random() * 3 + 2,
         speed: Math.random() * 1.2 + 0.4,
         sway: Math.random() * 0.04
     }));
+    
     const birdColorTiers = [
         { name: "Classic Trio Tier", primary: "#543011", secondary: "#eab308", detail: "#3a1f05", beak: "#f97316" }, 
         { name: "Forest Emerald Pack", primary: "#115e59", secondary: "#10b981", detail: "#064e3b", beak: "#f43f5e" },  
@@ -394,7 +412,7 @@
     let muzzleFlashX = 0;
     let muzzleFlashY = 0;
     let screenShake = 0;
-    let aimX = 260;
+    let aimX = 350;
     let aimY = 175;
 
     let joyActive = false;
@@ -629,7 +647,16 @@
         });
     }
 
-    function initAndLoginWithPi() {
+    async function initAndLoginWithPi() {
+        // إجبار شاشة الهاتف على الوضع العرضي
+        try {
+            if (screen.orientation && screen.orientation.lock) {
+                await screen.orientation.lock('landscape');
+            }
+        } catch (e) {
+            console.log("Landscape lock not supported or requires user interaction:", e);
+        }
+
         initAudio();
         const loginBtn = document.getElementById('btn-login');
         loginBtn.innerText = "Synchronizing Components... 🔄";
@@ -693,7 +720,6 @@
         document.getElementById('auth-section').className = 'hidden';
         document.getElementById('game-section').className = '';
         
-        // Setup initial Level target
         document.getElementById('target-val').innerText = `${levelBirdsKilled}/${birdsTarget}`;
         document.getElementById('time-val').innerText = timeRemaining.toFixed(1);
 
@@ -848,7 +874,6 @@
         isGameOver = false;
         isPaused = false;
         
-        // Reset level and timer (keeping cumulative score and hits)
         currentLevel = 1;
         levelBirdsKilled = 0;
         birdsTarget = 5;
@@ -970,7 +995,6 @@
             }
         });
         
-        // Dynamic Bird Generation System
         const MAX_BIRDS = 6;
         if (hitAny && totalHits > 0 && totalHits % 20 === 0 && targets.length < MAX_BIRDS) {
             let newBird = {
@@ -982,7 +1006,6 @@
             currentStatusText += "🦅 طائر جديد انضم للسرب! ";
         }
 
-        // Check Boss hit
         if (boss.active && boss.enterWarning <= 0) {
             let bossHitRadius = isRageMode ? boss.radius + 45 : boss.radius + 15;
             const dist = Math.sqrt((aimX - boss.x)**2 + (aimY - boss.y)**2);
@@ -996,7 +1019,7 @@
                     boss.active = false;
                     score += 300;
                     totalHits += 5;
-                    levelBirdsKilled += 5; // Boss helps clear the level faster
+                    levelBirdsKilled += 5; 
                     if (!isRageMode) ammo += 30;
                     createFloatingText(boss.x, boss.y, "+300 BOSS KILL!", "#fbbf24", true);
                     screenShake = 35;
@@ -1011,11 +1034,9 @@
         }
 
         if (hitAny) {
-            // Level Progression Check
             if (levelBirdsKilled >= birdsTarget) {
                 currentLevel++;
                 levelBirdsKilled = 0;
-                // Increase difficulty: more birds required, less time given (minimum 10 seconds)
                 birdsTarget = 3 + (currentLevel * 2);
                 timeRemaining = Math.max(10, 32 - (currentLevel * 2));
                 
@@ -1207,7 +1228,6 @@
             return;
         }
         
-        // Decrement Level Timer
         timeRemaining -= (deltaTime * 16.666) / 1000;
         if (timeRemaining <= 0) {
             timeRemaining = 0;
