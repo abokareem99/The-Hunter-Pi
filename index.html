@@ -22,7 +22,7 @@
         }
         .container {
             max-width: 540px;
-            margin: 0 auto;  /* إزالة الفراغ العلوي */
+            margin: 0 auto;  
             background: rgba(15, 23, 42, 0.98);
             padding: 12px;
             border-radius: 24px;
@@ -32,7 +32,7 @@
         }
         h1 { 
             color: #38bdf8;
-            margin-top: 0px; /* إزالة الفراغ العلوي */
+            margin-top: 0px; 
             margin-bottom: 8px; 
             font-size: 26px;
             letter-spacing: 1px;
@@ -44,7 +44,7 @@
             padding: 30px 15px; 
             border: 2px solid #38bdf8;
             box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-            margin-top: 0px; /* إزالة الفراغ العلوي */
+            margin-top: 0px; 
         }
         .hunter-avatar {
             width: 170px;
@@ -94,7 +94,7 @@
             cursor: crosshair; 
             width: 100%;
             height: auto;
-            aspect-ratio: 520 / 350; /* الحل السحري لمنع تمطط الشاشة العمودي */
+            aspect-ratio: 520 / 350; 
             object-fit: cover;
             touch-action: none;
             box-shadow: 0 8px 30px rgba(0,0,0,0.8);
@@ -282,13 +282,14 @@
  
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
         
+        <!-- تم عكس الأزرار بناءً على طلبك تماماً لليسار واليمين -->
         <div class="controls-wrapper">
+            <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
+            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO<br>(1 Pi)</button>
+            <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸️</button>
             <div class="joystick-container" id="joy-container">
                 <div class="joystick-knob" id="joy-knob"></div>
             </div>
-            <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸️</button>
-            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO<br>(1 Pi)</button>
-            <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
         </div>
 
         <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38bdf8; font-size: 16px;">🏆 GLOBAL LEADERBOARD</h3>
@@ -357,7 +358,6 @@
 
     let floatingTexts = [];
     let bossSpawnHits = 0;
-    // تصغير النسر الجارح بنسبة 20%
     let boss = {
         active: false, hp: 0, maxHp: 5, x: -100, y: -100, lastX: -100, lastY: -100, radius: 28, timer: 0, enterWarning: 0
     };
@@ -381,7 +381,6 @@
     ];
     let currentBirdStyle = birdColorTiers[0];
 
-    // تقليص أحجام الطيور ونطاق تصادمها بشكل ملحوظ
     let targets = [
         { id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, width: 35, height: 28, flap: 0, flapSpeed: 0.25, radius: 18, sineWave: false, opacity: 1.0, points: 10, special: "normal" },
         { id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, width: 30, height: 24, flap: 1.5, flapSpeed: 0.35, radius: 15, sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast" },
@@ -1032,7 +1031,6 @@
             } else { t.x += t.xSpeed * deltaTime; t.y += t.ySpeed * deltaTime; }
             t.flap += t.flapSpeed * deltaTime;
 
-            // نظام حدود ديناميكي لمنع خروج الطيور خارج الشاشة
             let minX = t.width / 2;
             let maxX = canvas.width - (t.width / 2);
             let minY = t.height / 2;
@@ -1162,7 +1160,6 @@
         }
         ctx.restore();
         
-        // مؤشر التصويب المصغر والأكثر دقة
         ctx.save();
         ctx.strokeStyle = isRageMode ? '#fbbf24' : '#f87171'; 
         ctx.lineWidth = 2.0;
