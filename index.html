@@ -31,22 +31,6 @@
             transition: transform 0.04s cubic-bezier(0.1, 0.8, 0.3, 1);
         }
 
-        /* رسالة تنبيه تظهر فقط إذا كان الهاتف في الوضع الطولي */
-        @media screen and (orientation: portrait) {
-            #game-container::before {
-                content: "⚠️ يرجى تدوير الهاتف (وضع أفقي) لتجربة اللعب بشكل صحيح ⚠️";
-                display: block;
-                background: #ef4444;
-                color: white;
-                padding: 10px;
-                border-radius: 12px;
-                margin-bottom: 15px;
-                font-weight: bold;
-                text-align: center;
-                box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-            }
-        }
-
         h1 { 
             color: #38bdf8;
             margin-top: 2px;
@@ -125,13 +109,13 @@
             display: block;
         }
 
-        /* حاوية أزرار التحكم تم تعديلها لتنظيم الأزرار بشكل أفقي */
+        /* حاوية أزرار التحكم: تم ترتيب الأزرار وعصا التحريك بشكل احترافي */
         .controls-wrapper {
             display: flex;
             justify-content: flex-start;
             align-items: center;
             margin-top: 10px;
-            gap: 8px;
+            gap: 10px;
             direction: ltr; 
             background: #0f172a;
             padding: 10px;
@@ -139,7 +123,34 @@
             border: 1px solid #1e293b;
         }
 
-        /* تم تصغير زر الإيقاف وإلغاء التموضع المطلق */
+        /* عصا التحريك أصبحت الأولى وتأخذ مكانها في اليسار */
+        .joystick-container {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #1e293b 40%, #0f172a 100%);
+            border: 3px solid #38bdf8;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3), inset 0 2px 8px rgba(0,0,0,0.8);
+            touch-action: none;
+            flex-shrink: 0;
+        }
+        .joystick-knob {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            border: 2px solid #38bdf8;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+            cursor: pointer;
+            transition: transform 0.05s ease;
+        }
+
+        /* زر الإيقاف مدفوع لليمين ليترك مسافة بينه وبين عصا التحريك */
         .btn-pause {
             background: rgba(15, 23, 42, 0.85);
             color: #fff;
@@ -155,10 +166,10 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            margin-left: auto; /* هذا الأمر يدفع باقي الأزرار إلى اليمين */
         }
         .btn-pause:active { transform: scale(0.9); }
 
-        /* تم تصغير زر الذخيرة */
         .btn-ammo {
             flex: 1;
             background-image: linear-gradient(135deg, #eab308, #ca8a04); 
@@ -177,7 +188,6 @@
             justify-content: center;
         }
 
-        /* تم تصغير زر الإطلاق */
         .btn-shoot {
             background-image: linear-gradient(135deg, #ef4444, #dc2626, #991b1b);
             color: white;
@@ -196,34 +206,6 @@
         .btn-shoot:active {
             transform: scale(0.85);
             background-image: linear-gradient(135deg, #991b1b, #451a03);
-        }
-
-        /* تم تصغير عصا التحريك ودفعها لأقصى اليمين */
-        .joystick-container {
-            width: 80px;
-            height: 80px;
-            background: radial-gradient(circle, #1e293b 40%, #0f172a 100%);
-            border: 3px solid #38bdf8;
-            border-radius: 50%;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3), inset 0 2px 8px rgba(0,0,0,0.8);
-            touch-action: none;
-            flex-shrink: 0;
-            margin-left: auto;
-        }
-        .joystick-knob {
-            width: 35px;
-            height: 35px;
-            background: linear-gradient(135deg, #0284c7, #0369a1);
-            border: 2px solid #38bdf8;
-            border-radius: 50%;
-            position: absolute;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.6);
-            cursor: pointer;
-            transition: transform 0.05s ease;
         }
 
         .leaderboard-table {
@@ -320,13 +302,13 @@
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 14px; margin: 8px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
         
         <div class="controls-wrapper">
-            <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸️</button>
-            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO</button>
-            <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
-            
             <div class="joystick-container" id="joy-container">
                 <div class="joystick-knob" id="joy-knob"></div>
             </div>
+            
+            <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸️</button>
+            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO</button>
+            <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
         </div>
 
         <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38bdf8; font-size: 18px;">🏆 GLOBAL LEADERBOARD</h3>
@@ -442,7 +424,7 @@
     let joyMoveY = 0;
     let smoothJoyX = 0; 
     let smoothJoyY = 0; 
-    const maxJoyDistance = 25; // تم تعديل المسافة القصوى لتناسب عصا التحريك الأصغر
+    const maxJoyDistance = 25; 
     let lastTime = performance.now(); 
 
     const canvas = document.getElementById('hunting-canvas');
@@ -668,7 +650,6 @@
     }
 
     async function initAndLoginWithPi() {
-        // إجبار المتصفح على وضع ملء الشاشة ثم الوضع العرضي لحل مشكلة اللاندسكيب
         try {
             let docEl = document.documentElement;
             if (docEl.requestFullscreen) {
