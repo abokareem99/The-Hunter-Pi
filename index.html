@@ -16,7 +16,7 @@
             text-align: center;
             margin: 0;
             padding: 5px; 
-            touch-action: pan-y; /* Fix: Allowed vertical scrolling */
+            touch-action: pan-y; 
             user-select: none;
             overflow-x: hidden;
         }
@@ -100,6 +100,7 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.8);
             background-color: #070b19;
             display: block;
+            position: relative;
         }
         
         .controls-wrapper {
@@ -176,6 +177,20 @@
             align-items: center;
             justify-content: center;
         }
+        
+        .btn-pause {
+            background: #1e293b;
+            color: #fff;
+            border: 2px solid #38bdf8;
+            border-radius: 12px;
+            padding: 10px 15px;
+            font-size: 22px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: 0.2s;
+            height: 70px;
+        }
+        .btn-pause:active { transform: scale(0.9); }
 
         .leaderboard-table {
             width: 100%;
@@ -216,6 +231,18 @@
             box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
             display: inline-block;
         }
+        
+        .level-bar {
+            width: 100%; 
+            margin-top: 8px; 
+            display: flex; 
+            justify-content: center; 
+            gap: 15px; 
+            align-items: center; 
+            border-top: 1px dashed #475569; 
+            padding-top: 8px;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
@@ -243,6 +270,13 @@
                 <div>Tier Color: <span id="color-name-display" style="font-weight: 900;">Classic Brown</span></div>
                 <div>Rank: <span id="rank-display" class="rank-badge">Rookie 🛡️</span></div>
             </div>
+            
+            <!-- Level & Timer System -->
+            <div class="level-bar">
+                <div>Level: <span id="level-val" style="color: #c084fc; font-weight: 900; font-size: 15px;">1</span> 🏆</div>
+                <div>Target: <span id="target-val" style="color: #60a5fa; font-weight: bold;">0/5</span> 🦅</div>
+                <div>Time: <span id="time-val" style="color: #ef4444; font-size: 16px; font-weight: 900;">30.0</span>s ⏳</div>
+            </div>
         </div>
 
         <canvas id="hunting-canvas" width="520" height="350"></canvas>
@@ -251,6 +285,7 @@
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
         
         <div class="controls-wrapper">
+            <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸️</button>
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
             <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO<br>(1 Pi)</button>
             <div class="joystick-container" id="joy-container">
@@ -305,6 +340,14 @@
     let playerWallet = ""; 
     let currentPiUserId = "";
     let isSdkInitialized = false;
+
+    // Challenge & Stage System Variables
+    let currentLevel = 1;
+    let levelBirdsKilled = 0;
+    let birdsTarget = 5;
+    let timeRemaining = 30.0;
+    let isPaused = false;
+    let isGameOver = false;
 
     let rageMeter = 0;
     let isRageMode = false;
@@ -366,19 +409,18 @@
 
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
-    let gameAnimationId; // Fix: Used for requestAnimationFrame
+    let gameAnimationId; 
     let ak47Img = null;
     let gunRecoilZ = 0;
     let gunRecoilY = 0;
     let gunRecoilAngle = 0;
 
     let audioCtx;
-    let shootTailBuffer = null; // Fix: Precompute audio buffer to stop freezing
+    let shootTailBuffer = null; 
 
     function initAudio() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            // Fix: Calculate expensive buffer array ONCE instead of every shot
             const tailBufferSize = audioCtx.sampleRate * 0.55; 
             shootTailBuffer = audioCtx.createBuffer(1, tailBufferSize, audioCtx.sampleRate);
             const tailData = shootTailBuffer.getChannelData(0);
@@ -412,7 +454,6 @@
                 impulseOsc.connect(lpImpulse);
                 lpImpulse.connect(impulseGain);
                 
-                // Fix: Use precomputed buffer
                 const tailNoise = audioCtx.createBufferSource();
                 tailNoise.buffer = shootTailBuffer;
                 
@@ -651,6 +692,11 @@
         updateSupabaseScore();
         document.getElementById('auth-section').className = 'hidden';
         document.getElementById('game-section').className = '';
+        
+        // Setup initial Level target
+        document.getElementById('target-val').innerText = `${levelBirdsKilled}/${birdsTarget}`;
+        document.getElementById('time-val').innerText = timeRemaining.toFixed(1);
+
         lastTime = performance.now(); 
         startGameLoop();
         setupJoystickListeners(); 
@@ -789,8 +835,29 @@
         document.getElementById('game-status').innerText = "⚠️ تحذير: النسر الجارح الظلامي قادم! (يحتاج 5 طلقات متتالية) ⚠️";
         document.getElementById('game-status').style.color = "#ef4444";
     }
+    
+    function triggerGameOver() {
+        isGameOver = true;
+        document.getElementById('game-status').innerText = "💀 انتهى الوقت! لقد خسرت التحدي.";
+        document.getElementById('game-status').style.color = "#ef4444";
+        playAdvancedSound('empty');
+    }
+    
+    function togglePause() {
+        if (isGameOver) return;
+        isPaused = !isPaused;
+        document.getElementById('btn-pause').innerText = isPaused ? "▶️" : "⏸️";
+        if (!isPaused) {
+            lastTime = performance.now(); 
+        } else {
+            document.getElementById('game-status').innerText = "⏸️ اللعبة متوقفة مؤقتاً";
+            document.getElementById('game-status').style.color = "#38bdf8";
+        }
+    }
 
     function executeShot() {
+        if (isPaused || isGameOver) return;
+        
         if (ammo <= 0 && !isRageMode) {
             playAdvancedSound('empty');
             document.getElementById('game-status').innerText = "❌ OUT OF AMMO! Refill using your Pi Wallet.";
@@ -830,6 +897,7 @@
                 hitCountThisShot++;
                 score += t.points;
                 totalHits++;
+                levelBirdsKilled++;
 
                 if (!isRageMode) {
                     rageMeter++;
@@ -897,6 +965,7 @@
                     boss.active = false;
                     score += 300;
                     totalHits += 5;
+                    levelBirdsKilled += 5; // Boss helps clear the level faster
                     if (!isRageMode) ammo += 30;
                     createFloatingText(boss.x, boss.y, "+300 BOSS KILL!", "#fbbf24", true);
                     screenShake = 35;
@@ -911,6 +980,22 @@
         }
 
         if (hitAny) {
+            // Level Progression Check
+            if (levelBirdsKilled >= birdsTarget) {
+                currentLevel++;
+                levelBirdsKilled = 0;
+                // Increase difficulty: more birds required, less time given (minimum 10 seconds)
+                birdsTarget = 3 + (currentLevel * 2);
+                timeRemaining = Math.max(10, 32 - (currentLevel * 2));
+                
+                document.getElementById('level-val').innerText = currentLevel;
+                createFloatingText(canvas.width/2, canvas.height/2, `LEVEL ${currentLevel} REACHED!`, "#c084fc", true);
+                playAdvancedSound('fanfare_bonus');
+                currentStatusText = `🏆 مبروك! انتقلت للمرحلة ${currentLevel}! ` + currentStatusText;
+            }
+            
+            document.getElementById('target-val').innerText = `${levelBirdsKilled}/${birdsTarget}`;
+            
             if (hitCountThisShot > 1) {
                 let comboBonus = hitCountThisShot * 15;
                 score += comboBonus;
@@ -976,6 +1061,7 @@
         const joyKnob = document.getElementById('joy-knob');
 
         function handleJoyStart(e) {
+            if (isPaused || isGameOver) return;
             initAudio();
             joyActive = true;
             const touch = e.touches ? e.touches[0] : e;
@@ -1019,6 +1105,7 @@
     }
 
     function handleCanvasPointer(clientX, clientY) {
+        if (isPaused || isGameOver) return;
         const rect = canvas.getBoundingClientRect();
         aimX = (clientX - rect.left) * (canvas.width / rect.width);
         aimY = (clientY - rect.top) * (canvas.height / rect.height);
@@ -1058,363 +1145,393 @@
         ctx.restore();
     }
 
+    function gameLoop(currentTime) {
+        let deltaTime = (currentTime - lastTime) / 16.666; 
+        lastTime = currentTime;
+
+        if (deltaTime > 3) deltaTime = 3; 
+        
+        if (isGameOver) {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#ef4444";
+            ctx.font = "900 45px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2 - 20);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 20px Arial";
+            ctx.fillText("انتهى الوقت! قم بتحديث الصفحة للمحاولة من جديد.", canvas.width/2, canvas.height/2 + 25);
+            gameAnimationId = requestAnimationFrame(gameLoop);
+            return;
+        }
+
+        if (isPaused) {
+            ctx.fillStyle = "rgba(15, 23, 42, 0.6)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#38bdf8";
+            ctx.font = "900 45px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("PAUSED", canvas.width/2, canvas.height/2 + 15);
+            gameAnimationId = requestAnimationFrame(gameLoop);
+            return;
+        }
+        
+        // Decrement Level Timer
+        timeRemaining -= (deltaTime * 16.666) / 1000;
+        if (timeRemaining <= 0) {
+            timeRemaining = 0;
+            triggerGameOver();
+        }
+        document.getElementById('time-val').innerText = timeRemaining.toFixed(1);
+
+        if (isRageMode) {
+            rageTimeLeft -= deltaTime;
+            if (rageTimeLeft <= 0) {
+                isRageMode = false;
+                document.getElementById('rage-val').innerText = "0%";
+                document.getElementById('ammo-val').innerText = ammo;
+                document.getElementById('game-status').innerText = "🧊 الغضب انتهى! عدنا للوضع الطبيعي.";
+                document.getElementById('game-status').style.color = "#38bdf8";
+            }
+        }
+
+        bgX -= 0.4 * deltaTime;
+
+        if (bgAlpha < 1.0) {
+            bgAlpha += 0.02 * deltaTime;
+            if (bgAlpha > 1.0) bgAlpha = 1.0;
+        }
+
+        leaves.forEach(leaf => {
+            leaf.y += leaf.speed * deltaTime;
+            leaf.x += Math.sin(leaf.y * 0.02) * 0.4 * deltaTime;
+            if (leaf.y > canvas.height) {
+                leaf.y = -10;
+                leaf.x = Math.random() * canvas.width;
+            }
+        });
+        
+        if (joyActive) {
+            smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
+            smoothJoyY += (joyMoveY - smoothJoyY) * 0.28 * deltaTime;
+            let aimSpeed = 5.8 * deltaTime; 
+            aimX += smoothJoyX * aimSpeed;
+            aimY += smoothJoyY * aimSpeed;
+        } else {
+            smoothJoyX += (0 - smoothJoyX) * 0.25 * deltaTime;
+            smoothJoyY += (0 - smoothJoyY) * 0.25 * deltaTime;
+        }
+
+        if (aimX < 0) aimX = 0;
+        if (aimX > canvas.width) aimX = canvas.width;
+        if (aimY < 0) aimY = 0;
+        if (aimY > canvas.height) aimY = canvas.height;
+
+        targets.forEach(t => {
+            if (t.sineWave) {
+                t.sineCounter += 0.08 * deltaTime;
+                t.x += t.xSpeed * deltaTime;
+                t.y += (t.ySpeed + Math.sin(t.sineCounter) * 2.5) * deltaTime;
+            } else if (t.special === "bonus") {
+                t.ghostCounter += 0.03 * deltaTime;
+                t.opacity = (Math.sin(t.ghostCounter) * 0.5) + 0.5; 
+                t.x += t.xSpeed * deltaTime;
+                t.y += t.ySpeed * deltaTime;
+            } else {
+                t.x += t.xSpeed * deltaTime;
+                t.y += t.ySpeed * deltaTime;
+            }
+
+            t.flap += t.flapSpeed * deltaTime;
+
+            let minBorder = 22;
+            let maxXBorder = canvas.width - minBorder;
+            let maxYBorder = canvas.height - 25;
+
+            if (t.x <= minBorder) { t.x = minBorder; t.xSpeed = Math.abs(t.xSpeed); }
+            if (t.x >= maxXBorder) { t.x = maxXBorder; t.xSpeed = -Math.abs(t.xSpeed); }
+            if (t.y <= minBorder) { t.y = minBorder; t.ySpeed = Math.abs(t.ySpeed); }
+            if (t.y >= maxYBorder) { t.y = maxYBorder; t.ySpeed = -Math.abs(t.ySpeed); }
+        });
+        
+        gunRecoilZ *= Math.pow(0.83, deltaTime);
+        gunRecoilY *= Math.pow(0.80, deltaTime);
+        gunRecoilAngle *= Math.pow(0.78, deltaTime);
+
+        if (screenShake > 0) {
+            const dx = (Math.random() - 0.5) * screenShake;
+            const dy = (Math.random() - 0.5) * screenShake;
+            document.getElementById('game-container').style.transform = `translate(${dx}px, ${dy}px)`;
+            screenShake *= Math.pow(0.85, deltaTime);
+            if (screenShake < 0.2) {
+                screenShake = 0;
+                document.getElementById('game-container').style.transform = 'none';
+            }
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        if (previousBgImg && bgAlpha < 1.0) {
+            drawMirroredLoopBackground(previousBgImg, 1.0 - bgAlpha);
+        }
+        if (currentBgImg) {
+            drawMirroredLoopBackground(currentBgImg, bgAlpha);
+        } else {
+            ctx.fillStyle = '#070b19';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        if (isRageMode) {
+            ctx.fillStyle = "rgba(220, 38, 38, 0.25)";
+        } else {
+            ctx.fillStyle = "rgba(2, 6, 23, 0.15)";
+        }
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = "rgba(234, 179, 8, 0.4)";
+        leaves.forEach(leaf => {
+            ctx.beginPath();
+            ctx.arc(leaf.x, leaf.y, leaf.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx * deltaTime; 
+            p.y += p.vy * deltaTime; 
+            p.vy += 0.18 * deltaTime; 
+            p.rotation += p.rotationSpeed * deltaTime;
+            p.alpha -= 0.025 * deltaTime;
+            
+            if (p.alpha <= 0) { 
+                particles.splice(i, 1); 
+            } else {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                ctx.beginPath(); 
+                ctx.ellipse(0, 0, p.radius * 2, p.radius, 0, 0, Math.PI * 2); 
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+        
+        targets.forEach(t => {
+            ctx.save();
+            ctx.globalAlpha = t.opacity;
+            ctx.translate(t.x, t.y);
+            
+            let moveAngle = Math.atan2(t.ySpeed, t.xSpeed);
+            if (t.xSpeed < 0) {
+                ctx.scale(1, -1);
+                ctx.rotate(-moveAngle + Math.PI);
+            } else {
+                ctx.rotate(moveAngle);
+            }
+            
+            let bodyColor = currentBirdStyle.primary;
+            let wingColor = currentBirdStyle.secondary;
+            let headColor = currentBirdStyle.detail;
+            let beakColor = currentBirdStyle.beak;
+
+            if (t.special === "fast") {
+                bodyColor = "#475569"; wingColor = "#cbd5e1"; headColor = "#1e293b";
+            } else if (t.special === "bonus") {
+                bodyColor = "#b45309"; wingColor = "#fbbf24"; headColor = "#78350f"; beakColor = "#ef4444";
+            }
+            
+            ctx.fillStyle = bodyColor;
+            ctx.beginPath(); 
+            ctx.ellipse(0, 0, t.width/2, t.height/2, 0, 0, Math.PI*2); 
+            ctx.fill();
+            
+            let wingFlapOffset = Math.sin(t.flap) * (t.height / 1.3);
+            ctx.fillStyle = wingColor;
+            ctx.beginPath(); 
+            ctx.ellipse(-2, - wingFlapOffset / 2, 9, t.height/2 + Math.abs(wingFlapOffset)/2, 0.2, 0, Math.PI*2); 
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(-2, + wingFlapOffset / 2, 9, t.height/2 + Math.abs(wingFlapOffset)/2, -0.2, 0, Math.PI*2); 
+            ctx.fill();
+
+            ctx.fillStyle = headColor;
+            ctx.beginPath();
+            ctx.arc(t.width/2 - 2, -3, 9, 0, Math.PI*2); ctx.fill();
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(t.width/2 + 1, -5, 2, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = beakColor;
+            ctx.beginPath();
+            ctx.moveTo(t.width/2 + 5, -6); 
+            ctx.lineTo(t.width/2 + 17, -3); 
+            ctx.lineTo(t.width/2 + 5, 2); 
+            ctx.fill();
+
+            ctx.fillStyle = headColor;
+            ctx.beginPath();
+            ctx.moveTo(-t.width/2, -4);
+            ctx.lineTo(-t.width/2 - 14, -11);
+            ctx.lineTo(-t.width/2 - 11, 0);
+            ctx.lineTo(-t.width/2 - 14, 11);
+            ctx.lineTo(-t.width/2, 4);
+            ctx.fill();
+
+            ctx.restore();
+            if (t.opacity > 0.15) {
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.font = '900 10px Arial';
+                let label = t.special === "normal" ? "Leader" : (t.special === "fast" ? "Wave Jumper" : "Ghost Gold");
+                ctx.fillText(label, t.x - 22, t.y - t.height - 4);
+            }
+        });
+        
+        if (boss.active) {
+            boss.timer += deltaTime * 0.05;
+            if (boss.enterWarning > 0) {
+                boss.enterWarning -= deltaTime * 0.016;
+                ctx.save();
+                ctx.fillStyle = "rgba(239, 68, 68, " + (Math.abs(Math.sin(boss.timer * 4))) + ")";
+                ctx.font = "900 28px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("⚠️ PREDATOR BOSS INCOMING ⚠️", canvas.width/2, canvas.height/2);
+                ctx.restore();
+            } else {
+                boss.lastX = boss.x;
+                boss.lastY = boss.y;
+                boss.x = canvas.width/2 + Math.sin(boss.timer * 0.8) * (canvas.width/2 - 60);
+                boss.y = canvas.height/3 + Math.sin(boss.timer * 1.6) * (canvas.height/4 - 40);
+
+                ctx.save();
+                ctx.translate(boss.x, boss.y);
+                let bMoveAngle = Math.atan2(boss.y - boss.lastY, boss.x - boss.lastX);
+                if (boss.x - boss.lastX < 0) {
+                    ctx.scale(1, -1);
+                    ctx.rotate(-bMoveAngle + Math.PI);
+                } else {
+                    ctx.rotate(bMoveAngle);
+                }
+
+                let bBodyColor = "#0f172a";
+                let bWingColor = "#ef4444";
+                let bHeadColor = "#020617";
+                let bBeakColor = "#f87171";
+
+                let tW = 85; let tH = 60;
+                ctx.fillStyle = bBodyColor;
+                ctx.beginPath(); ctx.ellipse(0, 0, tW/2, tH/2, 0, 0, Math.PI*2); ctx.fill();
+                let bWingFlapOffset = Math.sin(boss.timer * 12) * (tH / 1.1);
+                ctx.fillStyle = bWingColor;
+                ctx.beginPath();
+                ctx.ellipse(-6, -bWingFlapOffset/2, 18, tH/2 + Math.abs(bWingFlapOffset)/2, 0.4, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(-6, bWingFlapOffset/2, 18, tH/2 + Math.abs(bWingFlapOffset)/2, -0.4, 0, Math.PI*2);
+                ctx.fill();
+
+                ctx.fillStyle = bHeadColor;
+                ctx.beginPath(); ctx.arc(tW/2 - 4, -5, 16, 0, Math.PI*2); ctx.fill();
+
+                ctx.fillStyle = '#ff0000'; 
+                ctx.beginPath();
+                ctx.arc(tW/2 + 4, -8, 4, 0, Math.PI*2); ctx.fill();
+                ctx.shadowColor = "#ff0000";
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(tW/2 + 4, -8, 2, 0, Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.fillStyle = bBeakColor;
+                ctx.beginPath(); ctx.moveTo(tW/2 + 10, -10);
+                ctx.lineTo(tW/2 + 35, -5); ctx.lineTo(tW/2 + 10, 6); ctx.fill();
+
+                ctx.fillStyle = bHeadColor;
+                ctx.beginPath(); ctx.moveTo(-tW/2, -8); ctx.lineTo(-tW/2 - 25, -20);
+                ctx.lineTo(-tW/2 - 18, 0); ctx.lineTo(-tW/2 - 25, 20); ctx.lineTo(-tW/2, 8); ctx.fill();
+                ctx.restore();
+
+                ctx.fillStyle = "#333";
+                ctx.fillRect(boss.x - 30, boss.y - 50, 60, 8);
+                ctx.fillStyle = "#ef4444";
+                ctx.fillRect(boss.x - 30, boss.y - 50, 60 * (boss.hp / boss.maxHp), 8);
+            }
+        }
+
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+            let ft = floatingTexts[i];
+            ft.y += ft.vy * deltaTime;
+            ft.life -= 0.02 * deltaTime;
+            if (ft.life <= 0) {
+                floatingTexts.splice(i, 1);
+            } else {
+                ctx.save();
+                ctx.globalAlpha = ft.life;
+                ctx.fillStyle = ft.color;
+                ctx.font = ft.isCrit ? "900 24px Arial" : "bold 16px Arial";
+                ctx.textAlign = "center";
+                ctx.shadowColor = "black";
+                ctx.shadowBlur = 4;
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            }
+        }
+
+        if (flashIntensity > 0) {
+            ctx.save();
+            let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 3, muzzleFlashX, muzzleFlashY, 55);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, ' + flashIntensity + ')');
+            gradient.addColorStop(0.2, 'rgba(244, 240, 138, ' + (flashIntensity * 0.95) + ')');
+            gradient.addColorStop(0.6, 'rgba(249, 115, 22, ' + (flashIntensity * 0.6) + ')');
+            gradient.addColorStop(1, 'rgba(220, 38, 38, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(muzzleFlashX, muzzleFlashY, 55, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            flashIntensity -= 0.06 * deltaTime;
+        }
+
+        let gunBaseX = canvas.width - 45;
+        let gunBaseY = canvas.height + 25; 
+
+        ctx.save();
+        ctx.translate(gunBaseX, gunBaseY + gunRecoilY);
+        let gunRotation = Math.atan2(aimY - gunBaseY, aimX - gunBaseX) + Math.PI / 2 + gunRecoilAngle;
+        ctx.rotate(gunRotation);
+        if (ak47Img && ak47Img.complete && ak47Img.naturalWidth !== 0) {
+            let currentGunWidth = 90 + (gunRecoilZ * 0.2);
+            let currentGunHeight = 225 + gunRecoilZ;
+            ctx.drawImage(ak47Img, -currentGunWidth / 2, -currentGunHeight + 50, currentGunWidth, currentGunHeight);
+        } else {
+            ctx.fillStyle = '#5c2d17';
+            ctx.fillRect(-10, -50, 20, 60); 
+            ctx.fillStyle = '#1e293b'; ctx.fillRect(-7, -130, 14, 100); 
+            ctx.fillStyle = '#475569'; ctx.fillRect(-5, -180, 10, 50);
+            ctx.fillStyle = '#ca8a04'; ctx.fillRect(-3, -190, 6, 12); 
+        }
+        ctx.restore();
+        
+        ctx.save();
+        ctx.strokeStyle = isRageMode ? '#fbbf24' : '#f87171'; 
+        ctx.lineWidth = 2.5;
+        ctx.translate(aimX, aimY);
+        ctx.beginPath();
+        ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-22, 0);
+        ctx.lineTo(22, 0); ctx.moveTo(0, -22); ctx.lineTo(0, 22); ctx.stroke();
+        ctx.fillStyle = isRageMode ? '#fbbf24' : '#ef4444';
+        ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        
+        gameAnimationId = requestAnimationFrame(gameLoop); 
+    }
+
     function startGameLoop() {
         if(gameAnimationId) cancelAnimationFrame(gameAnimationId);
         lastTime = performance.now();
-
-        function gameLoop(currentTime) {
-            let deltaTime = (currentTime - lastTime) / 16.666; 
-            lastTime = currentTime;
-
-            if (deltaTime > 3) deltaTime = 3; 
-
-            if (isRageMode) {
-                rageTimeLeft -= deltaTime;
-                if (rageTimeLeft <= 0) {
-                    isRageMode = false;
-                    document.getElementById('rage-val').innerText = "0%";
-                    document.getElementById('ammo-val').innerText = ammo;
-                    document.getElementById('game-status').innerText = "🧊 الغضب انتهى! عدنا للوضع الطبيعي.";
-                    document.getElementById('game-status').style.color = "#38bdf8";
-                }
-            }
-
-            bgX -= 0.4 * deltaTime;
-
-            if (bgAlpha < 1.0) {
-                bgAlpha += 0.02 * deltaTime;
-                if (bgAlpha > 1.0) bgAlpha = 1.0;
-            }
-
-            leaves.forEach(leaf => {
-                leaf.y += leaf.speed * deltaTime;
-                leaf.x += Math.sin(leaf.y * 0.02) * 0.4 * deltaTime;
-                if (leaf.y > canvas.height) {
-                    leaf.y = -10;
-                    leaf.x = Math.random() * canvas.width;
-                }
-            });
-            
-            if (joyActive) {
-                smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
-                smoothJoyY += (joyMoveY - smoothJoyY) * 0.28 * deltaTime;
-                let aimSpeed = 5.8 * deltaTime; 
-                aimX += smoothJoyX * aimSpeed;
-                aimY += smoothJoyY * aimSpeed;
-            } else {
-                smoothJoyX += (0 - smoothJoyX) * 0.25 * deltaTime;
-                smoothJoyY += (0 - smoothJoyY) * 0.25 * deltaTime;
-            }
-
-            if (aimX < 0) aimX = 0;
-            if (aimX > canvas.width) aimX = canvas.width;
-            if (aimY < 0) aimY = 0;
-            if (aimY > canvas.height) aimY = canvas.height;
-
-            targets.forEach(t => {
-                if (t.sineWave) {
-                    t.sineCounter += 0.08 * deltaTime;
-                    t.x += t.xSpeed * deltaTime;
-                    t.y += (t.ySpeed + Math.sin(t.sineCounter) * 2.5) * deltaTime;
-                } else if (t.special === "bonus") {
-                    t.ghostCounter += 0.03 * deltaTime;
-                    t.opacity = (Math.sin(t.ghostCounter) * 0.5) + 0.5; 
-                    t.x += t.xSpeed * deltaTime;
-                    t.y += t.ySpeed * deltaTime;
-                } else {
-                    t.x += t.xSpeed * deltaTime;
-                    t.y += t.ySpeed * deltaTime;
-                }
-
-                t.flap += t.flapSpeed * deltaTime;
-
-                let minBorder = 22;
-                let maxXBorder = canvas.width - minBorder;
-                let maxYBorder = canvas.height - 25;
-
-                if (t.x <= minBorder) { t.x = minBorder; t.xSpeed = Math.abs(t.xSpeed); }
-                if (t.x >= maxXBorder) { t.x = maxXBorder; t.xSpeed = -Math.abs(t.xSpeed); }
-                if (t.y <= minBorder) { t.y = minBorder; t.ySpeed = Math.abs(t.ySpeed); }
-                if (t.y >= maxYBorder) { t.y = maxYBorder; t.ySpeed = -Math.abs(t.ySpeed); }
-            });
-            
-            gunRecoilZ *= Math.pow(0.83, deltaTime);
-            gunRecoilY *= Math.pow(0.80, deltaTime);
-            gunRecoilAngle *= Math.pow(0.78, deltaTime);
-
-            if (screenShake > 0) {
-                const dx = (Math.random() - 0.5) * screenShake;
-                const dy = (Math.random() - 0.5) * screenShake;
-                document.getElementById('game-container').style.transform = `translate(${dx}px, ${dy}px)`;
-                screenShake *= Math.pow(0.85, deltaTime);
-                if (screenShake < 0.2) {
-                    screenShake = 0;
-                    document.getElementById('game-container').style.transform = 'none';
-                }
-            }
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            if (previousBgImg && bgAlpha < 1.0) {
-                drawMirroredLoopBackground(previousBgImg, 1.0 - bgAlpha);
-            }
-            if (currentBgImg) {
-                drawMirroredLoopBackground(currentBgImg, bgAlpha);
-            } else {
-                ctx.fillStyle = '#070b19';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
-            if (isRageMode) {
-                ctx.fillStyle = "rgba(220, 38, 38, 0.25)";
-            } else {
-                ctx.fillStyle = "rgba(2, 6, 23, 0.15)";
-            }
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = "rgba(234, 179, 8, 0.4)";
-            leaves.forEach(leaf => {
-                ctx.beginPath();
-                ctx.arc(leaf.x, leaf.y, leaf.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            
-            // Fix: Backward loop to prevent skipping particles
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.x += p.vx * deltaTime; 
-                p.y += p.vy * deltaTime; 
-                p.vy += 0.18 * deltaTime; 
-                p.rotation += p.rotationSpeed * deltaTime;
-                p.alpha -= 0.025 * deltaTime;
-                
-                if (p.alpha <= 0) { 
-                    particles.splice(i, 1); 
-                } else {
-                    ctx.save();
-                    ctx.globalAlpha = p.alpha;
-                    ctx.fillStyle = p.color;
-                    ctx.translate(p.x, p.y);
-                    ctx.rotate(p.rotation);
-                    ctx.beginPath(); 
-                    ctx.ellipse(0, 0, p.radius * 2, p.radius, 0, 0, Math.PI * 2); 
-                    ctx.fill();
-                    ctx.restore();
-                }
-            }
-            
-            targets.forEach(t => {
-                ctx.save();
-                ctx.globalAlpha = t.opacity;
-                ctx.translate(t.x, t.y);
-                
-                let moveAngle = Math.atan2(t.ySpeed, t.xSpeed);
-                if (t.xSpeed < 0) {
-                    ctx.scale(1, -1);
-                    ctx.rotate(-moveAngle + Math.PI);
-                } else {
-                    ctx.rotate(moveAngle);
-                }
-                
-                let bodyColor = currentBirdStyle.primary;
-                let wingColor = currentBirdStyle.secondary;
-                let headColor = currentBirdStyle.detail;
-                let beakColor = currentBirdStyle.beak;
-
-                if (t.special === "fast") {
-                    bodyColor = "#475569"; wingColor = "#cbd5e1"; headColor = "#1e293b";
-                } else if (t.special === "bonus") {
-                    bodyColor = "#b45309"; wingColor = "#fbbf24"; headColor = "#78350f"; beakColor = "#ef4444";
-                }
-                
-                ctx.fillStyle = bodyColor;
-                ctx.beginPath(); 
-                ctx.ellipse(0, 0, t.width/2, t.height/2, 0, 0, Math.PI*2); 
-                ctx.fill();
-                
-                let wingFlapOffset = Math.sin(t.flap) * (t.height / 1.3);
-                ctx.fillStyle = wingColor;
-                ctx.beginPath(); 
-                ctx.ellipse(-2, - wingFlapOffset / 2, 9, t.height/2 + Math.abs(wingFlapOffset)/2, 0.2, 0, Math.PI*2); 
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(-2, + wingFlapOffset / 2, 9, t.height/2 + Math.abs(wingFlapOffset)/2, -0.2, 0, Math.PI*2); 
-                ctx.fill();
-
-                ctx.fillStyle = headColor;
-                ctx.beginPath();
-                ctx.arc(t.width/2 - 2, -3, 9, 0, Math.PI*2); ctx.fill();
-                
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                ctx.arc(t.width/2 + 1, -5, 2, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = beakColor;
-                ctx.beginPath();
-                ctx.moveTo(t.width/2 + 5, -6); 
-                ctx.lineTo(t.width/2 + 17, -3); 
-                ctx.lineTo(t.width/2 + 5, 2); 
-                ctx.fill();
-
-                ctx.fillStyle = headColor;
-                ctx.beginPath();
-                ctx.moveTo(-t.width/2, -4);
-                ctx.lineTo(-t.width/2 - 14, -11);
-                ctx.lineTo(-t.width/2 - 11, 0);
-                ctx.lineTo(-t.width/2 - 14, 11);
-                ctx.lineTo(-t.width/2, 4);
-                ctx.fill();
-
-                ctx.restore();
-                if (t.opacity > 0.15) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                    ctx.font = '900 10px Arial';
-                    let label = t.special === "normal" ? "Leader" : (t.special === "fast" ? "Wave Jumper" : "Ghost Gold");
-                    ctx.fillText(label, t.x - 22, t.y - t.height - 4);
-                }
-            });
-            
-            if (boss.active) {
-                boss.timer += deltaTime * 0.05;
-                if (boss.enterWarning > 0) {
-                    boss.enterWarning -= deltaTime * 0.016;
-                    ctx.save();
-                    ctx.fillStyle = "rgba(239, 68, 68, " + (Math.abs(Math.sin(boss.timer * 4))) + ")";
-                    ctx.font = "900 28px Arial";
-                    ctx.textAlign = "center";
-                    ctx.fillText("⚠️ PREDATOR BOSS INCOMING ⚠️", canvas.width/2, canvas.height/2);
-                    ctx.restore();
-                } else {
-                    boss.lastX = boss.x;
-                    boss.lastY = boss.y;
-                    boss.x = canvas.width/2 + Math.sin(boss.timer * 0.8) * (canvas.width/2 - 60);
-                    boss.y = canvas.height/3 + Math.sin(boss.timer * 1.6) * (canvas.height/4 - 40);
-
-                    ctx.save();
-                    ctx.translate(boss.x, boss.y);
-                    let bMoveAngle = Math.atan2(boss.y - boss.lastY, boss.x - boss.lastX);
-                    if (boss.x - boss.lastX < 0) {
-                        ctx.scale(1, -1);
-                        ctx.rotate(-bMoveAngle + Math.PI);
-                    } else {
-                        ctx.rotate(bMoveAngle);
-                    }
-
-                    let bBodyColor = "#0f172a";
-                    let bWingColor = "#ef4444";
-                    let bHeadColor = "#020617";
-                    let bBeakColor = "#f87171";
-
-                    let tW = 85; let tH = 60;
-                    ctx.fillStyle = bBodyColor;
-                    ctx.beginPath(); ctx.ellipse(0, 0, tW/2, tH/2, 0, 0, Math.PI*2); ctx.fill();
-                    let bWingFlapOffset = Math.sin(boss.timer * 12) * (tH / 1.1);
-                    ctx.fillStyle = bWingColor;
-                    ctx.beginPath();
-                    ctx.ellipse(-6, -bWingFlapOffset/2, 18, tH/2 + Math.abs(bWingFlapOffset)/2, 0.4, 0, Math.PI*2); ctx.fill();
-                    ctx.beginPath(); ctx.ellipse(-6, bWingFlapOffset/2, 18, tH/2 + Math.abs(bWingFlapOffset)/2, -0.4, 0, Math.PI*2);
-                    ctx.fill();
-
-                    ctx.fillStyle = bHeadColor;
-                    ctx.beginPath(); ctx.arc(tW/2 - 4, -5, 16, 0, Math.PI*2); ctx.fill();
-
-                    ctx.fillStyle = '#ff0000'; 
-                    ctx.beginPath();
-                    ctx.arc(tW/2 + 4, -8, 4, 0, Math.PI*2); ctx.fill();
-                    ctx.shadowColor = "#ff0000";
-                    ctx.shadowBlur = 10;
-                    ctx.beginPath();
-                    ctx.arc(tW/2 + 4, -8, 2, 0, Math.PI*2); ctx.fill();
-                    ctx.shadowBlur = 0;
-
-                    ctx.fillStyle = bBeakColor;
-                    ctx.beginPath(); ctx.moveTo(tW/2 + 10, -10);
-                    ctx.lineTo(tW/2 + 35, -5); ctx.lineTo(tW/2 + 10, 6); ctx.fill();
-
-                    ctx.fillStyle = bHeadColor;
-                    ctx.beginPath(); ctx.moveTo(-tW/2, -8); ctx.lineTo(-tW/2 - 25, -20);
-                    ctx.lineTo(-tW/2 - 18, 0); ctx.lineTo(-tW/2 - 25, 20); ctx.lineTo(-tW/2, 8); ctx.fill();
-                    ctx.restore();
-
-                    ctx.fillStyle = "#333";
-                    ctx.fillRect(boss.x - 30, boss.y - 50, 60, 8);
-                    ctx.fillStyle = "#ef4444";
-                    ctx.fillRect(boss.x - 30, boss.y - 50, 60 * (boss.hp / boss.maxHp), 8);
-                }
-            }
-
-            // Fix: Backward loop to prevent skipping texts
-            for (let i = floatingTexts.length - 1; i >= 0; i--) {
-                let ft = floatingTexts[i];
-                ft.y += ft.vy * deltaTime;
-                ft.life -= 0.02 * deltaTime;
-                if (ft.life <= 0) {
-                    floatingTexts.splice(i, 1);
-                } else {
-                    ctx.save();
-                    ctx.globalAlpha = ft.life;
-                    ctx.fillStyle = ft.color;
-                    ctx.font = ft.isCrit ? "900 24px Arial" : "bold 16px Arial";
-                    ctx.textAlign = "center";
-                    ctx.shadowColor = "black";
-                    ctx.shadowBlur = 4;
-                    ctx.fillText(ft.text, ft.x, ft.y);
-                    ctx.restore();
-                }
-            }
-
-            if (flashIntensity > 0) {
-                ctx.save();
-                let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 3, muzzleFlashX, muzzleFlashY, 55);
-                gradient.addColorStop(0, 'rgba(255, 255, 255, ' + flashIntensity + ')');
-                gradient.addColorStop(0.2, 'rgba(244, 240, 138, ' + (flashIntensity * 0.95) + ')');
-                gradient.addColorStop(0.6, 'rgba(249, 115, 22, ' + (flashIntensity * 0.6) + ')');
-                gradient.addColorStop(1, 'rgba(220, 38, 38, 0)');
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(muzzleFlashX, muzzleFlashY, 55, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-                flashIntensity -= 0.06 * deltaTime;
-            }
-
-            let gunBaseX = canvas.width - 45;
-            let gunBaseY = canvas.height + 25; 
-
-            ctx.save();
-            ctx.translate(gunBaseX, gunBaseY + gunRecoilY);
-            let gunRotation = Math.atan2(aimY - gunBaseY, aimX - gunBaseX) + Math.PI / 2 + gunRecoilAngle;
-            ctx.rotate(gunRotation);
-            if (ak47Img && ak47Img.complete && ak47Img.naturalWidth !== 0) {
-                let currentGunWidth = 90 + (gunRecoilZ * 0.2);
-                let currentGunHeight = 225 + gunRecoilZ;
-                ctx.drawImage(ak47Img, -currentGunWidth / 2, -currentGunHeight + 50, currentGunWidth, currentGunHeight);
-            } else {
-                ctx.fillStyle = '#5c2d17';
-                ctx.fillRect(-10, -50, 20, 60); 
-                ctx.fillStyle = '#1e293b'; ctx.fillRect(-7, -130, 14, 100); 
-                ctx.fillStyle = '#475569'; ctx.fillRect(-5, -180, 10, 50);
-                ctx.fillStyle = '#ca8a04'; ctx.fillRect(-3, -190, 6, 12); 
-            }
-            ctx.restore();
-            
-            ctx.save();
-            ctx.strokeStyle = isRageMode ? '#fbbf24' : '#f87171'; 
-            ctx.lineWidth = 2.5;
-            ctx.translate(aimX, aimY);
-            ctx.beginPath();
-            ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(-22, 0);
-            ctx.lineTo(22, 0); ctx.moveTo(0, -22); ctx.lineTo(0, 22); ctx.stroke();
-            ctx.fillStyle = isRageMode ? '#fbbf24' : '#ef4444';
-            ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-            
-            gameAnimationId = requestAnimationFrame(gameLoop); // Fix: Re-request next frame
-        }
-        
-        gameAnimationId = requestAnimationFrame(gameLoop); // Fix: Start rendering loop properly
+        gameAnimationId = requestAnimationFrame(gameLoop); 
     }
 
     function resetTarget(t) {
