@@ -9,50 +9,53 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
+        * {
+            box-sizing: border-box; /* يضمن احتواء العناصر داخل أبعادها بدون تسريب */
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #020617; 
             color: #ffffff;
             text-align: center;
             margin: 0;
-            padding: 0; /* تم إزالة الحواف لتوفير المساحة */
-            touch-action: none; /* يمنع أي تحريك أو تكبير للشاشة أثناء اللعب */
+            padding: 0; 
+            touch-action: none; 
             user-select: none;
-            overflow: hidden; /* يمنع ظهور شريط التمرير */
+            overflow: hidden; 
         }
         .container {
             max-width: 900px; 
             margin: 0 auto;  
             background: rgba(15, 23, 42, 0.98);
-            padding: 6px;
+            padding: 8px;
             border-radius: 12px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.9);
             border: 1px solid #475569;
-            height: 100vh; /* ملء الشاشة */
+            height: 100vh; 
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
         }
 
         h1 { 
             color: #38bdf8;
-            margin-top: 2px;
-            margin-bottom: 4px; 
-            font-size: 18px;
+            margin: 2px 0;
+            font-size: 16px;
             letter-spacing: 1px;
             text-shadow: 0 3px 6px rgba(0,0,0,0.9);
         }
         .welcome-card {
             background: #0f172a;
             border-radius: 18px;
-            padding: 20px 10px; 
+            padding: 15px 10px; 
             border: 2px solid #38bdf8;
             box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-            margin-top: 10px;
+            margin-top: 5px;
         }
         .hunter-avatar {
-            width: 140px;
-            height: 140px;
-            margin: 0 auto 15px auto;
+            width: 110px;
+            height: 110px;
+            margin: 0 auto 10px auto;
             border-radius: 16px;
             border: 3px solid #38bdf8;
             box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
@@ -64,8 +67,8 @@
             background-image: linear-gradient(135deg, #38bdf8, #0284c7);
             color: white;
             border: none;
-            padding: 12px 30px;
-            font-size: 17px;
+            padding: 10px 25px;
+            font-size: 15px;
             font-weight: bold;
             border-radius: 35px;
             cursor: pointer;
@@ -79,11 +82,11 @@
         
         .stats-bar {
             background: rgba(15, 23, 42, 0.9);
-            padding: 6px;
+            padding: 5px;
             border-radius: 10px;
-            margin-bottom: 4px; 
+            margin-bottom: 2px; 
             border: 1px solid #334155;
-            font-size: 13px; 
+            font-size: 12px; 
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
         }
         .stats-row {
@@ -96,8 +99,8 @@
         }
         .stats-row:not(:last-child) {
             border-bottom: 1px dashed #334155;
-            padding-bottom: 4px;
-            margin-bottom: 4px;
+            padding-bottom: 2px;
+            margin-bottom: 2px;
         }
 
         .canvas-wrapper {
@@ -105,8 +108,9 @@
             display: flex;
             justify-content: center;
             width: 100%;
-            flex-grow: 1; /* يجعل اللوحة تتمدد لملء الفراغ المتاح */
+            flex-grow: 1; 
             min-height: 0;
+            margin-bottom: 2px;
         }
 
         #hunting-canvas {
@@ -114,8 +118,8 @@
             border-radius: 12px;
             cursor: crosshair; 
             width: 100%;
-            height: 100%; /* يتناسب مع المساحة المتاحة */
-            object-fit: cover;
+            height: 100%; 
+            object-fit: fill; /* يضمن ملء المساحة المخصصة بشكل صحيح وتناسق الحركة */
             touch-action: none;
             box-shadow: 0 8px 30px rgba(0,0,0,0.8);
             background-color: #070b19;
@@ -126,8 +130,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 6px;
-            gap: 8px;
+            margin-top: 2px;
+            gap: 6px;
             direction: ltr; 
             background: #0f172a;
             padding: 6px;
@@ -140,12 +144,12 @@
             color: white;
             border: 2px solid #fca5a5;
             border-radius: 50%;
-            width: 70px;
-            height: 70px;
-            font-size: 14px;
+            width: 60px;
+            height: 60px;
+            font-size: 13px;
             font-weight: 900;
             cursor: pointer;
-            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.6);
             transition: transform 0.05s ease;
             -webkit-tap-highlight-color: transparent;
             flex-shrink: 0;
@@ -159,14 +163,14 @@
             flex: 1;
             background-image: linear-gradient(135deg, #eab308, #ca8a04); 
             color: #0f172a; 
-            font-size: 13px; 
-            padding: 6px 2px; 
+            font-size: 12px; 
+            padding: 4px 2px; 
             font-weight: 900;
             border-radius: 10px;
             border: none;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
-            height: 50px;
+            height: 45px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -177,9 +181,9 @@
             color: #fff;
             border: 2px solid #38bdf8;
             border-radius: 10px;
-            width: 50px;
-            height: 50px;
-            font-size: 18px;
+            width: 45px;
+            height: 45px;
+            font-size: 16px;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.6);
             transition: 0.2s;
@@ -191,8 +195,8 @@
         .btn-pause:active { transform: scale(0.9); }
 
         .joystick-container {
-            width: 70px;
-            height: 70px;
+            width: 60px;
+            height: 60px;
             background: radial-gradient(circle, #1e293b 40%, #0f172a 100%);
             border: 3px solid #38bdf8;
             border-radius: 50%;
@@ -200,24 +204,24 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3), inset 0 2px 8px rgba(0,0,0,0.8);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3), inset 0 2px 8px rgba(0,0,0,0.8);
             touch-action: none;
             flex-shrink: 0;
         }
         .joystick-knob {
-            width: 30px;
-            height: 30px;
+            width: 26px;
+            height: 26px;
             background: linear-gradient(135deg, #0284c7, #0369a1);
             border: 2px solid #38bdf8;
             border-radius: 50%;
             position: absolute;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.6);
             cursor: pointer;
         }
 
         .leaderboard-table {
             width: 100%;
-            margin-top: 10px;
+            margin-top: 5px;
             border-collapse: collapse;
             background: #0f172a;
             border-radius: 12px;
@@ -225,20 +229,20 @@
             border: 1px solid #334155;
         }
         .leaderboard-table th, .leaderboard-table td {
-            padding: 8px;
+            padding: 6px;
             border-bottom: 1px solid #1e293b;
-            font-size: 12px;
+            font-size: 11px;
         }
         .leaderboard-table th { background-color: #1e293b; color: #38bdf8; }
         
         .rank-badge { color: #38bdf8; font-weight: 900; }
         
-        /* جعل قسم اللعبة يأخذ المساحة بالكامل */
         #game-section {
             display: flex;
             flex-direction: column;
             height: 100%;
             flex-grow: 1;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -250,10 +254,10 @@
     <div id="auth-section">
         <div class="welcome-card">
             <div class="hunter-avatar"></div>
-            <p>Welcome Hunter!<br>Log in to deploy your custom cinematic AK-47 assault rifle 🔥</p>
+            <p style="font-size: 13px; margin: 5px 0;">Welcome Hunter!<br>Log in to deploy your custom cinematic AK-47 assault rifle 🔥</p>
             <button class="btn" id="btn-login" onclick="initAndLoginWithPi()">FREE ACCESS & START HUNTING 🚀</button>
         </div>
-        <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38bdf8; font-size: 15px;">🏆 TOP 3 HUNTERS</h3>
+        <h3 style="margin-top: 10px; margin-bottom: 3px; color: #38bdf8; font-size: 13px;">🏆 TOP 3 HUNTERS</h3>
         <table class="leaderboard-table">
             <thead>
                 <tr>
@@ -278,7 +282,7 @@
                 <div>🎯 Hits: <span id="hits-val" style="color: #eab308;">0</span></div>
                 <div>💰 Score: <span id="score-val" style="color: #4ade80;">0</span></div>
             </div>
-            <div class="stats-row" style="margin-top: 4px;">
+            <div class="stats-row" style="margin-top: 2px;">
                 <div>🔋 Ammo: <span id="ammo-val" style="color: #f87171;">30</span></div>
                 <div>😡 Rage: <span id="rage-val" style="color: #ef4444;">0%</span></div>
                 <div>🏆 Lvl: <span id="level-val" style="color: #c084fc; font-weight: 900;">1</span> (<span id="target-val" style="color: #60a5fa;">0/5</span>)</div>
@@ -290,7 +294,7 @@
             <canvas id="hunting-canvas" width="800" height="500"></canvas>
         </div>
  
-        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 18px; font-size: 12px; margin: 4px 0;">جاهز للصيد! المؤشر الآن بحركة أكثر سلاسة وحجم أكبر 🎯</p>
+        <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 14px; font-size: 11px; margin: 2px 0;">جاهز للصيد! تم تقليص أحجام الطيور والمؤشر لمتعة أكبر 🎯</p>
         
         <div class="controls-wrapper">
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
@@ -352,9 +356,9 @@
 
     let floatingTexts = [];
     let bossSpawnHits = 0;
-    // تكبير الزعيم
+    // النسر الزعيم بحجم متناسق ومضبوط
     let boss = {
-        active: false, hp: 0, maxHp: 5, x: -100, y: -100, lastX: -100, lastY: -100, radius: 70, timer: 0, enterWarning: 0
+        active: false, hp: 0, maxHp: 5, x: -100, y: -100, lastX: -100, lastY: -100, radius: 45, timer: 0, enterWarning: 0
     };
     
     let leaves = Array.from({length: 15}, () => ({
@@ -375,11 +379,11 @@
     ];
     let currentBirdStyle = birdColorTiers[0];
 
-    // تكبير أحجام الطيور بشكل كبير لتصبح الرؤية أوضح
+    // تقليص أحجام الطيور بنسبة ممتازة لتعطي شعوراً واقعياً بالصيد والأركيد
     let targets = [
-        { id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, width: 85, height: 66, flap: 0, flapSpeed: 0.25, radius: 42, sineWave: false, opacity: 1.0, points: 10, special: "normal" },
-        { id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, width: 75, height: 58, flap: 1.5, flapSpeed: 0.35, radius: 38, sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast" },
-        { id: 3, type: "ghost_refiller", x: 400, y: 80, xSpeed: 4.0, ySpeed: -2.2, width: 90, height: 70, flap: 3.0, flapSpeed: 0.20, radius: 45, sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0 }
+        { id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, width: 50, height: 38, flap: 0, flapSpeed: 0.25, radius: 25, sineWave: false, opacity: 1.0, points: 10, special: "normal" },
+        { id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, width: 45, height: 34, flap: 1.5, flapSpeed: 0.35, radius: 22, sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast" },
+        { id: 3, type: "ghost_refiller", x: 400, y: 80, xSpeed: 4.0, ySpeed: -2.2, width: 55, height: 42, flap: 3.0, flapSpeed: 0.20, radius: 28, sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0 }
     ];
     let particles = []; 
     let flashIntensity = 0;
@@ -389,7 +393,6 @@
     
     let aimX = 400; 
     let aimY = 250; 
-    // إضافة متغيرات لتنعيم حركة المؤشر
     let targetAimX = 400;
     let targetAimY = 250;
 
@@ -400,7 +403,7 @@
     let joyMoveY = 0;
     let smoothJoyX = 0; 
     let smoothJoyY = 0; 
-    const maxJoyDistance = 25; 
+    const maxJoyDistance = 22; 
     let lastTime = performance.now(); 
 
     const canvas = document.getElementById('hunting-canvas');
@@ -565,7 +568,7 @@
     }
 
     function setupDevAccount() {
-        playerPiUser = "Abokareem999";
+        playerPiUser = "AbuKareem_Dev";
         currentPiUserId = "DEV_UID_ABUKAREEM_OFFICIAL";
         playerWallet = "GCOHCVV66Y7UX3KB36V4B7NS5W"; 
         handleLoginSuccess();
@@ -592,8 +595,6 @@
         document.getElementById('target-val').innerText = `${levelBirdsKilled}/${birdsTarget}`;
         document.getElementById('time-val').innerText = timeRemaining.toFixed(1);
 
-        // ضبط مكان المؤشر الافتراضي في المنتصف
-        const rect = canvas.getBoundingClientRect();
         targetAimX = aimX = canvas.width / 2;
         targetAimY = aimY = canvas.height / 2;
 
@@ -656,10 +657,10 @@
 
     function createFeatherCloud(x, y, customColor) {
         let pColor = customColor || currentBirdStyle.secondary;
-        for (let i = 0; i < 25; i++) {
+        for (let i = 0; i < 20; i++) {
             particles.push({
                 x: x, y: y, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.8) * 7, 
-                radius: Math.random() * 4 + 1.5, rotation: Math.random() * Math.PI * 2,
+                radius: Math.random() * 3 + 1, rotation: Math.random() * Math.PI * 2,
                 rotationSpeed: (Math.random() - 0.5) * 0.3, alpha: 1,
                 color: Math.random() > 0.4 ? pColor : 'rgba(239, 68, 68, 0.8)'
             });
@@ -721,18 +722,17 @@
         if (!isRageMode) ammo--;
         document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
         playAdvancedSound('shoot');
-        flashIntensity = 0.8; screenShake = 14;     
-        gunRecoilZ = -55; gunRecoilY = -38; gunRecoilAngle = (Math.random() - 0.5) * 0.22;
-        let gunBaseX = canvas.width - 40; let gunBaseY = canvas.height + 20;
+        flashIntensity = 0.8; screenShake = 12;     
+        gunRecoilZ = -45; gunRecoilY = -30; gunRecoilAngle = (Math.random() - 0.5) * 0.18;
+        let gunBaseX = canvas.width - 60; let gunBaseY = canvas.height - 15;
         let rot = Math.atan2(aimY - gunBaseY, aimX - gunBaseX);
-        muzzleFlashX = gunBaseX + Math.cos(rot) * 150; muzzleFlashY = gunBaseY + Math.sin(rot) * 150;
+        muzzleFlashX = gunBaseX + Math.cos(rot) * 110; muzzleFlashY = gunBaseY + Math.sin(rot) * 110;
         
         let hitAny = false; let hitCountThisShot = 0; let ammoBonusEarned = 0; let currentStatusText = "";
 
         targets.forEach(t => {
             if (t.special === "bonus" && t.opacity < 0.2) return;
-            // زيادة نطاق الإصابة لتسهيل اللعب
-            let hitRadius = isRageMode ? t.radius + 55 : t.radius + 25;
+            let hitRadius = isRageMode ? t.radius + 35 : t.radius + 15;
             const distance = Math.sqrt((aimX - t.x)**2 + (aimY - t.y)**2);
             if (distance <= hitRadius) {
                 hitAny = true; hitCountThisShot++; score += t.points; totalHits++; levelBirdsKilled++;
@@ -764,22 +764,22 @@
         if (hitAny && totalHits > 0 && totalHits % 20 === 0 && targets.length < MAX_BIRDS) {
             let newBird = {
                 id: targets.length + 1, type: "clone", x: -40, y: Math.random() * (canvas.height - 100) + 20,
-                xSpeed: 2.2, ySpeed: 0.8, width: 75, height: 60, flap: 0, flapSpeed: 0.25, radius: 38,
+                xSpeed: 2.2, ySpeed: 0.8, width: 45, height: 34, flap: 0, flapSpeed: 0.25, radius: 22,
                 sineWave: true, sineCounter: Math.random() * 10, opacity: 1.0, points: 15, special: "normal"
             };
             targets.push(newBird); currentStatusText += "🦅 طائر جديد انضم للسرب! ";
         }
 
         if (boss.active && boss.enterWarning <= 0) {
-            let bossHitRadius = isRageMode ? boss.radius + 60 : boss.radius + 30;
+            let bossHitRadius = isRageMode ? boss.radius + 40 : boss.radius + 20;
             const dist = Math.sqrt((aimX - boss.x)**2 + (aimY - boss.y)**2);
             if (dist <= bossHitRadius) {
                 boss.hp--; hitAny = true; createFeatherCloud(boss.x, boss.y, "#ef4444");
-                playAdvancedSound('hit'); screenShake = 15;
+                playAdvancedSound('hit'); screenShake = 12;
                 if (boss.hp <= 0) {
                     boss.active = false; score += 300; totalHits += 5; levelBirdsKilled += 5; 
                     if (!isRageMode) ammo += 30;
-                    createFloatingText(boss.x, boss.y, "+300 BOSS KILL!", "#fbbf24", true); screenShake = 35;
+                    createFloatingText(boss.x, boss.y, "+300 BOSS KILL!", "#fbbf24", true); screenShake = 25;
                     document.getElementById('game-status').innerText = "👑 أسطوري! تم تدمير النسر الجارح! +300 نقطة و +30 ذخيرة! 👑";
                     document.getElementById('game-status').style.color = "#fbbf24";
                 } else { createFloatingText(boss.x, boss.y, "CRITICAL HIT!", "#ef4444", true); }
@@ -796,7 +796,7 @@
             document.getElementById('target-val').innerText = `${levelBirdsKilled}/${birdsTarget}`;
             
             if (hitCountThisShot > 1) {
-                score += hitCountThisShot * 15; screenShake = 22;
+                score += hitCountThisShot * 15; screenShake = 18;
                 createFloatingText(canvas.width/2, canvas.height/2 + 30, `COMBO x${hitCountThisShot}!`, "#a855f7", true);
             }
 
@@ -851,7 +851,6 @@
     function handleCanvasPointer(clientX, clientY) {
         if (isPaused || isGameOver) return;
         const rect = canvas.getBoundingClientRect();
-        // تم استخدام TargetAim للوصول الانسيابي للمؤشر
         targetAimX = (clientX - rect.left) * (canvas.width / rect.width);
         targetAimY = (clientY - rect.top) * (canvas.height / rect.height);
         if (targetAimX < 0) targetAimX = 0; if (targetAimX > canvas.width) targetAimX = canvas.width;
@@ -887,15 +886,15 @@
         
         if (isGameOver) {
             ctx.fillStyle = "rgba(0, 0, 0, 0.75)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#ef4444"; ctx.font = "900 45px Arial"; ctx.textAlign = "center";
+            ctx.fillStyle = "#ef4444"; ctx.font = "900 40px Arial"; ctx.textAlign = "center";
             ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2 - 20);
-            ctx.fillStyle = "#ffffff"; ctx.font = "bold 20px Arial";
+            ctx.fillStyle = "#ffffff"; ctx.font = "bold 18px Arial";
             ctx.fillText("انتهى الوقت! اضغط على زر 🔄 للعب مرة أخرى.", canvas.width/2, canvas.height/2 + 25);
             gameAnimationId = requestAnimationFrame(gameLoop); return;
         }
         if (isPaused) {
             ctx.fillStyle = "rgba(15, 23, 42, 0.6)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#38bdf8"; ctx.font = "900 45px Arial"; ctx.textAlign = "center";
+            ctx.fillStyle = "#38bdf8"; ctx.font = "900 40px Arial"; ctx.textAlign = "center";
             ctx.fillText("PAUSED", canvas.width/2, canvas.height/2 + 15);
             gameAnimationId = requestAnimationFrame(gameLoop); return;
         }
@@ -916,7 +915,6 @@
             if (leaf.y > canvas.height) { leaf.y = -10; leaf.x = Math.random() * canvas.width; }
         });
         
-        // نظام التنعيم الحركي (Lerp) للمؤشر لحركة سلسلة جداً
         if (joyActive) {
             smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
             smoothJoyY += (joyMoveY - smoothJoyY) * 0.28 * deltaTime;
@@ -928,7 +926,6 @@
             smoothJoyY += (0 - smoothJoyY) * 0.25 * deltaTime;
         }
         
-        // التقاط المسافة المتبقية بين مكان المؤشر الفعلي ونقطة الهدف
         aimX += (targetAimX - aimX) * 0.4 * deltaTime;
         aimY += (targetAimY - aimY) * 0.4 * deltaTime;
 
@@ -942,11 +939,17 @@
             else if (t.special === "bonus") { t.ghostCounter += 0.03 * deltaTime; t.opacity = (Math.sin(t.ghostCounter) * 0.5) + 0.5; t.x += t.xSpeed * deltaTime; t.y += t.ySpeed * deltaTime; }
             else { t.x += t.xSpeed * deltaTime; t.y += t.ySpeed * deltaTime; }
             t.flap += t.flapSpeed * deltaTime;
-            let minBorder = 25; let maxXBorder = canvas.width - minBorder; let maxYBorder = canvas.height - 25;
-            if (t.x <= minBorder) { t.x = minBorder; t.xSpeed = Math.abs(t.xSpeed); }
-            if (t.x >= maxXBorder) { t.x = maxXBorder; t.xSpeed = -Math.abs(t.xSpeed); }
-            if (t.y <= minBorder) { t.y = minBorder; t.ySpeed = Math.abs(t.ySpeed); }
-            if (t.y >= maxYBorder) { t.y = maxYBorder; t.ySpeed = -Math.abs(t.ySpeed); }
+            
+            // معادلة ارتداد حركية ديناميكية تمنع خروج حواف الطيور من الملعب
+            let minX = t.width / 2;
+            let maxX = canvas.width - (t.width / 2);
+            let minY = t.height / 2;
+            let maxY = canvas.height - (t.height / 2);
+            
+            if (t.x <= minX) { t.x = minX; t.xSpeed = Math.abs(t.xSpeed); }
+            if (t.x >= maxX) { t.x = maxX; t.xSpeed = -Math.abs(t.xSpeed); }
+            if (t.y <= minY) { t.y = minY; t.ySpeed = Math.abs(t.ySpeed); }
+            if (t.y >= maxY) { t.y = maxY; t.ySpeed = -Math.abs(t.ySpeed); }
         });
         
         gunRecoilZ *= Math.pow(0.83, deltaTime); gunRecoilY *= Math.pow(0.80, deltaTime); gunRecoilAngle *= Math.pow(0.78, deltaTime);
@@ -993,16 +996,16 @@
             ctx.beginPath(); ctx.ellipse(-2, wingFlapOffset/2, t.width/5, t.height/2 + Math.abs(wingFlapOffset)/2, -0.2, 0, Math.PI*2); ctx.fill();
 
             ctx.fillStyle = headColor; ctx.beginPath(); ctx.arc(t.width/2 - 2, -4, t.width/8, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(t.width/2 + 2, -6, 3, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = beakColor; ctx.beginPath(); ctx.moveTo(t.width/2 + 6, -8); ctx.lineTo(t.width/2 + 20, -4); ctx.lineTo(t.width/2 + 6, 3); ctx.fill();
+            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(t.width/2 + 2, -6, 2, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = beakColor; ctx.beginPath(); ctx.moveTo(t.width/2 + 4, -6); ctx.lineTo(t.width/2 + 14, -3); ctx.lineTo(t.width/2 + 4, 2); ctx.fill();
 
-            ctx.fillStyle = headColor; ctx.beginPath(); ctx.moveTo(-t.width/2, -5); ctx.lineTo(-t.width/2 - 18, -14); ctx.lineTo(-t.width/2 - 14, 0); ctx.lineTo(-t.width/2 - 18, 14); ctx.lineTo(-t.width/2, 5); ctx.fill();
+            ctx.fillStyle = headColor; ctx.beginPath(); ctx.moveTo(-t.width/2, -3); ctx.lineTo(-t.width/2 - 12, -9); ctx.lineTo(-t.width/2 - 9, 0); ctx.lineTo(-t.width/2 - 12, 9); ctx.lineTo(-t.width/2, 3); ctx.fill();
             ctx.restore();
             
             if (t.opacity > 0.15) {
-                ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.font = '900 11px Arial';
+                ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.font = '900 10px Arial';
                 let label = t.special === "normal" ? "Leader" : (t.special === "fast" ? "Wave Jumper" : "Ghost Gold");
-                ctx.fillText(label, t.x - 25, t.y - t.height/2 - 8);
+                ctx.fillText(label, t.x - 20, t.y - t.height/2 - 5);
             }
         });
         
@@ -1010,7 +1013,7 @@
             boss.timer += deltaTime * 0.05;
             if (boss.enterWarning > 0) {
                 boss.enterWarning -= deltaTime * 0.016;
-                ctx.save(); ctx.fillStyle = "rgba(239, 68, 68, " + (Math.abs(Math.sin(boss.timer * 4))) + ")"; ctx.font = "900 28px Arial"; ctx.textAlign = "center";
+                ctx.save(); ctx.fillStyle = "rgba(239, 68, 68, " + (Math.abs(Math.sin(boss.timer * 4))) + ")"; ctx.font = "900 24px Arial"; ctx.textAlign = "center";
                 ctx.fillText("⚠️ PREDATOR BOSS INCOMING ⚠️", canvas.width/2, canvas.height/2); ctx.restore();
             } else {
                 boss.lastX = boss.x; boss.lastY = boss.y;
@@ -1021,61 +1024,62 @@
                 let bMoveAngle = Math.atan2(boss.y - boss.lastY, boss.x - boss.lastX);
                 if (boss.x - boss.lastX < 0) { ctx.scale(1, -1); ctx.rotate(-bMoveAngle + Math.PI); } else { ctx.rotate(bMoveAngle); }
 
-                let tW = 140; let tH = 95;
+                let tW = 90; let tH = 65;
                 ctx.fillStyle = "#0f172a"; ctx.beginPath(); ctx.ellipse(0, 0, tW/2, tH/2, 0, 0, Math.PI*2); ctx.fill();
                 let bWingFlapOffset = Math.sin(boss.timer * 12) * (tH / 1.1);
-                ctx.fillStyle = "#ef4444"; ctx.beginPath(); ctx.ellipse(-8, -bWingFlapOffset/2, 25, tH/2 + Math.abs(bWingFlapOffset)/2, 0.4, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.ellipse(-8, bWingFlapOffset/2, 25, tH/2 + Math.abs(bWingFlapOffset)/2, -0.4, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#ef4444"; ctx.beginPath(); ctx.ellipse(-6, -bWingFlapOffset/2, 18, tH/2 + Math.abs(bWingFlapOffset)/2, 0.4, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(-6, bWingFlapOffset/2, 18, tH/2 + Math.abs(bWingFlapOffset)/2, -0.4, 0, Math.PI*2); ctx.fill();
 
-                ctx.fillStyle = "#020617"; ctx.beginPath(); ctx.arc(tW/2 - 6, -8, 22, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#ff0000'; ctx.beginPath(); ctx.arc(tW/2 + 6, -12, 6, 0, Math.PI*2); ctx.fill();
-                ctx.shadowColor = "#ff0000"; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(tW/2 + 6, -12, 3, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
-                ctx.fillStyle = "#f87171"; ctx.beginPath(); ctx.moveTo(tW/2 + 15, -15); ctx.lineTo(tW/2 + 50, -8); ctx.lineTo(tW/2 + 15, 8); ctx.fill();
+                ctx.fillStyle = "#020617"; ctx.beginPath(); ctx.arc(tW/2 - 4, -6, 14, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#ff0000'; ctx.beginPath(); ctx.arc(tW/2 + 4, -9, 4, 0, Math.PI*2); ctx.fill();
+                ctx.shadowColor = "#ff0000"; ctx.shadowBlur = 8; ctx.beginPath(); ctx.arc(tW/2 + 4, -9, 2, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+                ctx.fillStyle = "#f87171"; ctx.beginPath(); ctx.moveTo(tW/2 + 10, -10); ctx.lineTo(tW/2 + 32, -5); ctx.lineTo(tW/2 + 10, 5); ctx.fill();
 
-                ctx.fillStyle = "#020617"; ctx.beginPath(); ctx.moveTo(-tW/2, -10); ctx.lineTo(-tW/2 - 35, -30); ctx.lineTo(-tW/2 - 25, 0); ctx.lineTo(-tW/2 - 35, 30); ctx.lineTo(-tW/2, 10); ctx.fill();
+                ctx.fillStyle = "#020617"; ctx.beginPath(); ctx.moveTo(-tW/2, -7); ctx.lineTo(-tW/2 - 25, -20); ctx.lineTo(-tW/2 - 18, 0); ctx.lineTo(-tW/2 - 25, 20); ctx.lineTo(-tW/2, 7); ctx.fill();
                 ctx.restore();
 
-                ctx.fillStyle = "#333"; ctx.fillRect(boss.x - 40, boss.y - 70, 80, 10);
-                ctx.fillStyle = "#ef4444"; ctx.fillRect(boss.x - 40, boss.y - 70, 80 * (boss.hp / boss.maxHp), 10);
+                ctx.fillStyle = "#333"; ctx.fillRect(boss.x - 30, boss.y - 50, 60, 8);
+                ctx.fillStyle = "#ef4444"; ctx.fillRect(boss.x - 30, boss.y - 50, 60 * (boss.hp / boss.maxHp), 8);
             }
         }
 
         for (let i = floatingTexts.length - 1; i >= 0; i--) {
             let ft = floatingTexts[i]; ft.y += ft.vy * deltaTime; ft.life -= 0.02 * deltaTime;
             if (ft.life <= 0) { floatingTexts.splice(i, 1); } else {
-                ctx.save(); ctx.globalAlpha = ft.life; ctx.fillStyle = ft.color; ctx.font = ft.isCrit ? "900 24px Arial" : "bold 16px Arial"; ctx.textAlign = "center"; ctx.shadowColor = "black"; ctx.shadowBlur = 4; ctx.fillText(ft.text, ft.x, ft.y); ctx.restore();
+                ctx.save(); ctx.globalAlpha = ft.life; ctx.fillStyle = ft.color; ctx.font = ft.isCrit ? "900 20px Arial" : "bold 14px Arial"; ctx.textAlign = "center"; ctx.shadowColor = "black"; ctx.shadowBlur = 4; ctx.fillText(ft.text, ft.x, ft.y); ctx.restore();
             }
         }
 
         if (flashIntensity > 0) {
             ctx.save();
-            let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 3, muzzleFlashX, muzzleFlashY, 55);
+            let gradient = ctx.createRadialGradient(muzzleFlashX, muzzleFlashY, 2, muzzleFlashX, muzzleFlashY, 40);
             gradient.addColorStop(0, 'rgba(255, 255, 255, ' + flashIntensity + ')'); gradient.addColorStop(0.2, 'rgba(244, 240, 138, ' + (flashIntensity * 0.95) + ')'); gradient.addColorStop(0.6, 'rgba(249, 115, 22, ' + (flashIntensity * 0.6) + ')'); gradient.addColorStop(1, 'rgba(220, 38, 38, 0)');
-            ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(muzzleFlashX, muzzleFlashY, 55, 0, Math.PI * 2); ctx.fill(); ctx.restore(); flashIntensity -= 0.06 * deltaTime;
+            ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(muzzleFlashX, muzzleFlashY, 40, 0, Math.PI * 2); ctx.fill(); ctx.restore(); flashIntensity -= 0.06 * deltaTime;
         }
 
-        let gunBaseX = canvas.width - 45; let gunBaseY = canvas.height + 25; 
+        // إحداثيات السلاح المحدثة لضمان ظهوره بشكل سينمائي أنيق داخل اللوحة
+        let gunBaseX = canvas.width - 60; let gunBaseY = canvas.height - 15; 
         ctx.save(); ctx.translate(gunBaseX, gunBaseY + gunRecoilY);
         let gunRotation = Math.atan2(aimY - gunBaseY, aimX - gunBaseX) + Math.PI / 2 + gunRecoilAngle;
         ctx.rotate(gunRotation);
         if (ak47Img && ak47Img.complete && ak47Img.naturalWidth !== 0) {
-            let currentGunWidth = 90 + (gunRecoilZ * 0.2); let currentGunHeight = 225 + gunRecoilZ;
-            ctx.drawImage(ak47Img, -currentGunWidth / 2, -currentGunHeight + 50, currentGunWidth, currentGunHeight);
+            let currentGunWidth = 65 + (gunRecoilZ * 0.15); let currentGunHeight = 165 + gunRecoilZ;
+            ctx.drawImage(ak47Img, -currentGunWidth / 2, -currentGunHeight + 35, currentGunWidth, currentGunHeight);
         } else {
-            ctx.fillStyle = '#5c2d17'; ctx.fillRect(-10, -50, 20, 60); ctx.fillStyle = '#1e293b'; ctx.fillRect(-7, -130, 14, 100); ctx.fillStyle = '#475569'; ctx.fillRect(-5, -180, 10, 50); ctx.fillStyle = '#ca8a04'; ctx.fillRect(-3, -190, 6, 12); 
+            ctx.fillStyle = '#5c2d17'; ctx.fillRect(-8, -40, 16, 50); ctx.fillStyle = '#1e293b'; ctx.fillRect(-5, -100, 10, 80); ctx.fillStyle = '#475569'; ctx.fillRect(-4, -140, 8, 40); ctx.fillStyle = '#ca8a04'; ctx.fillRect(-2, -150, 4, 10); 
         }
         ctx.restore();
         
-        // تصميم مؤشر اللعب: الدائرة والخطوط (تم تكبيرها وجعلها أوضح)
+        // تصميم مؤشر اللعب المصغر والذكي فائق الدقة لشاشات الجوال
         ctx.save();
         ctx.strokeStyle = isRageMode ? '#fbbf24' : '#f87171'; 
-        ctx.lineWidth = 3.5;
+        ctx.lineWidth = 2.5;
         ctx.translate(aimX, aimY);
         ctx.beginPath();
-        ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(-45, 0); ctx.lineTo(45, 0); ctx.moveTo(0, -45); ctx.lineTo(0, 45); ctx.stroke();
+        ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-26, 0); ctx.lineTo(26, 0); ctx.moveTo(0, -26); ctx.lineTo(0, 26); ctx.stroke();
         ctx.fillStyle = isRageMode ? '#fbbf24' : '#ef4444';
-        ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
         
         gameAnimationId = requestAnimationFrame(gameLoop); 
