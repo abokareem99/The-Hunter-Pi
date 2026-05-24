@@ -21,7 +21,7 @@
             overflow-x: hidden;
         }
         .container {
-            max-width: 750px; 
+            max-width: 850px; /* زيادة عرض الحاوية لتناسب الشاشة الجديدة */
             margin: 0 auto;  
             background: rgba(15, 23, 42, 0.98);
             padding: 8px;
@@ -75,7 +75,6 @@
         .btn:hover { transform: scale(1.02); }
         .hidden { display: none; }
         
-        /* شريط معلومات ذكي مدمج لتقليص المساحة الرأسية */
         .stats-bar {
             background: rgba(15, 23, 42, 0.9);
             padding: 6px;
@@ -118,7 +117,6 @@
             display: block;
         }
 
-        /* حاوية أزرار التحكم المعكوسة: تم نقل زر الإطلاق لليسار والجوستيك لليمين */
         .controls-wrapper {
             display: flex;
             justify-content: flex-start;
@@ -132,7 +130,6 @@
             border: 1px solid #1e293b;
         }
 
-        /* زر الإطلاق أصبح أولاً في أقصى اليسار */
         .btn-shoot {
             background-image: linear-gradient(135deg, #ef4444, #dc2626, #991b1b);
             color: white;
@@ -171,7 +168,6 @@
             justify-content: center;
         }
 
-        /* زر الإيقاف يدفع الجوستيك إلى أقصى اليمين بعبقرية الفليكس */
         .btn-pause {
             background: rgba(15, 23, 42, 0.85);
             color: #fff;
@@ -187,11 +183,10 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            margin-left: auto; /* يدفع العناصر التالية لليمين */
+            margin-left: auto;
         }
         .btn-pause:active { transform: scale(0.9); }
 
-        /* عصا التحريك أصبحت في أقصى اليمين */
         .joystick-container {
             width: 80px;
             height: 80px;
@@ -281,7 +276,7 @@
         </div>
 
         <div class="canvas-wrapper">
-            <canvas id="hunting-canvas" width="700" height="480"></canvas>
+            <canvas id="hunting-canvas" width="800" height="550"></canvas>
         </div>
         
         <div><span class="audio-indicator">🌌 Tri-Target Swarm System & Dynamic Backgrounds</span></div>
@@ -300,7 +295,7 @@
             </div>
         </div>
 
-        <h3 style="margin-top: 10px; margin-bottom: 3px; color: #38bdf8; font-size: 15px;">🏆 GLOBAL LEADERBOARD</h3>
+        <h3 style="margin-top: 10px; margin-bottom: 3px; color: #38bdf8; font-size: 15px;">🏆 TOP 3 HUNTERS</h3>
         <table class="leaderboard-table">
             <thead>
                 <tr>
@@ -326,11 +321,11 @@
 
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
     
-    // تعديل أبعاد الخلفيات المجلوبة لتناسب الطول الجديد للمستطيل الفني للعبة
+    // تعديل الروابط لتناسب الأبعاد الجديدة
     const BACKGROUNDS = [
-        "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?auto=format&fit=crop&w=750&h=480&q=80", 
-        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=750&h=480&q=80", 
-        "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=750&h=480&q=80"  
+        "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?auto=format&fit=crop&w=800&h=550&q=80", 
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&h=550&q=80", 
+        "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&h=550&q=80"  
     ];
     const RANK_TIERS = [
         { minHits: 0,   name: "Rookie 🛡️",          color: "#94a3b8", bg: "#1e293b" },
@@ -370,13 +365,13 @@
     let floatingTexts = [];
     let bossSpawnHits = 0;
     let boss = {
-        active: false, hp: 0, maxHp: 5, x: -100, y: -100, lastX: -100, lastY: -100, radius: 35, timer: 0, enterWarning: 0
+        active: false, hp: 0, maxHp: 5, x: -100, y: -100, lastX: -100, lastY: -100, radius: 45, timer: 0, enterWarning: 0
     };
     
-    // تهيئة الأوراق المتساقطة لتملأ الارتفاع الجديد المتناسق تلقائياً
+    // الأوراق تناسب عرض وطول الشاشة الجديدة
     let leaves = Array.from({length: 15}, () => ({
-        x: Math.random() * 700,
-        y: Math.random() * 480,
+        x: Math.random() * 800,
+        y: Math.random() * 550,
         size: Math.random() * 3 + 2,
         speed: Math.random() * 1.2 + 0.4,
         sway: Math.random() * 0.04
@@ -395,18 +390,20 @@
     ];
     let currentBirdStyle = birdColorTiers[0];
 
+    // تكبير أحجام الطيور ونصف قطرها لتسهيل الإصابة والتوافق مع الشاشة
     let targets = [
-        { id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, width: 44, height: 35, flap: 0, flapSpeed: 0.25, radius: 22, sineWave: false, opacity: 1.0, points: 10, special: "normal" },
-        { id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, width: 38, height: 30, flap: 1.5, flapSpeed: 0.35, radius: 19, sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast" },
-        { id: 3, type: "ghost_refiller", x: 400, y: 80, xSpeed: 4.0, ySpeed: -2.2, width: 46, height: 36, flap: 3.0, flapSpeed: 0.20, radius: 23, sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0 }
+        { id: 1, type: "leader", x: 100, y: 100, xSpeed: 2.8, ySpeed: 1.8, width: 55, height: 44, flap: 0, flapSpeed: 0.25, radius: 28, sineWave: false, opacity: 1.0, points: 10, special: "normal" },
+        { id: 2, type: "wave_jumper", x: 250, y: 180, xSpeed: -3.4, ySpeed: 1.2, width: 48, height: 38, flap: 1.5, flapSpeed: 0.35, radius: 24, sineWave: true, sineCounter: 0, opacity: 1.0, points: 20, special: "fast" },
+        { id: 3, type: "ghost_refiller", x: 400, y: 80, xSpeed: 4.0, ySpeed: -2.2, width: 58, height: 45, flap: 3.0, flapSpeed: 0.20, radius: 29, sineWave: false, opacity: 1.0, points: 50, special: "bonus", ghostCounter: 0 }
     ];
     let particles = []; 
     let flashIntensity = 0;
     let muzzleFlashX = 0;
     let muzzleFlashY = 0;
     let screenShake = 0;
-    let aimX = 350;
-    let aimY = 240; // تم تعديل نقطة البداية للمؤشر لمنتصف الارتفاع الجديد بالبكسل
+    // نقطة بداية المؤشر في منتصف الشاشة الجديدة
+    let aimX = 400; 
+    let aimY = 275; 
 
     let joyActive = false;
     let joyStartX = 0;
@@ -803,7 +800,7 @@
                 .from(TABLE_NAME)
                 .select('pi_username, high_score, title')
                 .order('high_score', { ascending: false })
-                .limit(5);
+                .limit(3); // تم تعديل العدد ليعرض أفضل 3 فقط لتوفير المساحة
             const tbody = document.getElementById('leaderboard-body');
             tbody.innerHTML = "";
             if (data && data.length > 0) {
@@ -853,7 +850,7 @@
         boss.lastY = -50;
         boss.timer = 0;
         boss.enterWarning = 3.0; 
-        boss.radius = 35;
+        boss.radius = 45;
         playAdvancedSound('fanfare_bonus');
         document.getElementById('game-status').innerText = "⚠️ تحذير: النسر الجارح الظلامي قادم! (يحتاج 5 طلقات متتالية) ⚠️";
         document.getElementById('game-status').style.color = "#ef4444";
@@ -995,8 +992,9 @@
         const MAX_BIRDS = 6;
         if (hitAny && totalHits > 0 && totalHits % 20 === 0 && targets.length < MAX_BIRDS) {
             let newBird = {
+                // تكبير الطيور المضافة حديثاً
                 id: targets.length + 1, type: "clone", x: -40, y: Math.random() * (canvas.height - 100) + 20,
-                xSpeed: 2.2, ySpeed: 0.8, width: 40, height: 32, flap: 0, flapSpeed: 0.25, radius: 20,
+                xSpeed: 2.2, ySpeed: 0.8, width: 50, height: 40, flap: 0, flapSpeed: 0.25, radius: 25,
                 sineWave: true, sineCounter: Math.random() * 10, opacity: 1.0, points: 15, special: "normal"
             };
             targets.push(newBird);
@@ -1564,12 +1562,13 @@
         ctx.lineWidth = 2.5;
         ctx.translate(aimX, aimY);
         ctx.beginPath();
-        ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.stroke();
+        // تم تكبير مساحة مؤشر التصويب لتصبح بقطر 15 ومسافة تقاطع أكبر
+        ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(-22, 0);
-        ctx.lineTo(22, 0); ctx.moveTo(0, -22); ctx.lineTo(0, 22); ctx.stroke();
+        ctx.moveTo(-30, 0);
+        ctx.lineTo(30, 0); ctx.moveTo(0, -30); ctx.lineTo(0, 30); ctx.stroke();
         ctx.fillStyle = isRageMode ? '#fbbf24' : '#ef4444';
-        ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); // تكبير نقطة المنتصف
         ctx.fill();
         ctx.restore();
         
