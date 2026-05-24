@@ -98,7 +98,7 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.8);
             background-color: #070b19;
             display: block;
-            transition: transform 0.03s ease; /* لتنعيم الاهتزاز */
+            transition: transform 0.03s ease;
         }
         
         .controls-wrapper {
@@ -214,6 +214,16 @@
             box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
             display: inline-block;
         }
+
+        .bottom-player-info {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body>
@@ -231,7 +241,6 @@
 
     <div id="game-section" class="hidden">
         <div class="stats-bar">
-            <div>Hunter: <span id="player-name" style="color: #38bdf8;">...</span></div>
             <div>Hits: <span id="hits-val" style="color: #eab308;">0</span> 🎯</div>
             <div>Score: <span id="score-val" style="color: #4ade80;">0</span></div>
             <div>Ammo: <span id="ammo-val" style="color: #f87171;">30</span> 🎈</div>
@@ -272,6 +281,11 @@
                 </tr>
             </tbody>
         </table>
+
+        <!-- اسم اللاعب في الأسفل كما طلبت مسبقاً -->
+        <div class="bottom-player-info">
+            Active Hunter: <strong id="player-name-bottom" style="color: #38bdf8;">...</strong>
+        </div>
     </div>
 </div>
 
@@ -370,15 +384,25 @@
     let gunRecoilY = 0;
     let gunRecoilAngle = 0;
     
-    // 🔴 تم إضافة المتغير هنا لضبط سرعة الطلقات ومنع التباطؤ
     let lastShotTime = 0; 
 
     let audioCtx;
+    let masterCompressor;
     let shootTailBuffer = null;
 
     function initAudio() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // فلتر رئيسي لمنع تشابك واختفاء الصوت عند زيادة الضغط
+            masterCompressor = audioCtx.createDynamicsCompressor();
+            masterCompressor.threshold.setValueAtTime(-15, audioCtx.currentTime);
+            masterCompressor.knee.setValueAtTime(10, audioCtx.currentTime);
+            masterCompressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+            masterCompressor.attack.setValueAtTime(0, audioCtx.currentTime);
+            masterCompressor.release.setValueAtTime(0.25, audioCtx.currentTime);
+            masterCompressor.connect(audioCtx.destination);
+
             const tailBufferSize = audioCtx.sampleRate * 0.55;
             shootTailBuffer = audioCtx.createBuffer(1, tailBufferSize, audioCtx.sampleRate);
             const tailData = shootTailBuffer.getChannelData(0);
@@ -389,7 +413,7 @@
     }
 
     function playAdvancedSound(type) {
-        if (!audioCtx) return;
+        if (!audioCtx || !masterCompressor) return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
 
         try {
@@ -428,17 +452,18 @@
                 tailNoise.connect(tailFilter);
                 tailFilter.connect(tailGain);
                 
+                // صدى خفيف وبسيط بدون لوب التغذية العكسية الذي كان يعلق اللعبة
                 const delay = audioCtx.createDelay();
-                delay.delayTime.value = 0.15;
-                const feedback = audioCtx.createGain();
-                feedback.gain.value = 0.25;
-                delay.connect(feedback);
-                feedback.connect(delay);
-                delay.connect(audioCtx.destination);
+                delay.delayTime.value = 0.12;
+                const delayGain = audioCtx.createGain();
+                delayGain.gain.value = 0.15;
+                
+                delay.connect(delayGain);
+                delayGain.connect(masterCompressor);
 
-                impulseGain.connect(audioCtx.destination);
+                impulseGain.connect(masterCompressor);
                 impulseGain.connect(delay); 
-                tailGain.connect(audioCtx.destination);
+                tailGain.connect(masterCompressor);
                 tailGain.connect(delay); 
                 
                 impulseOsc.start(now);
@@ -459,7 +484,7 @@
                 
                 mechOsc.connect(mechFilter);
                 mechFilter.connect(mechGain);
-                mechGain.connect(audioCtx.destination);
+                mechGain.connect(masterCompressor);
                 
                 mechOsc.start(now);
                 mechOsc.stop(now + 0.04);
@@ -480,7 +505,7 @@
                 
                 hitOsc.connect(lpFilter);
                 lpFilter.connect(hitGain);
-                hitGain.connect(audioCtx.destination);
+                hitGain.connect(masterCompressor);
                 hitOsc.start(now);
                 hitOsc.stop(now + 0.15);
             } else if (type === 'empty') {
@@ -494,7 +519,7 @@
                 emptyGain.gain.linearRampToValueAtTime(0.001, now + 0.025);
                 
                 emptyOsc.connect(emptyGain);
-                emptyGain.connect(audioCtx.destination);
+                emptyGain.connect(masterCompressor);
                 emptyOsc.start(now);
                 emptyOsc.stop(now + 0.025);
                 
@@ -507,7 +532,7 @@
                 gain1.gain.setValueAtTime(0.3, now);
                 gain1.gain.linearRampToValueAtTime(0.001, now + 0.06);
                 osc1.connect(gain1);
-                gain1.connect(audioCtx.destination);
+                gain1.connect(masterCompressor);
                 osc1.start(now);
                 osc1.stop(now + 0.06);
 
@@ -526,7 +551,7 @@
                 
                 osc2.connect(reloadFilter);
                 reloadFilter.connect(gain2);
-                gain2.connect(audioCtx.destination);
+                gain2.connect(masterCompressor);
                 osc2.start(now + delay);
                 osc2.stop(now + delay + 0.08);
                 
@@ -540,7 +565,7 @@
                     gain.gain.setValueAtTime(0.25, now + (index * 0.06));
                     gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.06) + 0.18);
                     osc.connect(gain);
-                    gain.connect(audioCtx.destination);
+                    gain.connect(masterCompressor);
                     osc.start(now + (index * 0.06));
                     osc.stop(now + (index * 0.06) + 0.18);
                 });
@@ -629,7 +654,7 @@
     }
 
     async function handleLoginSuccess() {
-        document.getElementById('player-name').innerText = playerPiUser;
+        document.getElementById('player-name-bottom').innerText = playerPiUser;
         try {
             let { data } = await _supabaseClient
                 .from(TABLE_NAME)
@@ -753,13 +778,14 @@
         } catch (err) {}
     }
 
+    // تخفيف عدد الجزيئات لتخفيف الضغط على المعالج وتنعيم الحركة
     function createFeatherCloud(x, y, customColor) {
         let pColor = customColor || currentBirdStyle.secondary;
-        for (let i = 0; i < 25; i++) {
+        for (let i = 0; i < 12; i++) {
             particles.push({
                 x: x, y: y,
                 vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.8) * 7, 
-                radius: Math.random() * 4 + 1.5,
+                size: Math.random() * 4 + 2,
                 rotation: Math.random() * Math.PI * 2,
                 rotationSpeed: (Math.random() - 0.5) * 0.3,
                 alpha: 1,
@@ -789,7 +815,6 @@
     }
 
     function executeShot() {
-        // 🔴 التعديل هنا: منع الطلقات المزدوجة المتتالية (Double trigger) لمنع التعليق
         const now = performance.now();
         if (now - lastShotTime < 80) return; 
         lastShotTime = now;
@@ -874,7 +899,6 @@
             }
         });
         
-        // Dynamic Bird Generation System
         const MAX_BIRDS = 6;
         if (hitAny && totalHits > 0 && totalHits % 20 === 0 && targets.length < MAX_BIRDS) {
             let newBird = {
@@ -886,7 +910,6 @@
             currentStatusText += "🦅 طائر جديد انضم للسرب! ";
         }
 
-        // Check Boss hit
         if (boss.active && boss.enterWarning <= 0) {
             let bossHitRadius = isRageMode ? boss.radius + 45 : boss.radius + 15;
             const dist = Math.sqrt((aimX - boss.x)**2 + (aimY - boss.y)**2);
@@ -1042,7 +1065,6 @@
         if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
     });
 
-    // 🔴 التعديل هنا: استخدام mousedown وإيقاف النقر المزدوج في الهواتف لزيادة سرعة استجابة الزر 
     const fireTriggerBtn = document.getElementById('fire-trigger');
     fireTriggerBtn.addEventListener('mousedown', (e) => { 
         e.preventDefault(); 
@@ -1050,7 +1072,7 @@
     });
     fireTriggerBtn.addEventListener('touchstart', (e) => { 
         e.preventDefault(); 
-        e.stopPropagation(); // يمنع تسجيل click بعد touch مباشرة
+        e.stopPropagation(); 
         executeShot(); 
     }, { passive: false });
 
@@ -1154,7 +1176,6 @@
                 const dx = (Math.random() - 0.5) * screenShake;
                 const dy = (Math.random() - 0.5) * screenShake;
                 
-                // 🔴 التعديل هنا: الاهتزاز للشاشة فقط وليس للحاوية، كي لا يهرب الزر من إصبعك
                 document.getElementById('hunting-canvas').style.transform = `translate(${dx}px, ${dy}px)`;
                 
                 screenShake *= Math.pow(0.85, deltaTime);
@@ -1187,6 +1208,8 @@
                 ctx.arc(leaf.x, leaf.y, leaf.size, 0, Math.PI * 2);
                 ctx.fill();
             });
+
+            // تحسين رسم جزيئات الريش لعدم التعليق 
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
                 p.x += p.vx * deltaTime; 
@@ -1203,9 +1226,7 @@
                     ctx.fillStyle = p.color;
                     ctx.translate(p.x, p.y);
                     ctx.rotate(p.rotation);
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, p.radius * 2, p.radius, 0, 0, Math.PI * 2); 
-                    ctx.fill();
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size); // استخدام المستطيل أسرع بكثير من الدائرة
                     ctx.restore();
                 }
             }
