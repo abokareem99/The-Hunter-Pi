@@ -838,13 +838,44 @@
     
     function triggerGameOver() {
         isGameOver = true;
-        document.getElementById('game-status').innerText = "💀 انتهى الوقت! لقد خسرت التحدي.";
+        document.getElementById('game-status').innerText = "💀 انتهى الوقت! اضغط على زر الإعادة 🔄 للبدء.";
         document.getElementById('game-status').style.color = "#ef4444";
+        document.getElementById('btn-pause').innerText = "🔄";
         playAdvancedSound('empty');
     }
     
+    function restartGame() {
+        isGameOver = false;
+        isPaused = false;
+        
+        // Reset level and timer (keeping cumulative score and hits)
+        currentLevel = 1;
+        levelBirdsKilled = 0;
+        birdsTarget = 5;
+        timeRemaining = 30.0;
+        
+        rageMeter = 0;
+        isRageMode = false;
+        boss.active = false;
+        
+        document.getElementById('level-val').innerText = currentLevel;
+        document.getElementById('target-val').innerText = `${levelBirdsKilled}/${birdsTarget}`;
+        document.getElementById('time-val').innerText = timeRemaining.toFixed(1);
+        document.getElementById('rage-val').innerText = "0%";
+        document.getElementById('ammo-val').innerText = ammo;
+        document.getElementById('btn-pause').innerText = "⏸️";
+        document.getElementById('game-status').innerText = "🚀 تم إعادة بدء التحدي! انطلق!";
+        document.getElementById('game-status').style.color = "#4ade80";
+        
+        targets.forEach(t => resetTarget(t));
+        lastTime = performance.now();
+    }
+
     function togglePause() {
-        if (isGameOver) return;
+        if (isGameOver) {
+            restartGame();
+            return;
+        }
         isPaused = !isPaused;
         document.getElementById('btn-pause').innerText = isPaused ? "▶️" : "⏸️";
         if (!isPaused) {
@@ -1160,7 +1191,7 @@
             ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2 - 20);
             ctx.fillStyle = "#ffffff";
             ctx.font = "bold 20px Arial";
-            ctx.fillText("انتهى الوقت! قم بتحديث الصفحة للمحاولة من جديد.", canvas.width/2, canvas.height/2 + 25);
+            ctx.fillText("انتهى الوقت! اضغط على زر 🔄 للعب مرة أخرى.", canvas.width/2, canvas.height/2 + 25);
             gameAnimationId = requestAnimationFrame(gameLoop);
             return;
         }
