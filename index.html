@@ -21,7 +21,7 @@
             overflow-x: hidden;
         }
         .container {
-            max-width: 750px; /* تم زيادة العرض للوضع الأفقي */
+            max-width: 750px; 
             margin: 2px auto;  
             background: rgba(15, 23, 42, 0.98);
             padding: 12px;
@@ -30,6 +30,23 @@
             border: 1px solid #475569;
             transition: transform 0.04s cubic-bezier(0.1, 0.8, 0.3, 1);
         }
+
+        /* رسالة تنبيه تظهر فقط إذا كان الهاتف في الوضع الطولي */
+        @media screen and (orientation: portrait) {
+            #game-container::before {
+                content: "⚠️ يرجى تدوير الهاتف (وضع أفقي) لتجربة اللعب بشكل صحيح ⚠️";
+                display: block;
+                background: #ef4444;
+                color: white;
+                padding: 10px;
+                border-radius: 12px;
+                margin-bottom: 15px;
+                font-weight: bold;
+                text-align: center;
+                box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+            }
+        }
+
         h1 { 
             color: #38bdf8;
             margin-top: 2px;
@@ -83,7 +100,7 @@
             margin-bottom: 8px; 
             font-weight: bold;
             border: 1px solid #334155;
-            font-size: 13px; /* تم تكبير الخط قليلاً ليتناسب مع الشاشة العرضية */
+            font-size: 13px; 
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
             flex-wrap: wrap;
             gap: 5px;
@@ -107,64 +124,84 @@
             background-color: #070b19;
             display: block;
         }
-        
-        /* تصميم زر الإيقاف الجديد في أعلى الشاشة */
-        .btn-pause {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(15, 23, 42, 0.85);
-            color: #fff;
-            border: 2px solid #38bdf8;
-            border-radius: 12px;
-            width: 50px;
-            height: 50px;
-            font-size: 22px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-            transition: 0.2s;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn-pause:active { transform: scale(0.9); }
 
+        /* حاوية أزرار التحكم تم تعديلها لتنظيم الأزرار بشكل أفقي */
         .controls-wrapper {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             margin-top: 10px;
-            gap: 10px;
+            gap: 8px;
             direction: ltr; 
             background: #0f172a;
-            padding: 12px;
+            padding: 10px;
             border-radius: 18px;
             border: 1px solid #1e293b;
         }
 
+        /* تم تصغير زر الإيقاف وإلغاء التموضع المطلق */
+        .btn-pause {
+            background: rgba(15, 23, 42, 0.85);
+            color: #fff;
+            border: 2px solid #38bdf8;
+            border-radius: 12px;
+            width: 55px;
+            height: 55px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .btn-pause:active { transform: scale(0.9); }
+
+        /* تم تصغير زر الذخيرة */
+        .btn-ammo {
+            flex: 1;
+            background-image: linear-gradient(135deg, #eab308, #ca8a04); 
+            color: #0f172a; 
+            font-size: 13px; 
+            padding: 8px 4px; 
+            font-weight: 900;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+            letter-spacing: 0.2px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* تم تصغير زر الإطلاق */
         .btn-shoot {
             background-image: linear-gradient(135deg, #ef4444, #dc2626, #991b1b);
             color: white;
             border: 2px solid #fca5a5;
             border-radius: 50%;
-            width: 95px;
-            height: 95px;
-            font-size: 18px;
+            width: 75px;
+            height: 75px;
+            font-size: 15px;
             font-weight: 900;
             cursor: pointer;
             box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
             transition: transform 0.05s ease;
             -webkit-tap-highlight-color: transparent;
+            flex-shrink: 0;
         }
         .btn-shoot:active {
             transform: scale(0.85);
             background-image: linear-gradient(135deg, #991b1b, #451a03);
         }
 
+        /* تم تصغير عصا التحريك ودفعها لأقصى اليمين */
         .joystick-container {
-            width: 95px;
-            height: 95px;
+            width: 80px;
+            height: 80px;
             background: radial-gradient(circle, #1e293b 40%, #0f172a 100%);
             border: 3px solid #38bdf8;
             border-radius: 50%;
@@ -174,10 +211,12 @@
             align-items: center;
             box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3), inset 0 2px 8px rgba(0,0,0,0.8);
             touch-action: none;
+            flex-shrink: 0;
+            margin-left: auto;
         }
         .joystick-knob {
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             background: linear-gradient(135deg, #0284c7, #0369a1);
             border: 2px solid #38bdf8;
             border-radius: 50%;
@@ -185,24 +224,6 @@
             box-shadow: 0 3px 10px rgba(0,0,0,0.6);
             cursor: pointer;
             transition: transform 0.05s ease;
-        }
-
-        .btn-ammo {
-            flex: 1;
-            background-image: linear-gradient(135deg, #eab308, #ca8a04); 
-            color: #0f172a; 
-            font-size: 14px; 
-            padding: 14px 8px; 
-            font-weight: 900;
-            border-radius: 14px;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
-            letter-spacing: 0.2px;
-            height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .leaderboard-table {
@@ -292,7 +313,6 @@
 
         <div class="canvas-wrapper">
             <canvas id="hunting-canvas" width="700" height="350"></canvas>
-            <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸️</button>
         </div>
         
         <div><span class="audio-indicator">🌌 Tri-Target Swarm System & Dynamic Backgrounds</span></div>
@@ -300,8 +320,10 @@
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 14px; margin: 8px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
         
         <div class="controls-wrapper">
+            <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸️</button>
+            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO</button>
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
-            <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO<br>(1 Pi)</button>
+            
             <div class="joystick-container" id="joy-container">
                 <div class="joystick-knob" id="joy-knob"></div>
             </div>
@@ -333,7 +355,6 @@
 
     const AK47_IMAGE_URL = "https://raw.githubusercontent.com/abokareem99/the-hunter-pi/main/ak47.png?v=3";
     
-    // تم تحديث أبعاد الصور الخلفية لتلائم الشاشة العرضية الجديدة
     const BACKGROUNDS = [
         "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?auto=format&fit=crop&w=750&h=350&q=80", 
         "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=750&h=350&q=80", 
@@ -380,7 +401,6 @@
         active: false, hp: 0, maxHp: 5, x: -100, y: -100, lastX: -100, lastY: -100, radius: 35, timer: 0, enterWarning: 0
     };
     
-    // تم تعديل إحداثيات الأوراق المتساقطة لتشمل العرض الجديد (700)
     let leaves = Array.from({length: 15}, () => ({
         x: Math.random() * 700,
         y: Math.random() * 350,
@@ -422,7 +442,7 @@
     let joyMoveY = 0;
     let smoothJoyX = 0; 
     let smoothJoyY = 0; 
-    const maxJoyDistance = 35;
+    const maxJoyDistance = 25; // تم تعديل المسافة القصوى لتناسب عصا التحريك الأصغر
     let lastTime = performance.now(); 
 
     const canvas = document.getElementById('hunting-canvas');
@@ -648,8 +668,15 @@
     }
 
     async function initAndLoginWithPi() {
-        // إجبار شاشة الهاتف على الوضع العرضي
+        // إجبار المتصفح على وضع ملء الشاشة ثم الوضع العرضي لحل مشكلة اللاندسكيب
         try {
+            let docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                await docEl.requestFullscreen();
+            } else if (docEl.webkitRequestFullscreen) {
+                await docEl.webkitRequestFullscreen();
+            }
+            
             if (screen.orientation && screen.orientation.lock) {
                 await screen.orientation.lock('landscape');
             }
