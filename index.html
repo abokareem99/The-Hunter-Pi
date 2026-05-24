@@ -98,10 +98,7 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.8);
             background-color: #070b19;
             display: block;
-            transition: filter 0.5s ease;
-        }
-        .matrix-glow {
-            filter: hue-rotate(180deg) saturate(200%) contrast(120%) drop-shadow(0 0 15px #0ff);
+            transition: transform 0.03s ease; /* لتنعيم الاهتزاز */
         }
         
         .controls-wrapper {
@@ -311,10 +308,6 @@
     let isRageMode = false;
     let rageTimeLeft = 0;
 
-    // Event State Variables
-    let isMatrixMode = false;
-    let matrixTimeLeft = 0;
-
     let bgX = 0;
     let currentBgImg = null;
     let previousBgImg = null;
@@ -371,19 +364,22 @@
 
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
-    let gameAnimationId; 
+    let gameAnimationId;
     let ak47Img = null;
     let gunRecoilZ = 0;
     let gunRecoilY = 0;
     let gunRecoilAngle = 0;
+    
+    // 🔴 تم إضافة المتغير هنا لضبط سرعة الطلقات ومنع التباطؤ
+    let lastShotTime = 0; 
 
     let audioCtx;
-    let shootTailBuffer = null; 
+    let shootTailBuffer = null;
 
     function initAudio() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const tailBufferSize = audioCtx.sampleRate * 0.55; 
+            const tailBufferSize = audioCtx.sampleRate * 0.55;
             shootTailBuffer = audioCtx.createBuffer(1, tailBufferSize, audioCtx.sampleRate);
             const tailData = shootTailBuffer.getChannelData(0);
             for (let i = 0; i < tailBufferSize; i++) { 
@@ -468,40 +464,6 @@
                 mechOsc.start(now);
                 mechOsc.stop(now + 0.04);
                 
-            } else if (type === 'matrix_trigger') {
-                // Majestic Echo Deep Impact
-                const mOsc = audioCtx.createOscillator();
-                const mGain = audioCtx.createGain();
-                mOsc.type = 'square';
-                mOsc.frequency.setValueAtTime(150, now);
-                mOsc.frequency.exponentialRampToValueAtTime(20, now + 1.5);
-                
-                const mFilter = audioCtx.createBiquadFilter();
-                mFilter.type = 'lowpass';
-                mFilter.frequency.setValueAtTime(2000, now);
-                mFilter.frequency.exponentialRampToValueAtTime(100, now + 1.5);
-
-                mGain.gain.setValueAtTime(1.0, now);
-                mGain.gain.exponentialRampToValueAtTime(0.01, now + 2.0);
-
-                const mDelay = audioCtx.createDelay();
-                mDelay.delayTime.value = 0.4;
-                const mFeedback = audioCtx.createGain();
-                mFeedback.gain.value = 0.6;
-                
-                mOsc.connect(mFilter);
-                mFilter.connect(mGain);
-                
-                mGain.connect(mDelay);
-                mDelay.connect(mFeedback);
-                mFeedback.connect(mDelay);
-                
-                mDelay.connect(audioCtx.destination);
-                mGain.connect(audioCtx.destination);
-
-                mOsc.start(now);
-                mOsc.stop(now + 2.0);
-
             } else if (type === 'hit') {
                 const hitOsc = audioCtx.createOscillator();
                 const hitGain = audioCtx.createGain();
@@ -696,8 +658,6 @@
     }
 
     function updatePlayerRank() {
-        if (isMatrixMode) return; // Prevent overwriting Matrix Hacker title during event
-
         let activeRank = RANK_TIERS[0];
         for (let i = RANK_TIERS.length - 1; i >= 0; i--) {
             if (totalHits >= RANK_TIERS[i].minHits) {
@@ -712,28 +672,6 @@
         rankDisplay.style.color = activeRank.color;
         rankDisplay.style.borderColor = activeRank.color;
         rankDisplay.style.background = `linear-gradient(135deg, ${activeRank.bg}, #0f172a)`;
-    }
-
-    function triggerMatrixMode() {
-        isMatrixMode = true;
-        matrixTimeLeft = 600; // ~10 seconds of time freeze
-        playAdvancedSound('matrix_trigger');
-        
-        // Setup visual and title
-        document.getElementById('hunting-canvas').classList.add('matrix-glow');
-        
-        currentRankTitle = "👾 Matrix Hacker 🔥";
-        const rankDisplay = document.getElementById('rank-display');
-        rankDisplay.innerText = currentRankTitle;
-        rankDisplay.style.color = "#0ff";
-        rankDisplay.style.borderColor = "#0ff";
-        rankDisplay.style.background = `linear-gradient(135deg, #004d40, #0f172a)`;
-
-        createFloatingText(canvas.width/2, canvas.height/2, "TIME FREEZE MATRIX!", "#0ff", true);
-        document.getElementById('game-status').innerText = "🌌 MATRIX ANOMALY TRIGGERED! TIME SLOWED + INFINITE RAGE! 🌌";
-        document.getElementById('game-status').style.color = "#0ff";
-        
-        updateSupabaseScore(); // Save title to DB immediately!
     }
 
     function updateBirdColorTier() {
@@ -802,12 +740,11 @@
                 data.forEach((row, index) => {
                     const tr = document.createElement('tr');
                     if (row.pi_username === playerPiUser) tr.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
-                    
                     let displayTitle = row.title || "Rookie 🛡️";
                     tr.innerHTML = `
                         <td>${index + 1}</td>
                         <td>${row.pi_username}</td>
-                        <td style="font-weight:bold; font-size:11px; ${displayTitle.includes('Matrix') ? 'color:#0ff;' : ''}">${displayTitle}</td>
+                        <td style="font-weight:bold; font-size:11px;">${displayTitle}</td>
                         <td style="color:#4ade80; font-weight:bold;">${row.high_score || 0}</td>
                     `;
                     tbody.appendChild(tr);
@@ -852,15 +789,20 @@
     }
 
     function executeShot() {
-        if (ammo <= 0 && !isRageMode && !isMatrixMode) {
+        // 🔴 التعديل هنا: منع الطلقات المزدوجة المتتالية (Double trigger) لمنع التعليق
+        const now = performance.now();
+        if (now - lastShotTime < 80) return; 
+        lastShotTime = now;
+
+        if (ammo <= 0 && !isRageMode) {
             playAdvancedSound('empty');
             document.getElementById('game-status').innerText = "❌ OUT OF AMMO! Refill using your Pi Wallet.";
             document.getElementById('game-status').style.color = "#f87171";
             return;
         }
         
-        if (!isRageMode && !isMatrixMode) ammo--;
-        document.getElementById('ammo-val').innerText = (isRageMode || isMatrixMode) ? "♾️" : ammo;
+        if (!isRageMode) ammo--;
+        document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
         
         playAdvancedSound('shoot');
         flashIntensity = 0.8; 
@@ -883,24 +825,16 @@
         targets.forEach(t => {
             if (t.special === "bonus" && t.opacity < 0.2) return;
 
-            let hitRadius = (isRageMode || isMatrixMode) ? t.radius + 45 : t.radius + 18;
+            let hitRadius = isRageMode ? t.radius + 45 : t.radius + 18;
             const distance = Math.sqrt((aimX - t.x)**2 + (aimY - t.y)**2);
             
             if (distance <= hitRadius) {
                 hitAny = true;
-                
-                // Matrix Target Logic
-                if (t.special === "matrix_orb") {
-                    triggerMatrixMode();
-                    resetTarget(t);
-                    return;
-                }
-
                 hitCountThisShot++;
-                score += t.points * (isMatrixMode ? 3 : 1); // 3x multiplier in matrix mode
+                score += t.points;
                 totalHits++;
 
-                if (!isRageMode && !isMatrixMode) {
+                if (!isRageMode) {
                     rageMeter++;
                     document.getElementById('rage-val').innerText = (rageMeter * 10) + "%";
                     if (rageMeter >= 10) {
@@ -920,7 +854,7 @@
 
                 createFeatherCloud(t.x, t.y, pColor);
                 playAdvancedSound('hit');
-                createFloatingText(t.x, t.y, "+" + (t.points * (isMatrixMode ? 3 : 1)), pColor, false);
+                createFloatingText(t.x, t.y, "+" + t.points, pColor, false);
                 
                 if (t.special === "bonus") {
                     ammoBonusEarned += 12;
@@ -940,17 +874,7 @@
             }
         });
         
-        // Spawn Matrix Orb Randomly
-        if (hitAny && Math.random() < 0.04 && !isMatrixMode && totalHits > 15 && !targets.some(t => t.special === "matrix_orb")) {
-            let newOrb = {
-                id: 999, type: "matrix_orb", x: -40, y: Math.random() * (canvas.height - 100) + 20,
-                xSpeed: 4.5, ySpeed: Math.sin(Date.now()) * 2, width: 40, height: 40, flap: 0, flapSpeed: 0, radius: 25,
-                sineWave: true, sineCounter: 0, opacity: 1.0, points: 500, special: "matrix_orb"
-            };
-            targets.push(newOrb);
-            createFloatingText(canvas.width/2, canvas.height/2 - 50, "✨ MATRIX ORB APPEARED! ✨", "#0ff", true);
-        }
-
+        // Dynamic Bird Generation System
         const MAX_BIRDS = 6;
         if (hitAny && totalHits > 0 && totalHits % 20 === 0 && targets.length < MAX_BIRDS) {
             let newBird = {
@@ -964,19 +888,19 @@
 
         // Check Boss hit
         if (boss.active && boss.enterWarning <= 0) {
-            let bossHitRadius = (isRageMode || isMatrixMode) ? boss.radius + 45 : boss.radius + 15;
+            let bossHitRadius = isRageMode ? boss.radius + 45 : boss.radius + 15;
             const dist = Math.sqrt((aimX - boss.x)**2 + (aimY - boss.y)**2);
             if (dist <= bossHitRadius) {
-                boss.hp -= (isMatrixMode ? 2 : 1); // Matrix mode deals double damage to boss
+                boss.hp--;
                 hitAny = true;
                 createFeatherCloud(boss.x, boss.y, "#ef4444");
                 playAdvancedSound('hit');
                 screenShake = 15;
                 if (boss.hp <= 0) {
                     boss.active = false;
-                    score += 300 * (isMatrixMode ? 2 : 1);
+                    score += 300;
                     totalHits += 5;
-                    if (!isRageMode && !isMatrixMode) ammo += 30;
+                    if (!isRageMode) ammo += 30;
                     createFloatingText(boss.x, boss.y, "+300 BOSS KILL!", "#fbbf24", true);
                     screenShake = 35;
                     playAdvancedSound('fanfare_bonus');
@@ -991,7 +915,7 @@
 
         if (hitAny) {
             if (hitCountThisShot > 1) {
-                let comboBonus = hitCountThisShot * 15 * (isMatrixMode ? 3 : 1);
+                let comboBonus = hitCountThisShot * 15;
                 score += comboBonus;
                 currentStatusText = `🔥 SWARM COMBO x${hitCountThisShot}! +${comboBonus} BONUS PTS! ` + currentStatusText;
                 playAdvancedSound('fanfare_bonus');
@@ -1001,10 +925,9 @@
 
             document.getElementById('score-val').innerText = score;
             document.getElementById('hits-val').innerText = totalHits;
-            let statusColor = isRageMode ? "#ef4444" : (isMatrixMode ? "#0ff" : "#4ade80");
-            
+            let statusColor = isRageMode ? "#ef4444" : "#4ade80";
             if (totalHits > 0 && totalHits % 10 === 0 && !boss.active) {
-                if (!isRageMode && !isMatrixMode) ammo += 50;
+                if (!isRageMode) ammo += 50;
                 playAdvancedSound('fanfare_bonus');
                 currentStatusText += "🎁 INVENTORY BOX! +50 AMMO! ";
                 statusColor = "#eab308";
@@ -1023,31 +946,28 @@
 
             updateBirdColorTier();
             updatePlayerRank();
-            
-            if (!isMatrixMode && currentRankTitle !== oldRankTitle) {
+            if (currentRankTitle !== oldRankTitle) {
                 currentStatusText = `🎖️ تـرقـيـة جـديـدة: لقد أصبحت [ ${currentRankTitle} ] !!! ` + currentStatusText;
                 statusColor = "#a855f7";
                 playAdvancedSound('fanfare_bonus');
                 screenShake = 25;
-            } else if (!isMatrixMode && currentBirdStyle.name !== oldStyleName) {
+            } else if (currentBirdStyle.name !== oldStyleName) {
                 currentStatusText += `🔥 LEVEL UP: [${currentBirdStyle.name}]!`;
                 statusColor = "#38bdf8";
-            } else if (!boss.active && !isMatrixMode) {
+            } else if (!boss.active) {
                 let remaining = getNextTierRemainingHits();
                 currentStatusText += `| Next swarm in ${remaining} hits.`;
             }
 
-            if (ammoBonusEarned > 0 && !isRageMode && !isMatrixMode) ammo += ammoBonusEarned;
-            document.getElementById('ammo-val').innerText = (isRageMode || isMatrixMode) ? "♾️" : ammo;
+            if (ammoBonusEarned > 0 && !isRageMode) ammo += ammoBonusEarned;
+            document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
 
-            if (!isMatrixMode) {
-                document.getElementById('game-status').innerText = currentStatusText;
-                document.getElementById('game-status').style.color = statusColor;
-            }
+            document.getElementById('game-status').innerText = currentStatusText;
+            document.getElementById('game-status').style.color = statusColor;
 
             updateSupabaseScore();
         } else {
-            if (!isRageMode && !isMatrixMode) {
+            if (!isRageMode) {
                 document.getElementById('game-status').innerText = "💨 SHOT MISSED! Adjust your AK-47 trajectory.";
                 document.getElementById('game-status').style.color = "#fbbf24";
             }
@@ -1121,10 +1041,19 @@
         e.preventDefault();
         if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
     });
+
+    // 🔴 التعديل هنا: استخدام mousedown وإيقاف النقر المزدوج في الهواتف لزيادة سرعة استجابة الزر 
     const fireTriggerBtn = document.getElementById('fire-trigger');
-    fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
-    fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
-    
+    fireTriggerBtn.addEventListener('mousedown', (e) => { 
+        e.preventDefault(); 
+        executeShot(); 
+    });
+    fireTriggerBtn.addEventListener('touchstart', (e) => { 
+        e.preventDefault(); 
+        e.stopPropagation(); // يمنع تسجيل click بعد touch مباشرة
+        executeShot(); 
+    }, { passive: false });
+
     function drawMirroredLoopBackground(image, opacityValue) {
         ctx.save();
         ctx.globalAlpha = opacityValue;
@@ -1144,58 +1073,36 @@
     function startGameLoop() {
         if(gameAnimationId) cancelAnimationFrame(gameAnimationId);
         lastTime = performance.now();
-
         function gameLoop(currentTime) {
-            let deltaTime = (currentTime - lastTime) / 16.666; 
+            let deltaTime = (currentTime - lastTime) / 16.666;
             lastTime = currentTime;
 
-            if (deltaTime > 3) deltaTime = 3; 
-
-            // Time Freeze Logic
-            let targetTimeMult = isMatrixMode ? 0.15 : 1.0;
-
-            if (isMatrixMode) {
-                matrixTimeLeft -= deltaTime;
-                if (matrixTimeLeft <= 0) {
-                    isMatrixMode = false;
-                    document.getElementById('hunting-canvas').classList.remove('matrix-glow');
-                    document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
-                    document.getElementById('game-status').innerText = "الزمن يعود لطبيعته...";
-                    document.getElementById('game-status').style.color = "#38bdf8";
-                    updatePlayerRank(); // Restore original title
-                    updateSupabaseScore();
-                }
-            }
-
+            if (deltaTime > 3) deltaTime = 3;
             if (isRageMode) {
                 rageTimeLeft -= deltaTime;
                 if (rageTimeLeft <= 0) {
                     isRageMode = false;
                     document.getElementById('rage-val').innerText = "0%";
-                    if(!isMatrixMode) document.getElementById('ammo-val').innerText = ammo;
-                    if(!isMatrixMode) {
-                        document.getElementById('game-status').innerText = "🧊 الغضب انتهى! عدنا للوضع الطبيعي.";
-                        document.getElementById('game-status').style.color = "#38bdf8";
-                    }
+                    document.getElementById('ammo-val').innerText = ammo;
+                    document.getElementById('game-status').innerText = "🧊 الغضب انتهى! عدنا للوضع الطبيعي.";
+                    document.getElementById('game-status').style.color = "#38bdf8";
                 }
             }
 
-            bgX -= 0.4 * deltaTime * targetTimeMult;
-
+            bgX -= 0.4 * deltaTime;
             if (bgAlpha < 1.0) {
                 bgAlpha += 0.02 * deltaTime;
                 if (bgAlpha > 1.0) bgAlpha = 1.0;
             }
 
             leaves.forEach(leaf => {
-                leaf.y += leaf.speed * deltaTime * targetTimeMult;
-                leaf.x += Math.sin(leaf.y * 0.02) * 0.4 * deltaTime * targetTimeMult;
+                leaf.y += leaf.speed * deltaTime;
+                leaf.x += Math.sin(leaf.y * 0.02) * 0.4 * deltaTime;
                 if (leaf.y > canvas.height) {
                     leaf.y = -10;
                     leaf.x = Math.random() * canvas.width;
                 }
             });
-            
             if (joyActive) {
                 smoothJoyX += (joyMoveX - smoothJoyX) * 0.28 * deltaTime;
                 smoothJoyY += (joyMoveY - smoothJoyY) * 0.28 * deltaTime;
@@ -1214,20 +1121,20 @@
 
             targets.forEach(t => {
                 if (t.sineWave) {
-                    t.sineCounter += 0.08 * deltaTime * targetTimeMult;
-                    t.x += t.xSpeed * deltaTime * targetTimeMult;
-                    t.y += (t.ySpeed + Math.sin(t.sineCounter) * 2.5) * deltaTime * targetTimeMult;
+                    t.sineCounter += 0.08 * deltaTime;
+                    t.x += t.xSpeed * deltaTime;
+                    t.y += (t.ySpeed + Math.sin(t.sineCounter) * 2.5) * deltaTime;
                 } else if (t.special === "bonus") {
-                    t.ghostCounter += 0.03 * deltaTime * targetTimeMult;
+                    t.ghostCounter += 0.03 * deltaTime;
                     t.opacity = (Math.sin(t.ghostCounter) * 0.5) + 0.5; 
-                    t.x += t.xSpeed * deltaTime * targetTimeMult;
-                    t.y += t.ySpeed * deltaTime * targetTimeMult;
+                    t.x += t.xSpeed * deltaTime;
+                    t.y += t.ySpeed * deltaTime;
                 } else {
-                    t.x += t.xSpeed * deltaTime * targetTimeMult;
-                    t.y += t.ySpeed * deltaTime * targetTimeMult;
+                    t.x += t.xSpeed * deltaTime;
+                    t.y += t.ySpeed * deltaTime;
                 }
 
-                t.flap += t.flapSpeed * deltaTime * targetTimeMult;
+                t.flap += t.flapSpeed * deltaTime;
 
                 let minBorder = 22;
                 let maxXBorder = canvas.width - minBorder;
@@ -1246,16 +1153,18 @@
             if (screenShake > 0) {
                 const dx = (Math.random() - 0.5) * screenShake;
                 const dy = (Math.random() - 0.5) * screenShake;
-                document.getElementById('game-container').style.transform = `translate(${dx}px, ${dy}px)`;
+                
+                // 🔴 التعديل هنا: الاهتزاز للشاشة فقط وليس للحاوية، كي لا يهرب الزر من إصبعك
+                document.getElementById('hunting-canvas').style.transform = `translate(${dx}px, ${dy}px)`;
+                
                 screenShake *= Math.pow(0.85, deltaTime);
                 if (screenShake < 0.2) {
                     screenShake = 0;
-                    document.getElementById('game-container').style.transform = 'none';
+                    document.getElementById('hunting-canvas').style.transform = 'none';
                 }
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
             if (previousBgImg && bgAlpha < 1.0) {
                 drawMirroredLoopBackground(previousBgImg, 1.0 - bgAlpha);
             }
@@ -1266,39 +1175,35 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            if (isMatrixMode) {
-                ctx.fillStyle = "rgba(0, 255, 200, 0.15)";
-            } else if (isRageMode) {
+            if (isRageMode) {
                 ctx.fillStyle = "rgba(220, 38, 38, 0.25)";
             } else {
                 ctx.fillStyle = "rgba(2, 6, 23, 0.15)";
             }
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = isMatrixMode ? "rgba(0, 255, 200, 0.6)" : "rgba(234, 179, 8, 0.4)";
+            ctx.fillStyle = "rgba(234, 179, 8, 0.4)";
             leaves.forEach(leaf => {
                 ctx.beginPath();
                 ctx.arc(leaf.x, leaf.y, leaf.size, 0, Math.PI * 2);
                 ctx.fill();
             });
-            
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
-                p.x += p.vx * deltaTime * targetTimeMult; 
-                p.y += p.vy * deltaTime * targetTimeMult; 
-                p.vy += 0.18 * deltaTime * targetTimeMult; 
-                p.rotation += p.rotationSpeed * deltaTime * targetTimeMult;
+                p.x += p.vx * deltaTime; 
+                p.y += p.vy * deltaTime; 
+                p.vy += 0.18 * deltaTime; 
+                p.rotation += p.rotationSpeed * deltaTime;
                 p.alpha -= 0.025 * deltaTime;
                 
                 if (p.alpha <= 0) { 
-                    particles.splice(i, 1); 
+                    particles.splice(i, 1);
                 } else {
                     ctx.save();
                     ctx.globalAlpha = p.alpha;
                     ctx.fillStyle = p.color;
                     ctx.translate(p.x, p.y);
                     ctx.rotate(p.rotation);
-                    ctx.beginPath(); 
+                    ctx.beginPath();
                     ctx.ellipse(0, 0, p.radius * 2, p.radius, 0, 0, Math.PI * 2); 
                     ctx.fill();
                     ctx.restore();
@@ -1318,31 +1223,10 @@
                     ctx.rotate(moveAngle);
                 }
                 
-                if (t.special === "matrix_orb") {
-                    // Draw Matrix Orb
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = "#0ff";
-                    ctx.fillStyle = "#000";
-                    ctx.beginPath();
-                    ctx.arc(0, 0, t.width/2, 0, Math.PI*2);
-                    ctx.fill();
-                    ctx.fillStyle = "#0ff";
-                    ctx.beginPath();
-                    ctx.arc(0, 0, t.width/2 - 4, 0, Math.PI*2);
-                    ctx.fill();
-                    ctx.fillStyle = "#fff";
-                    ctx.font = "bold 20px Arial";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    ctx.fillText("M", 0, 0);
-                    ctx.restore();
-                    return; // Skip bird drawing
-                }
-
-                let bodyColor = isMatrixMode ? "#004d40" : currentBirdStyle.primary;
-                let wingColor = isMatrixMode ? "#0ff" : currentBirdStyle.secondary;
-                let headColor = isMatrixMode ? "#00251a" : currentBirdStyle.detail;
-                let beakColor = isMatrixMode ? "#fff" : currentBirdStyle.beak;
+                let bodyColor = currentBirdStyle.primary;
+                let wingColor = currentBirdStyle.secondary;
+                let headColor = currentBirdStyle.detail;
+                let beakColor = currentBirdStyle.beak;
 
                 if (t.special === "fast") {
                     bodyColor = "#475569"; wingColor = "#cbd5e1"; headColor = "#1e293b";
@@ -1395,9 +1279,8 @@
                     ctx.fillText(label, t.x - 22, t.y - t.height - 4);
                 }
             });
-            
             if (boss.active) {
-                boss.timer += deltaTime * 0.05 * targetTimeMult;
+                boss.timer += deltaTime * 0.05;
                 if (boss.enterWarning > 0) {
                     boss.enterWarning -= deltaTime * 0.016;
                     ctx.save();
@@ -1422,10 +1305,10 @@
                         ctx.rotate(bMoveAngle);
                     }
 
-                    let bBodyColor = isMatrixMode ? "#000" : "#0f172a";
-                    let bWingColor = isMatrixMode ? "#0ff" : "#ef4444";
-                    let bHeadColor = isMatrixMode ? "#111" : "#020617";
-                    let bBeakColor = isMatrixMode ? "#0ff" : "#f87171";
+                    let bBodyColor = "#0f172a";
+                    let bWingColor = "#ef4444";
+                    let bHeadColor = "#020617";
+                    let bBeakColor = "#f87171";
 
                     let tW = 85; let tH = 60;
                     ctx.fillStyle = bBodyColor;
@@ -1460,14 +1343,14 @@
 
                     ctx.fillStyle = "#333";
                     ctx.fillRect(boss.x - 30, boss.y - 50, 60, 8);
-                    ctx.fillStyle = isMatrixMode ? "#0ff" : "#ef4444";
+                    ctx.fillStyle = "#ef4444";
                     ctx.fillRect(boss.x - 30, boss.y - 50, 60 * (boss.hp / boss.maxHp), 8);
                 }
             }
 
             for (let i = floatingTexts.length - 1; i >= 0; i--) {
                 let ft = floatingTexts[i];
-                ft.y += ft.vy * deltaTime * targetTimeMult;
+                ft.y += ft.vy * deltaTime;
                 ft.life -= 0.02 * deltaTime;
                 if (ft.life <= 0) {
                     floatingTexts.splice(i, 1);
@@ -1518,9 +1401,8 @@
                 ctx.fillStyle = '#ca8a04'; ctx.fillRect(-3, -190, 6, 12); 
             }
             ctx.restore();
-            
             ctx.save();
-            ctx.strokeStyle = isRageMode ? '#fbbf24' : (isMatrixMode ? '#0ff' : '#f87171'); 
+            ctx.strokeStyle = isRageMode ? '#fbbf24' : '#f87171'; 
             ctx.lineWidth = 2.5;
             ctx.translate(aimX, aimY);
             ctx.beginPath();
@@ -1528,15 +1410,15 @@
             ctx.beginPath();
             ctx.moveTo(-22, 0);
             ctx.lineTo(22, 0); ctx.moveTo(0, -22); ctx.lineTo(0, 22); ctx.stroke();
-            ctx.fillStyle = isRageMode ? '#fbbf24' : (isMatrixMode ? '#0ff' : '#ef4444');
+            ctx.fillStyle = isRageMode ? '#fbbf24' : '#ef4444';
             ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
             
-            gameAnimationId = requestAnimationFrame(gameLoop); 
+            gameAnimationId = requestAnimationFrame(gameLoop);
         }
         
-        gameAnimationId = requestAnimationFrame(gameLoop); 
+        gameAnimationId = requestAnimationFrame(gameLoop);
     }
 
     function resetTarget(t) {
@@ -1598,7 +1480,7 @@
             const result = await response.json();
             if (result.success) {
                 ammo += 30;
-                document.getElementById('ammo-val').innerText = (isRageMode || isMatrixMode) ? "♾️" : ammo;
+                document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
                 document.getElementById('game-status').innerText = "🪙 1 Pi received successfully! Magazine reloaded. 🔋";
                 document.getElementById('game-status').style.color = "#4ade80";
                 playAdvancedSound('reload');
