@@ -103,44 +103,52 @@
             position: relative;
         }
         
+        /* تعديل الحاوية السفلية لمنع الخروج عن الشاشة وتوزيع العناصر بذكاء */
         .controls-wrapper {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-top: 10px;
-            gap: 10px;
+            gap: 6px; 
             direction: ltr; 
             background: #0f172a;
-            padding: 12px;
+            padding: 8px;
             border-radius: 18px;
             border: 1px solid #1e293b;
+            box-sizing: border-box;
+            width: 100%;
         }
 
+        /* تعديل زر الإطلاق ليتصاغر ديناميكياً ويحافظ على دائريته الكاملة */
         .btn-shoot {
             background-image: linear-gradient(135deg, #ef4444, #dc2626, #991b1b);
             color: white;
             border: 2px solid #fca5a5;
             border-radius: 50%;
-            width: 95px;
-            height: 95px;
-            flex-shrink: 0; /* يمنع الزر من الانضغاط ليصبح بيضاوي */
+            width: clamp(65px, 16vw, 88px);
+            height: clamp(65px, 16vw, 88px);
+            flex-shrink: 0; 
             aspect-ratio: 1 / 1;
-            font-size: 18px;
+            font-size: clamp(12px, 3vw, 16px);
             font-weight: 900;
             cursor: pointer;
             box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
             transition: transform 0.05s ease;
             -webkit-tap-highlight-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-shoot:active {
             transform: scale(0.85);
             background-image: linear-gradient(135deg, #991b1b, #451a03);
         }
 
+        /* تعديل حاوية الجويستيك لتتناسق مع زر الإطلاق تماماً */
         .joystick-container {
-            width: 95px;
-            height: 95px;
-            flex-shrink: 0; /* يمنع عصا التحكم من الانضغاط */
+            width: clamp(65px, 16vw, 88px);
+            height: clamp(65px, 16vw, 88px);
+            flex-shrink: 0; 
             aspect-ratio: 1 / 1;
             background: radial-gradient(circle, #1e293b 40%, #0f172a 100%);
             border: 3px solid #38bdf8;
@@ -153,8 +161,8 @@
             touch-action: none;
         }
         .joystick-knob {
-            width: 40px;
-            height: 40px;
+            width: clamp(26px, 6.5vw, 36px);
+            height: clamp(26px, 6.5vw, 36px);
             background: linear-gradient(135deg, #0284c7, #0369a1);
             border: 2px solid #38bdf8;
             border-radius: 50%;
@@ -164,35 +172,45 @@
             transition: transform 0.05s ease;
         }
 
+        /* تعديل زر شحن الذخيرة ليمتص المساحة المتبقية دون التسبب في تمدد عمودي عشوائي */
         .btn-ammo {
             flex: 1;
+            min-width: 0;
             background-image: linear-gradient(135deg, #eab308, #ca8a04); 
             color: #0f172a; 
-            font-size: 13px; 
-            padding: 14px 8px; 
+            font-size: clamp(9px, 2.4vw, 12px); 
+            padding: 4px 2px; 
             font-weight: 900;
             border-radius: 14px;
             border: none;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
-            letter-spacing: 0.2px;
-            height: 70px;
+            letter-spacing: 0.1px;
+            height: clamp(65px, 16vw, 88px);
             display: flex;
             align-items: center;
             justify-content: center;
+            text-align: center;
+            word-wrap: break-word;
+            box-sizing: border-box;
         }
         
+        /* تعديل زر الإيقاف المؤقت ليتطابق ارتفاعه مع بقية الأزرار */
         .btn-pause {
             background: #1e293b;
             color: #fff;
             border: 2px solid #38bdf8;
             border-radius: 12px;
-            padding: 10px 15px;
-            font-size: 22px;
+            padding: 0 clamp(8px, 2vw, 14px);
+            font-size: clamp(14px, 3.5vw, 20px);
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             transition: 0.2s;
-            height: 70px;
+            height: clamp(65px, 16vw, 88px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
         }
         .btn-pause:active { transform: scale(0.9); }
 
@@ -295,7 +313,7 @@
             </div>
         </div>
 
-        <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38bdf8; font-size: 16px;">🏆 GLOBAL LEADERBOARD</h3>
+        <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38b#38bdf8; font-size: 16px;">🏆 GLOBAL LEADERBOARD</h3>
         <table class="leaderboard-table">
             <thead>
                 <tr>
@@ -404,11 +422,11 @@
     let joyMoveY = 0;
     let smoothJoyX = 0; 
     let smoothJoyY = 0; 
-    const maxJoyDistance = 35;
+    let maxJoyDistance = 35; /* تم تحويله إلى متغير عام لضبطه ديناميكياً مع حجم الحاوية */
     let lastTime = performance.now(); 
 
-    let lastShotTime = 0; // تم إضافة متغير لتنظيم وقت الطلقات ومنع التعليق
-    const SHOT_COOLDOWN = 180; // نظام التبريد بالميلي ثانية
+    let lastShotTime = 0; 
+    const SHOT_COOLDOWN = 180; 
 
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
@@ -743,13 +761,11 @@
                 rotationSpeed: (Math.random() - 0.5) * 0.3, alpha: 1, color: Math.random() > 0.4 ? pColor : 'rgba(239, 68, 68, 0.8)'
             });
         }
-        // تنظيف الجزيئات القديمة لمنع التعليق
         if (particles.length > 150) particles.splice(0, particles.length - 150);
     }
 
     function createFloatingText(x, y, text, color, isCrit = false) {
         floatingTexts.push({ x, y, text, color, life: 1.0, isCrit, vy: -1.5 });
-        // تنظيف النصوص القديمة لمنع التعليق
         if (floatingTexts.length > 20) floatingTexts.splice(0, floatingTexts.length - 20);
     }
 
@@ -800,7 +816,6 @@
     function executeShot() {
         if (isPaused || isGameOver) return;
 
-        // التحقق من نظام التبريد لمنع إغراق النظام بالطلقات والتعليق
         const now = performance.now();
         if (now - lastShotTime < SHOT_COOLDOWN) return;
         lastShotTime = now;
@@ -940,6 +955,8 @@
             const touch = e.touches ? e.touches[0] : e;
             const rect = joyContainer.getBoundingClientRect();
             joyStartX = rect.left + rect.width / 2; joyStartY = rect.top + rect.height / 2;
+            /* احتساب نطاق الجويستيك ديناميكياً ليناسب تصغير الشاشة وحجم الحاوية الجديد بدقة */
+            maxJoyDistance = rect.width * 0.38; 
         }
         function handleJoyMove(e) {
             if (!joyActive) return;
@@ -970,11 +987,9 @@
     canvas.addEventListener('mousemove', (e) => { handleCanvasPointer(e.clientX, e.clientY); });
     canvas.addEventListener('mousedown', (e) => { handleCanvasPointer(e.clientX, e.clientY); });
     canvas.addEventListener('touchstart', (e) => {
-        // e.preventDefault(); تمت الإزالة للسماح بالتمرير، اللمس المتعدد يعالج بشكل منفصل
         if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
     });
     canvas.addEventListener('touchmove', (e) => {
-        // e.preventDefault(); تمت الإزالة للسماح بالتمرير
         if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
     });
     const fireTriggerBtn = document.getElementById('fire-trigger');
