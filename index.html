@@ -103,7 +103,6 @@
             position: relative;
         }
         
-        /* تعديل الحاوية السفلية لمنع الخروج عن الشاشة وتوزيع العناصر بذكاء */
         .controls-wrapper {
             display: flex;
             justify-content: space-between;
@@ -119,17 +118,17 @@
             width: 100%;
         }
 
-        /* تعديل زر الإطلاق ليتصاغر ديناميكياً ويحافظ على دائريته الكاملة */
+        /* زر الإطلاق - تم زيادة الحجم */
         .btn-shoot {
             background-image: linear-gradient(135deg, #ef4444, #dc2626, #991b1b);
             color: white;
             border: 2px solid #fca5a5;
             border-radius: 50%;
-            width: clamp(65px, 16vw, 88px);
-            height: clamp(65px, 16vw, 88px);
+            width: clamp(75px, 20vw, 100px);
+            height: clamp(75px, 20vw, 100px);
             flex-shrink: 0; 
             aspect-ratio: 1 / 1;
-            font-size: clamp(12px, 3vw, 16px);
+            font-size: clamp(14px, 3.5vw, 18px);
             font-weight: 900;
             cursor: pointer;
             box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
@@ -144,10 +143,10 @@
             background-image: linear-gradient(135deg, #991b1b, #451a03);
         }
 
-        /* تعديل حاوية الجويستيك لتتناسق مع زر الإطلاق تماماً */
+        /* الجويستيك - تم زيادة الحجم ليتناسق مع زر الإطلاق */
         .joystick-container {
-            width: clamp(65px, 16vw, 88px);
-            height: clamp(65px, 16vw, 88px);
+            width: clamp(75px, 20vw, 100px);
+            height: clamp(75px, 20vw, 100px);
             flex-shrink: 0; 
             aspect-ratio: 1 / 1;
             background: radial-gradient(circle, #1e293b 40%, #0f172a 100%);
@@ -161,8 +160,8 @@
             touch-action: none;
         }
         .joystick-knob {
-            width: clamp(26px, 6.5vw, 36px);
-            height: clamp(26px, 6.5vw, 36px);
+            width: clamp(30px, 8vw, 42px);
+            height: clamp(30px, 8vw, 42px);
             background: linear-gradient(135deg, #0284c7, #0369a1);
             border: 2px solid #38bdf8;
             border-radius: 50%;
@@ -172,13 +171,13 @@
             transition: transform 0.05s ease;
         }
 
-        /* تعديل زر شحن الذخيرة ليمتص المساحة المتبقية دون التسبب في تمدد عمودي عشوائي */
+        /* زر شحن الذخيرة - تم تصغيره */
         .btn-ammo {
-            flex: 1;
+            flex: 0.7;
             min-width: 0;
             background-image: linear-gradient(135deg, #eab308, #ca8a04); 
             color: #0f172a; 
-            font-size: clamp(9px, 2.4vw, 12px); 
+            font-size: clamp(8px, 2vw, 11px); 
             padding: 4px 2px; 
             font-weight: 900;
             border-radius: 14px;
@@ -186,7 +185,7 @@
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
             letter-spacing: 0.1px;
-            height: clamp(65px, 16vw, 88px);
+            height: clamp(55px, 14vw, 75px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -195,18 +194,18 @@
             box-sizing: border-box;
         }
         
-        /* تعديل زر الإيقاف المؤقت ليتطابق ارتفاعه مع بقية الأزرار */
+        /* زر الإيقاف المؤقت - تم تصغيره ليتماشى مع زر الذخيرة */
         .btn-pause {
             background: #1e293b;
             color: #fff;
             border: 2px solid #38bdf8;
             border-radius: 12px;
             padding: 0 clamp(8px, 2vw, 14px);
-            font-size: clamp(14px, 3.5vw, 20px);
+            font-size: clamp(12px, 3vw, 18px);
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             transition: 0.2s;
-            height: clamp(65px, 16vw, 88px);
+            height: clamp(55px, 14vw, 75px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -313,7 +312,7 @@
             </div>
         </div>
 
-        <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38b#38bdf8; font-size: 16px;">🏆 GLOBAL LEADERBOARD</h3>
+        <h3 style="margin-top: 15px; margin-bottom: 5px; color: #38bdf8; font-size: 16px;">🏆 GLOBAL LEADERBOARD</h3>
         <table class="leaderboard-table">
             <thead>
                 <tr>
@@ -422,7 +421,7 @@
     let joyMoveY = 0;
     let smoothJoyX = 0; 
     let smoothJoyY = 0; 
-    let maxJoyDistance = 35; /* تم تحويله إلى متغير عام لضبطه ديناميكياً مع حجم الحاوية */
+    let maxJoyDistance = 35; 
     let lastTime = performance.now(); 
 
     let lastShotTime = 0; 
@@ -955,7 +954,6 @@
             const touch = e.touches ? e.touches[0] : e;
             const rect = joyContainer.getBoundingClientRect();
             joyStartX = rect.left + rect.width / 2; joyStartY = rect.top + rect.height / 2;
-            /* احتساب نطاق الجويستيك ديناميكياً ليناسب تصغير الشاشة وحجم الحاوية الجديد بدقة */
             maxJoyDistance = rect.width * 0.38; 
         }
         function handleJoyMove(e) {
