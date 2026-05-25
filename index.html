@@ -16,7 +16,7 @@
             text-align: center;
             margin: 0;
             padding: 5px; 
-            touch-action: pan-y; /* يسمح بالتمرير لأسفل لرؤية قائمة المتصدرين */
+            touch-action: pan-y;
             user-select: none;
             overflow-x: hidden;
         }
@@ -123,6 +123,8 @@
             border-radius: 50%;
             width: 95px;
             height: 95px;
+            flex-shrink: 0; /* يمنع الزر من الانضغاط ليصبح بيضاوي */
+            aspect-ratio: 1 / 1;
             font-size: 18px;
             font-weight: 900;
             cursor: pointer;
@@ -138,6 +140,8 @@
         .joystick-container {
             width: 95px;
             height: 95px;
+            flex-shrink: 0; /* يمنع عصا التحكم من الانضغاط */
+            aspect-ratio: 1 / 1;
             background: radial-gradient(circle, #1e293b 40%, #0f172a 100%);
             border: 3px solid #38bdf8;
             border-radius: 50%;
@@ -282,7 +286,6 @@
  
         <p id="game-status" style="color: #fbbf24; font-weight: bold; min-height: 20px; font-size: 13px; margin: 5px 0;">3 birds on screen! Brown = Leader, Silver = Wave Jumper, Gold = Ghost Refiller! 🚀</p>
         
-        <!-- تم عكس الأزرار بناءً على طلبك تماماً لليسار واليمين -->
         <div class="controls-wrapper">
             <button class="btn-shoot" id="fire-trigger">FIRE 🔥</button>
             <button class="btn-ammo" onclick="buyAmmoWithPi()">🪙 REFILL<br>30 AMMO<br>(1 Pi)</button>
@@ -403,6 +406,9 @@
     let smoothJoyY = 0; 
     const maxJoyDistance = 35;
     let lastTime = performance.now(); 
+
+    let lastShotTime = 0; // تم إضافة متغير لتنظيم وقت الطلقات ومنع التعليق
+    const SHOT_COOLDOWN = 180; // نظام التبريد بالميلي ثانية
 
     const canvas = document.getElementById('hunting-canvas');
     const ctx = canvas.getContext('2d');
@@ -737,10 +743,14 @@
                 rotationSpeed: (Math.random() - 0.5) * 0.3, alpha: 1, color: Math.random() > 0.4 ? pColor : 'rgba(239, 68, 68, 0.8)'
             });
         }
+        // تنظيف الجزيئات القديمة لمنع التعليق
+        if (particles.length > 150) particles.splice(0, particles.length - 150);
     }
 
     function createFloatingText(x, y, text, color, isCrit = false) {
         floatingTexts.push({ x, y, text, color, life: 1.0, isCrit, vy: -1.5 });
+        // تنظيف النصوص القديمة لمنع التعليق
+        if (floatingTexts.length > 20) floatingTexts.splice(0, floatingTexts.length - 20);
     }
 
     function spawnBoss() {
@@ -789,6 +799,12 @@
 
     function executeShot() {
         if (isPaused || isGameOver) return;
+
+        // التحقق من نظام التبريد لمنع إغراق النظام بالطلقات والتعليق
+        const now = performance.now();
+        if (now - lastShotTime < SHOT_COOLDOWN) return;
+        lastShotTime = now;
+
         if (ammo <= 0 && !isRageMode) {
             playAdvancedSound('empty');
             document.getElementById('game-status').innerText = "❌ OUT OF AMMO! Refill using your Pi Wallet.";
@@ -954,14 +970,16 @@
     canvas.addEventListener('mousemove', (e) => { handleCanvasPointer(e.clientX, e.clientY); });
     canvas.addEventListener('mousedown', (e) => { handleCanvasPointer(e.clientX, e.clientY); });
     canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault(); if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
+        // e.preventDefault(); تمت الإزالة للسماح بالتمرير، اللمس المتعدد يعالج بشكل منفصل
+        if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
     });
     canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault(); if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
+        // e.preventDefault(); تمت الإزالة للسماح بالتمرير
+        if(e.touches.length > 0) handleCanvasPointer(e.touches[0].clientX, e.touches[0].clientY);
     });
     const fireTriggerBtn = document.getElementById('fire-trigger');
     fireTriggerBtn.addEventListener('click', (e) => { e.preventDefault(); executeShot(); });
-    fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); });
+    fireTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); executeShot(); }, { passive: false });
 
     function drawMirroredLoopBackground(image, opacityValue) {
         ctx.save(); ctx.globalAlpha = opacityValue;
