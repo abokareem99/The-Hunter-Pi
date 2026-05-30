@@ -118,7 +118,6 @@
             width: 100%;
         }
 
-        /* زر الإطلاق - تم زيادة الحجم */
         .btn-shoot {
             background-image: linear-gradient(135deg, #ef4444, #dc2626, #991b1b);
             color: white;
@@ -143,7 +142,6 @@
             background-image: linear-gradient(135deg, #991b1b, #451a03);
         }
 
-        /* الجويستيك - تم زيادة الحجم ليتناسق مع زر الإطلاق */
         .joystick-container {
             width: clamp(75px, 20vw, 100px);
             height: clamp(75px, 20vw, 100px);
@@ -171,7 +169,6 @@
             transition: transform 0.05s ease;
         }
 
-        /* زر شحن الذخيرة - تم تصغيره */
         .btn-ammo {
             flex: 0.7;
             min-width: 0;
@@ -194,7 +191,6 @@
             box-sizing: border-box;
         }
         
-        /* زر الإيقاف المؤقت - تم تصغيره ليتماشى مع زر الذخيرة */
         .btn-pause {
             background: #1e293b;
             color: #fff;
@@ -620,11 +616,13 @@
         preloadAssets().then(() => {
             try {
                 if (typeof Pi !== 'undefined' && window.Pi) {
+                    // تهيئة واجهة Pi Network قبل المصادقة والدفع
                     if (!isSdkInitialized) {
-                        window.Pi.init({ version: "2.0" });
+                        window.Pi.init({ version: "2.0", sandbox: false });
                         isSdkInitialized = true;
                     }
                     setTimeout(() => {
+                        // إضافة صلاحيات الدفع 'payments'
                         window.Pi.authenticate(['username', 'payments'], onIncompletePaymentFound)
                         .then(function(auth) {
                             playerPiUser = auth.user.username;
@@ -1221,6 +1219,7 @@
         if (t.sineWave) t.sineCounter = 0; if (t.special === "bonus") t.ghostCounter = Math.random() * 5;
     }
 
+    // --- وظيفة الدفع بالباي لمعالجة الشراء (متوافقة مع U2A) ---
     function buyAmmoWithPi() {
         if (typeof Pi === 'undefined' || !window.Pi) {
             document.getElementById('game-status').innerText = "⚠️ Open this game inside Pi Browser to initiate real ledger purchases.";
@@ -1230,35 +1229,60 @@
         document.getElementById('game-status').style.color = "#fbbf24";
 
         const paymentData = {
-            amount: 1.0, memo: "Refill AK-47 Ammo Magazine (30 Rounds) - The Hunter Arcade", metadata: { item_code: "ak47_ammo_box_30", buyer: playerPiUser || "unknown_player" }, uid: currentPiUserId || ""
+            amount: 1.0, 
+            memo: "Refill AK-47 Ammo Magazine (30 Rounds) - The Hunter Arcade", 
+            metadata: { item_code: "ak47_ammo_box_30", buyer: playerPiUser || "unknown_player" }, 
+            uid: currentPiUserId || ""
         };
+        
         const callbacks = {
             onReadyForServerApproval: function(paymentId) { approvePaymentOnBackend(paymentId); },
             onReadyForServerCompletion: function(paymentId, txid) { completePaymentOnBackend(paymentId, txid); },
             onCancel: function(paymentId) { document.getElementById('game-status').innerText = "❌ Payment aborted by the user."; document.getElementById('game-status').style.color = "#f87171"; },
             onError: function(error, payment) { document.getElementById('game-status').innerText = "⚠️ Processing fault within Pi Wallet subsystem."; document.getElementById('game-status').style.color = "#f87171"; }
         };
+        
         Pi.createPayment(paymentData, callbacks);
     }
 
     async function approvePaymentOnBackend(paymentId) {
-        try { await fetch('/api/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId }) }); } catch (err) { console.error(err); }
+        try { 
+            await fetch('/api/approve', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ paymentId: paymentId }) 
+            }); 
+        } catch (err) { console.error(err); }
     }
 
     async function completePaymentOnBackend(paymentId, txid) {
         try {
-            const response = await fetch('/api/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: paymentId, txid: txid }) });
+            const response = await fetch('/api/complete', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ paymentId: paymentId, txid: txid }) 
+            });
             const result = await response.json();
             if (result.success) {
                 ammo += 30; document.getElementById('ammo-val').innerText = isRageMode ? "♾️" : ammo;
-                document.getElementById('game-status').innerText = "🪙 1 Pi received successfully! Magazine reloaded. 🔋"; document.getElementById('game-status').style.color = "#4ade80"; playAdvancedSound('reload'); updateSupabaseScore();
+                document.getElementById('game-status').innerText = "🪙 1 Pi received successfully! Magazine reloaded. 🔋"; 
+                document.getElementById('game-status').style.color = "#4ade80"; 
+                playAdvancedSound('reload'); 
+                updateSupabaseScore();
             }
         } catch (err) { console.error(err); }
     }
     
+    // --- استرجاع المدفوعات غير المكتملة وإنهائها ---
     async function onIncompletePaymentFound(payment) {
         if (payment && payment.identifier) {
-            try { await fetch('/api/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid }) }); } catch (e) { console.error(e); }
+            try { 
+                await fetch('/api/complete', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ paymentId: payment.identifier, txid: payment.transaction.txid }) 
+                }); 
+            } catch (e) { console.error(e); }
         }
     }
 </script>
